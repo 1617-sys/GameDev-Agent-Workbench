@@ -1,0 +1,10 @@
+.idea/
+.vscode/
+*.iml
+
+target/
+backend-java/target/
+
+*.log
+.DS_Store
+

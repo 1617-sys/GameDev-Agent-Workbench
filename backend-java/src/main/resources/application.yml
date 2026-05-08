@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: gamedev-agent-workbench
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+server:
+  port: 8080
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:gamedev-agent-workbench-local-secret-key-please-change}
+    expire-seconds: ${JWT_EXPIRE_SECONDS:86400}

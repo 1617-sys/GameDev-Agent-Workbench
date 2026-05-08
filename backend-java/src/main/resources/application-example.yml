@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: gamedev-agent-workbench
+  datasource:
+    url: jdbc:mysql://localhost:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+
+server:
+  port: 8080
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+
+logging:
+  level:
+    com.example.gameworkbench: info
+
+app:
+  jwt:
+    secret: change-this-to-a-strong-secret-key
+    expire-seconds: 86400
+  python-service:
+    base-url: http://localhost:8000
+  aigc-gameflow:
+    base-url: http://localhost:8090
