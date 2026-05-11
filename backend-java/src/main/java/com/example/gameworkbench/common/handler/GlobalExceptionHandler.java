@@ -2,9 +2,11 @@ package com.example.gameworkbench.common.handler;
 
 import com.example.gameworkbench.common.ApiResponse;
 import com.example.gameworkbench.common.exception.BusinessException;
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.BindException;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,7 +26,29 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class
     })
     public ApiResponse<Void> handleValidationException(Exception exception) {
-        return ApiResponse.error(40001, "请求参数不合法");
+        String message = "请求参数不合法";
+
+        if (exception instanceof MethodArgumentNotValidException manve) {
+            FieldError fieldError = manve.getBindingResult().getFieldError();
+            if (fieldError != null && fieldError.getDefaultMessage() != null) {
+                message = fieldError.getDefaultMessage();
+            }
+        } else if (exception instanceof BindException bindException) {
+            FieldError fieldError = bindException.getBindingResult().getFieldError();
+            if (fieldError != null && fieldError.getDefaultMessage() != null) {
+                message = fieldError.getDefaultMessage();
+            }
+        } else if (exception instanceof ConstraintViolationException cve) {
+            ConstraintViolation<?> violation = cve.getConstraintViolations()
+                    .stream()
+                    .findFirst()
+                    .orElse(null);
+            if (violation != null && violation.getMessage() != null) {
+                message = violation.getMessage();
+            }
+        }
+
+        return ApiResponse.error(40001, message);
     }
 
     @ExceptionHandler(Exception.class)

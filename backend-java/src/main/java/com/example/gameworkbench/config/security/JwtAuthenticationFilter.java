@@ -1,6 +1,8 @@
 package com.example.gameworkbench.config.security;
 
+import com.example.gameworkbench.common.ApiResponse;
 import com.example.gameworkbench.service.JwtService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,11 +14,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     protected void doFilterInternal(
@@ -32,13 +36,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authorization.substring(7);
         if (!jwtService.validateToken(token)) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token无效或已过期");
+            writeUnauthorized(response);
             return;
         }
 
         Long userId = jwtService.parseUserId(token);
         if (userId == null) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token无效或已过期");
+            writeUnauthorized(response);
             return;
         }
 
@@ -47,5 +51,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         filterChain.doFilter(request, response);
+    }
+
+    private void writeUnauthorized(HttpServletResponse response) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write(objectMapper.writeValueAsString(
+                ApiResponse.error(40101, "Token无效或已过期")
+        ));
     }
 }
