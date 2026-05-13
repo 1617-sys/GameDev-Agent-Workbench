@@ -22,3 +22,5 @@ app:
   jwt:
     secret: ${JWT_SECRET:gamedev-agent-workbench-local-secret-key-please-change}
     expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
+  python:
+    base-url: ${PYTHON_AGENT_BASE_URL:http://127.0.0.1:8000}
