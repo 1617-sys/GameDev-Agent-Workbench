@@ -4,7 +4,7 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
     username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:123456}
+    password: ${DB_PASSWORD:161764}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
 server:

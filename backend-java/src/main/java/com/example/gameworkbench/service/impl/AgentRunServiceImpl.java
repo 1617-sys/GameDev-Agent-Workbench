@@ -1,5 +1,6 @@
 package com.example.gameworkbench.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.gameworkbench.client.PythonAgentClient;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -80,6 +82,22 @@ public class AgentRunServiceImpl implements AgentRunService {
         }
     }
 
+    public List<AgentRunVO> listRuns(Long userId) {
+        if (userId == null) {
+            throw new BusinessException(40101, "请先登录");
+        }
+
+        List<AgentRun> runs = agentRunMapper.selectList(new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getUserId, userId));
+        return runs.stream().map(this::toVO).toList();
+    }
+
+    public AgentRunVO getRun(Long userId, String runUuid) {
+        if (userId == null) {
+            throw new BusinessException(40101, "请先登录");
+        }
+        return toVO(agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getRunUuid, runUuid).eq(AgentRun::getUserId, userId)));
+    }
+
     private AgentRunVO toVO(AgentRun agentRun) {
         return AgentRunVO.builder()
                 .id(agentRun.getId())
@@ -103,4 +121,6 @@ public class AgentRunServiceImpl implements AgentRunService {
             return String.valueOf(value);
         }
     }
+
+    
 }
