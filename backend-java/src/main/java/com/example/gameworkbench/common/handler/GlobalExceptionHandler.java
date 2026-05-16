@@ -53,7 +53,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<Void> handleException(Exception exception) {
-        log.error("Unhandled exception", exception);
+        log.error("[全局异常] 未处理异常", exception);
         return ApiResponse.error(50000, "系统异常");
     }
 }

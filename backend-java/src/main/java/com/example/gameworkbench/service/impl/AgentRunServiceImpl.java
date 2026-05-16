@@ -13,12 +13,14 @@ import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AgentRunServiceImpl implements AgentRunService {
@@ -30,6 +32,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
         if (userId == null) {
+            log.warn("[Agent] 执行失败：未登录请求 agentType={}", request.getAgentType());
             throw new BusinessException(40101, "请先登录");
         }
 
@@ -46,6 +49,9 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setUpdatedAt(now);
         agentRunMapper.insert(agentRun);
 
+        log.info("[Agent] 执行开始 userId={} runUuid={} agentType={}",
+                userId, agentRun.getRunUuid(), request.getAgentType());
+
         try {
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
                     .title(request.getTitle())
@@ -55,7 +61,9 @@ public class AgentRunServiceImpl implements AgentRunService {
                     .build();
 
             PythonAgentResponse pythonResponse = pythonAgentClient.invoke(request.getAgentType(), pythonRequest);
-            String outputContent = pythonResponse.getData() == null ? null : objectMapper.writeValueAsString(pythonResponse.getData());
+            String outputContent = pythonResponse.getData() == null
+                    ? null
+                    : objectMapper.writeValueAsString(pythonResponse.getData());
 
             agentRun.setOutputContent(outputContent);
             agentRun.setErrorMessage(null);
@@ -64,6 +72,8 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
+            log.info("[Agent] 执行成功 userId={} runUuid={} agentType={} timeTakenMs={}",
+                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs());
             return toVO(agentRun);
         } catch (BusinessException exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
@@ -71,6 +81,9 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+
+            log.warn("[Agent] 执行失败 userId={} runUuid={} agentType={} timeTakenMs={} message={}",
+                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
@@ -78,24 +91,46 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+
+            log.error("[Agent] 执行异常 userId={} runUuid={} agentType={} timeTakenMs={}",
+                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs(), exception);
             throw new BusinessException(50001, "Agent执行失败");
         }
     }
 
+    @Override
     public List<AgentRunVO> listRuns(Long userId) {
         if (userId == null) {
+            log.warn("[Agent] 查询执行记录列表失败：未登录请求");
             throw new BusinessException(40101, "请先登录");
         }
 
-        List<AgentRun> runs = agentRunMapper.selectList(new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getUserId, userId));
+        log.info("[Agent] 查询执行记录列表开始 userId={}", userId);
+        List<AgentRun> runs = agentRunMapper.selectList(new LambdaQueryWrapper<AgentRun>()
+                .eq(AgentRun::getUserId, userId)
+                .orderByDesc(AgentRun::getCreatedAt));
+        log.info("[Agent] 查询执行记录列表成功 userId={} count={}", userId, runs.size());
         return runs.stream().map(this::toVO).toList();
     }
 
+    @Override
     public AgentRunVO getRun(Long userId, String runUuid) {
         if (userId == null) {
+            log.warn("[Agent] 查询执行记录失败：未登录请求 runUuid={}", runUuid);
             throw new BusinessException(40101, "请先登录");
         }
-        return toVO(agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getRunUuid, runUuid).eq(AgentRun::getUserId, userId)));
+
+        log.info("[Agent] 查询执行记录开始 userId={} runUuid={}", userId, runUuid);
+        AgentRun agentRun = agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>()
+                .eq(AgentRun::getRunUuid, runUuid)
+                .eq(AgentRun::getUserId, userId));
+        if (agentRun == null) {
+            log.warn("[Agent] 查询执行记录失败：记录不存在 userId={} runUuid={}", userId, runUuid);
+            throw new BusinessException(40401, "执行记录不存在");
+        }
+
+        log.info("[Agent] 查询执行记录成功 userId={} runUuid={} status={}", userId, runUuid, agentRun.getStatus());
+        return toVO(agentRun);
     }
 
     private AgentRunVO toVO(AgentRun agentRun) {
@@ -118,9 +153,8 @@ public class AgentRunServiceImpl implements AgentRunService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (Exception exception) {
+            log.warn("[Agent] 执行记录输入序列化失败，改为使用 String.valueOf 兜底", exception);
             return String.valueOf(value);
         }
     }
-
-    
 }
