@@ -218,6 +218,9 @@ MVP 跑通后，再按下面顺序增强：
 - [第二周 AI 游戏工具流冲刺计划](./week-2-plan.md)
 - [第二周手机速读版](./week-2-mobile.md)
 - [第二周手机 HTML 版](./week-2-mobile.html)
+- [第二周任务优先级拆分](./week-2-priority.md)
+- [第二周任务优先级手机速读版](./week-2-priority-mobile.md)
+- [第二周任务优先级手机 HTML 版](./week-2-priority-mobile.html)
 
 ## 面试表达重点
 

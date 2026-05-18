@@ -16,6 +16,8 @@ public class AgentRunVO {
     private Long id;
     private String runUuid;
     private Long userId;
+    private Long projectId;
+    private String projectUuid;
     private String agentType;
     private String inputContent;
     private String outputContent;

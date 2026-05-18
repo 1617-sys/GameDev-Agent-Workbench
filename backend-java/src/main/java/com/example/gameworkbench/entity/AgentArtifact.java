@@ -9,31 +9,23 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Data
-@TableName("agent_run")
-public class AgentRun {
+@TableName("agent_artifact")
+public class AgentArtifact {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String runUuid;
-
-    private Long userId;
+    private String artifactUuid;
 
     private Long projectId;
 
-    private String projectUuid;
+    private Long agentRunId;
 
-    private String agentType;
+    private String artifactType;
 
-    private String inputContent;
+    private String title;
 
-    private String outputContent;
-
-    private String status;
-
-    private String errorMessage;
-
-    private Long timeTakenMs;
+    private String content;
 
     private LocalDateTime createdAt;
 

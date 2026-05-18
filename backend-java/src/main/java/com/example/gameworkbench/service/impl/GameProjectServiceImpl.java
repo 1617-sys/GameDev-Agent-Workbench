@@ -1,6 +1,7 @@
 package com.example.gameworkbench.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.gameProject.GameProjectRequest;
 import com.example.gameworkbench.entity.GameProject;
@@ -26,7 +27,7 @@ public class GameProjectServiceImpl implements GameProjectService {
     public GameProjectVO createProject(Long userId, GameProjectRequest request) {
         if (userId == null) {
             log.warn("[项目] 创建项目失败：未登录请求");
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         LocalDateTime now = LocalDateTime.now();
@@ -54,7 +55,7 @@ public class GameProjectServiceImpl implements GameProjectService {
     public List<GameProjectVO> listProjects(Long userId) {
         if (userId == null) {
             log.warn("[项目] 查询项目列表失败：未登录请求");
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[项目] 查询项目列表开始 userId={}", userId);
@@ -69,19 +70,19 @@ public class GameProjectServiceImpl implements GameProjectService {
     public GameProjectVO getProject(Long userId, String projectUuid) {
         if (userId == null) {
             log.warn("[项目] 查询项目失败：未登录请求 projectUuid={}", projectUuid);
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[项目] 查询项目开始 userId={} projectUuid={}", userId, projectUuid);
         GameProject gameProject = findByProjectUuid(projectUuid);
         if (gameProject == null) {
             log.warn("[项目] 查询项目失败：项目不存在 userId={} projectUuid={}", userId, projectUuid);
-            throw new BusinessException(40401, "项目不存在");
+            throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
         if (!gameProject.getUserId().equals(userId)) {
             log.warn("[项目] 查询项目失败：无权访问该项目 userId={} projectUuid={} ownerUserId={}",
                     userId, projectUuid, gameProject.getUserId());
-            throw new BusinessException(40301, "无权访问该项目");
+            throw new BusinessException(ErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
         log.info("[项目] 查询项目成功 userId={} projectUuid={}", userId, projectUuid);
@@ -92,19 +93,19 @@ public class GameProjectServiceImpl implements GameProjectService {
     public GameProjectVO updateProject(Long userId, String projectUuid, GameProjectRequest request) {
         if (userId == null) {
             log.warn("[项目] 更新项目失败：未登录请求 projectUuid={}", projectUuid);
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[项目] 更新项目开始 userId={} projectUuid={}", userId, projectUuid);
         GameProject gameProject = findByProjectUuid(projectUuid);
         if (gameProject == null) {
             log.warn("[项目] 更新项目失败：项目不存在 userId={} projectUuid={}", userId, projectUuid);
-            throw new BusinessException(40401, "项目不存在");
+            throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
         if (!gameProject.getUserId().equals(userId)) {
             log.warn("[项目] 更新项目失败：无权更新该项目 userId={} projectUuid={} ownerUserId={}",
                     userId, projectUuid, gameProject.getUserId());
-            throw new BusinessException(40301, "无权更新该项目");
+            throw new BusinessException(ErrorCode.FORBIDDEN_PROJECT_UPDATE);
         }
 
         gameProject.setName(request.getName());

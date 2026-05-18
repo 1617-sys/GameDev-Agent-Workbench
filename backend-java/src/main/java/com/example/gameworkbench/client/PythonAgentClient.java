@@ -3,6 +3,7 @@ package com.example.gameworkbench.client;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
 import com.example.gameworkbench.common.enums.AgentType;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +32,11 @@ public class PythonAgentClient {
     public PythonAgentResponse invoke(AgentType agentType, PythonAgentRequest request) {
         if (agentType == null) {
             log.warn("[Python] 调用失败：Agent 类型不能为空");
-            throw new BusinessException(40001, "Agent类型不能为空");
+            throw new BusinessException(ErrorCode.AGENT_TYPE_REQUIRED);
         }
         if (!StringUtils.hasText(baseUrl)) {
             log.error("[Python] 调用失败：Python 服务地址未配置 agentType={}", agentType);
-            throw new BusinessException(50002, "Python服务地址未配置");
+            throw new BusinessException(ErrorCode.PYTHON_BASE_URL_NOT_CONFIGURED);
         }
 
         String url = baseUrl + agentType.getPythonPath();
@@ -53,27 +54,27 @@ public class PythonAgentClient {
         } catch (Exception exception) {
             log.error("[Python] 调用异常 agentType={} url={} timeTakenMs={}",
                     agentType, url, System.currentTimeMillis() - startTime, exception);
-            throw new BusinessException(50201, "调用Python服务失败");
+            throw new BusinessException(ErrorCode.PYTHON_CALL_FAILED);
         }
 
         if (!StringUtils.hasText(responseBody)) {
             log.warn("[Python] 调用失败：返回内容为空 agentType={} url={}", agentType, url);
-            throw new BusinessException(50202, "Python服务未返回结果");
+            throw new BusinessException(ErrorCode.PYTHON_EMPTY_RESPONSE);
         }
 
         try {
             PythonAgentResponse response = objectMapper.readValue(responseBody, PythonAgentResponse.class);
             if (response.getCode() == null) {
                 log.warn("[Python] 调用失败：返回 code 为空 agentType={} url={}", agentType, url);
-                throw new BusinessException(50202, "Python服务返回格式不正确");
+                throw new BusinessException(ErrorCode.PYTHON_INVALID_RESPONSE);
             }
             if (!Objects.equals(response.getCode(), 0)) {
                 String message = StringUtils.hasText(response.getMessage())
                         ? response.getMessage()
-                        : "Python服务返回失败";
+                        : ErrorCode.PYTHON_RESPONSE_FAILED.getMessage();
                 log.warn("[Python] 调用返回失败 agentType={} url={} code={} message={}",
                         agentType, url, response.getCode(), message);
-                throw new BusinessException(50203, message);
+                throw new BusinessException(ErrorCode.PYTHON_RESPONSE_FAILED.getCode(), message);
             }
             log.info("[Python] 调用成功 agentType={} url={} code={}", agentType, url, response.getCode());
             return response;
@@ -81,7 +82,7 @@ public class PythonAgentClient {
             throw exception;
         } catch (Exception exception) {
             log.error("[Python] 解析返回结果异常 agentType={} url={}", agentType, url, exception);
-            throw new BusinessException(50202, "解析Python返回结果失败");
+            throw new BusinessException(ErrorCode.PYTHON_RESPONSE_PARSE_FAILED);
         }
     }
 }

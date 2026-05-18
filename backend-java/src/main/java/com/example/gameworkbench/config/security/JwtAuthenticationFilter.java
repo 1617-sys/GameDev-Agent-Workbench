@@ -1,6 +1,7 @@
 package com.example.gameworkbench.config.security;
 
 import com.example.gameworkbench.common.ApiResponse;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.service.JwtService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
@@ -58,7 +59,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType("application/json;charset=UTF-8");
         response.getWriter().write(objectMapper.writeValueAsString(
-                ApiResponse.error(40101, "Token无效或已过期")
+                ApiResponse.error(
+                        ErrorCode.TOKEN_INVALID_OR_EXPIRED.getCode(),
+                        ErrorCode.TOKEN_INVALID_OR_EXPIRED.getMessage()
+                )
         ));
     }
 }

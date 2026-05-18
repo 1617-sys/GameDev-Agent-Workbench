@@ -1,6 +1,7 @@
 package com.example.gameworkbench.common.handler;
 
 import com.example.gameworkbench.common.ApiResponse;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -26,7 +27,7 @@ public class GlobalExceptionHandler {
             ConstraintViolationException.class
     })
     public ApiResponse<Void> handleValidationException(Exception exception) {
-        String message = "请求参数不合法";
+        String message = ErrorCode.INVALID_PARAM.getMessage();
 
         if (exception instanceof MethodArgumentNotValidException manve) {
             FieldError fieldError = manve.getBindingResult().getFieldError();
@@ -48,12 +49,15 @@ public class GlobalExceptionHandler {
             }
         }
 
-        return ApiResponse.error(40001, message);
+        return ApiResponse.error(ErrorCode.INVALID_PARAM.getCode(), message);
     }
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<Void> handleException(Exception exception) {
         log.error("[全局异常] 未处理异常", exception);
-        return ApiResponse.error(50000, "系统异常");
+        return ApiResponse.error(
+                ErrorCode.SYSTEM_ERROR.getCode(),
+                ErrorCode.SYSTEM_ERROR.getMessage()
+        );
     }
 }

@@ -1,19 +1,23 @@
 package com.example.gameworkbench.controller;
 
-import com.example.gameworkbench.common.ApiResponse;
-import com.example.gameworkbench.dto.agent.AgentRunRequest;
-import com.example.gameworkbench.service.AgentRunService;
-import com.example.gameworkbench.vo.agent.AgentRunVO;
+import java.util.List;
+
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import java.util.List;
-import org.springframework.web.bind.annotation.PathVariable;
+
+import com.example.gameworkbench.common.ApiResponse;
+import com.example.gameworkbench.dto.agent.AgentRunRequest;
+import com.example.gameworkbench.service.AgentRunService;
+import com.example.gameworkbench.vo.agent.AgentRunVO;
+
+import lombok.RequiredArgsConstructor;
 
 
 @RestController
@@ -33,9 +37,11 @@ public class AgentController {
 
     @GetMapping("/runs")
     public ApiResponse<List<AgentRunVO>> listRuns(
-            @AuthenticationPrincipal Long userId
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody AgentRunRequest request
+
     ) {
-        return ApiResponse.success(agentRunService.listRuns(userId));
+        return ApiResponse.success(agentRunService.listRuns(userId, request));
     }
 
     @GetMapping("/runs/{runUuid}")

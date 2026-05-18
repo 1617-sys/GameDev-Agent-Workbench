@@ -9,6 +9,9 @@ import lombok.Data;
 @Data
 public class AgentRunRequest {
 
+    @NotBlank(message = "项目UUID不能为空")
+    private String projectUuid;
+
     @NotNull(message = "Agent类型不能为空")
     private AgentType agentType;
 

@@ -5,10 +5,13 @@ import com.example.gameworkbench.client.PythonAgentClient;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
 import com.example.gameworkbench.common.enums.AgentRunStatus;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
 import com.example.gameworkbench.entity.AgentRun;
+import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.mapper.AgentRunMapper;
+import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -26,6 +29,7 @@ import java.util.UUID;
 public class AgentRunServiceImpl implements AgentRunService {
 
     private final AgentRunMapper agentRunMapper;
+    private final GameProjectMapper gameProjectMapper;
     private final PythonAgentClient pythonAgentClient;
     private final ObjectMapper objectMapper;
 
@@ -33,7 +37,15 @@ public class AgentRunServiceImpl implements AgentRunService {
     public AgentRunVO run(Long userId, AgentRunRequest request) {
         if (userId == null) {
             log.warn("[Agent] 执行失败：未登录请求 agentType={}", request.getAgentType());
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        GameProject gameProject = gameProjectMapper.selectOne(new LambdaQueryWrapper<GameProject>()
+                .eq(GameProject::getProjectUuid, request.getProjectUuid())
+                .eq(GameProject::getUserId, userId));
+        if (gameProject == null) {
+            log.warn("[Agent] 执行失败：项目不存在或无权访问 userId={} projectUuid={}", userId, request.getProjectUuid());
+            throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
 
         long startTime = System.currentTimeMillis();
@@ -42,6 +54,8 @@ public class AgentRunServiceImpl implements AgentRunService {
         AgentRun agentRun = new AgentRun();
         agentRun.setRunUuid(UUID.randomUUID().toString());
         agentRun.setUserId(userId);
+        agentRun.setProjectId(gameProject.getId());
+        agentRun.setProjectUuid(gameProject.getProjectUuid());
         agentRun.setAgentType(request.getAgentType().name());
         agentRun.setInputContent(writeJsonSafely(request));
         agentRun.setStatus(AgentRunStatus.RUNNING.name());
@@ -49,8 +63,8 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setUpdatedAt(now);
         agentRunMapper.insert(agentRun);
 
-        log.info("[Agent] 执行开始 userId={} runUuid={} agentType={}",
-                userId, agentRun.getRunUuid(), request.getAgentType());
+        log.info("[Agent] 执行开始 userId={} projectId={} projectUuid={} runUuid={} agentType={}",
+                userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(), request.getAgentType());
 
         try {
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
@@ -72,8 +86,9 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.info("[Agent] 执行成功 userId={} runUuid={} agentType={} timeTakenMs={}",
-                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs());
+            log.info("[Agent] 执行成功 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
+                    userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
+                    request.getAgentType(), agentRun.getTimeTakenMs());
             return toVO(agentRun);
         } catch (BusinessException exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
@@ -82,19 +97,21 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.warn("[Agent] 执行失败 userId={} runUuid={} agentType={} timeTakenMs={} message={}",
-                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs(), exception.getMessage());
+            log.warn("[Agent] 执行失败 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={} message={}",
+                    userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
+                    request.getAgentType(), agentRun.getTimeTakenMs(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
-            agentRun.setErrorMessage("Agent执行失败");
+            agentRun.setErrorMessage(ErrorCode.AGENT_RUN_ERROR.getMessage());
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.error("[Agent] 执行异常 userId={} runUuid={} agentType={} timeTakenMs={}",
-                    userId, agentRun.getRunUuid(), request.getAgentType(), agentRun.getTimeTakenMs(), exception);
-            throw new BusinessException(50001, "Agent执行失败");
+            log.error("[Agent] 执行异常 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
+                    userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
+                    request.getAgentType(), agentRun.getTimeTakenMs(), exception);
+            throw new BusinessException(ErrorCode.AGENT_RUN_ERROR);
         }
     }
 
@@ -102,7 +119,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     public List<AgentRunVO> listRuns(Long userId) {
         if (userId == null) {
             log.warn("[Agent] 查询执行记录列表失败：未登录请求");
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[Agent] 查询执行记录列表开始 userId={}", userId);
@@ -117,7 +134,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     public AgentRunVO getRun(Long userId, String runUuid) {
         if (userId == null) {
             log.warn("[Agent] 查询执行记录失败：未登录请求 runUuid={}", runUuid);
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[Agent] 查询执行记录开始 userId={} runUuid={}", userId, runUuid);
@@ -126,7 +143,7 @@ public class AgentRunServiceImpl implements AgentRunService {
                 .eq(AgentRun::getUserId, userId));
         if (agentRun == null) {
             log.warn("[Agent] 查询执行记录失败：记录不存在 userId={} runUuid={}", userId, runUuid);
-            throw new BusinessException(40401, "执行记录不存在");
+            throw new BusinessException(ErrorCode.AGENT_RUN_NOT_FOUND);
         }
 
         log.info("[Agent] 查询执行记录成功 userId={} runUuid={} status={}", userId, runUuid, agentRun.getStatus());
@@ -138,6 +155,8 @@ public class AgentRunServiceImpl implements AgentRunService {
                 .id(agentRun.getId())
                 .runUuid(agentRun.getRunUuid())
                 .userId(agentRun.getUserId())
+                .projectId(agentRun.getProjectId())
+                .projectUuid(agentRun.getProjectUuid())
                 .agentType(agentRun.getAgentType())
                 .inputContent(agentRun.getInputContent())
                 .outputContent(agentRun.getOutputContent())

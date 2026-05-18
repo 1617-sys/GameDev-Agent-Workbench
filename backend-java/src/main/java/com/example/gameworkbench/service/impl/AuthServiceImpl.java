@@ -1,6 +1,7 @@
 package com.example.gameworkbench.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.auth.LoginRequest;
 import com.example.gameworkbench.dto.auth.RegisterRequest;
@@ -37,7 +38,7 @@ public class AuthServiceImpl implements AuthService {
                 .eq(SysUser::getUsername, request.getUsername()));
         if (sameUsernameCount > 0) {
             log.warn("[认证] 注册失败：用户名已存在 username={}", request.getUsername());
-            throw new BusinessException(40002, "用户名已存在");
+            throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
         SysUser user = new SysUser();
@@ -62,15 +63,15 @@ public class AuthServiceImpl implements AuthService {
 
         if (user == null) {
             log.warn("[认证] 登录失败：用户不存在 username={}", request.getUsername());
-            throw new BusinessException(40003, "用户名或密码错误");
+            throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
         }
         if (!NORMAL_STATUS.equals(user.getStatus())) {
             log.warn("[认证] 登录失败：账号已被禁用 userId={} username={}", user.getId(), user.getUsername());
-            throw new BusinessException(40004, "账号已被禁用");
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
             log.warn("[认证] 登录失败：用户名或密码错误 userId={} username={}", user.getId(), user.getUsername());
-            throw new BusinessException(40003, "用户名或密码错误");
+            throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
         }
 
         user.setLastLoginAt(LocalDateTime.now());
@@ -89,18 +90,18 @@ public class AuthServiceImpl implements AuthService {
     public UserVO me(Long userId) {
         if (userId == null) {
             log.warn("[认证] 获取当前用户失败：未登录请求");
-            throw new BusinessException(40101, "请先登录");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         log.info("[认证] 获取当前用户开始 userId={}", userId);
         SysUser user = sysUserMapper.selectById(userId);
         if (user == null) {
             log.warn("[认证] 获取当前用户失败：用户不存在 userId={}", userId);
-            throw new BusinessException(40401, "用户不存在");
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         if (!NORMAL_STATUS.equals(user.getStatus())) {
             log.warn("[认证] 获取当前用户失败：账号已被禁用 userId={} username={}", user.getId(), user.getUsername());
-            throw new BusinessException(40004, "账号已被禁用");
+            throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 
         log.info("[认证] 获取当前用户成功 userId={} username={}", user.getId(), user.getUsername());
