@@ -14,8 +14,10 @@ import com.example.gameworkbench.common.enums.AgentRunStatus;
 import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
+import com.example.gameworkbench.entity.AgentArtifact;
 import com.example.gameworkbench.entity.AgentRun;
 import com.example.gameworkbench.entity.GameProject;
+import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.AgentRunMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.AgentRunService;
@@ -34,6 +36,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final GameProjectMapper gameProjectMapper;
     private final PythonAgentClient pythonAgentClient;
     private final ObjectMapper objectMapper;
+    private final AgentArtifactMapper agentArtifactMapper;
 
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
@@ -70,6 +73,7 @@ public class AgentRunServiceImpl implements AgentRunService {
 
         try {
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
+                    .projectUuid(request.getProjectUuid())
                     .title(request.getTitle())
                     .content(request.getContent())
                     .context(request.getContext())
@@ -88,9 +92,23 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
+            AgentArtifact agentArtifact = AgentArtifact.builder()
+                    .artifactUuid(UUID.randomUUID().toString())
+                    .agentRunId(agentRun.getId())
+                    .projectId(agentRun.getProjectId())
+                    .artifactType(request.getAgentType().getArtifactType().name())
+                    .title(request.getTitle())
+                    .content(outputContent)
+                    .createdAt(LocalDateTime.now())
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+            agentArtifactMapper.insert(agentArtifact);
+
+
             log.info("[Agent] 执行成功 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                     request.getAgentType(), agentRun.getTimeTakenMs());
+            log.info("[Agent] 产物详情  artifactUuid={} ",agentArtifact.getArtifactUuid());        
             return toVO(agentRun);
         } catch (BusinessException exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
