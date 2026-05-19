@@ -37,11 +37,9 @@ public class AgentController {
 
     @GetMapping("/runs")
     public ApiResponse<List<AgentRunVO>> listRuns(
-            @AuthenticationPrincipal Long userId,
-            @Valid @RequestBody AgentRunRequest request
-
+            @AuthenticationPrincipal Long userId
     ) {
-        return ApiResponse.success(agentRunService.listRuns(userId, request));
+        return ApiResponse.success(agentRunService.listRuns(userId));
     }
 
     @GetMapping("/runs/{runUuid}")

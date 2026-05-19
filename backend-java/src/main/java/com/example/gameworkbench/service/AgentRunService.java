@@ -9,7 +9,7 @@ public interface AgentRunService {
 
     AgentRunVO run(Long userId, AgentRunRequest request);
 
-    List<AgentRunVO> listRuns(Long userId, AgentRunRequest request);
-
     AgentRunVO getRun(Long userId, String runUuid);
+
+    List<AgentRunVO> listRuns(Long userId);
 }
