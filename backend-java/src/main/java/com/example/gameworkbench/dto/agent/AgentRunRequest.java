@@ -1,12 +1,20 @@
 package com.example.gameworkbench.dto.agent;
 
-import com.example.gameworkbench.common.enums.AgentType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import com.example.gameworkbench.common.enums.AgentType;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class AgentRunRequest {
 
     @NotBlank(message = "项目UUID不能为空")

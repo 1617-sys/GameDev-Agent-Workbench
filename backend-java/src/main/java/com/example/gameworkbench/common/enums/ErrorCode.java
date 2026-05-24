@@ -19,9 +19,10 @@ public enum ErrorCode {
     FORBIDDEN_ARTIFACT_ACCESS(40301, "无权访问该产物", "产物详情"),
 
     USER_NOT_FOUND(40401, "用户不存在", "获取当前用户"),
-    PROJECT_NOT_FOUND(40401, "项目不存在", "项目/Agent运行"),
+    PROJECT_NOT_FOUND(40401, "项目不存在", "项目/Agent运行/工作流"),
     AGENT_RUN_NOT_FOUND(40401, "执行记录不存在", "执行记录详情"),
     ARTIFACT_NOT_FOUND(40401, "产物不存在", "产物详情"),
+    WORKFLOW_RUN_NOT_FOUND(40401, "工作流记录不存在", "工作流详情"),
 
     SYSTEM_ERROR(50000, "系统异常", "全局兜底异常"),
     AGENT_RUN_ERROR(50001, "Agent执行失败", "Agent运行异常"),

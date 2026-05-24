@@ -1,11 +1,5 @@
 package com.example.gameworkbench.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.gameworkbench.client.PythonAgentClient;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
@@ -14,18 +8,20 @@ import com.example.gameworkbench.common.enums.AgentRunStatus;
 import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
-import com.example.gameworkbench.entity.AgentArtifact;
 import com.example.gameworkbench.entity.AgentRun;
 import com.example.gameworkbench.entity.GameProject;
-import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.AgentRunMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -36,7 +32,6 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final GameProjectMapper gameProjectMapper;
     private final PythonAgentClient pythonAgentClient;
     private final ObjectMapper objectMapper;
-    private final AgentArtifactMapper agentArtifactMapper;
 
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
@@ -49,7 +44,8 @@ public class AgentRunServiceImpl implements AgentRunService {
                 .eq(GameProject::getProjectUuid, request.getProjectUuid())
                 .eq(GameProject::getUserId, userId));
         if (gameProject == null) {
-            log.warn("[Agent] 执行失败：项目不存在或无权访问 userId={} projectUuid={}", userId, request.getProjectUuid());
+            log.warn("[Agent] 执行失败：项目不存在或无权访问 userId={} projectUuid={}",
+                    userId, request.getProjectUuid());
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
 
@@ -69,7 +65,8 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRunMapper.insert(agentRun);
 
         log.info("[Agent] 执行开始 userId={} projectId={} projectUuid={} runUuid={} agentType={}",
-                userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(), request.getAgentType());
+                userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
+                request.getAgentType());
 
         try {
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
@@ -92,23 +89,9 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            AgentArtifact agentArtifact = AgentArtifact.builder()
-                    .artifactUuid(UUID.randomUUID().toString())
-                    .agentRunId(agentRun.getId())
-                    .projectId(agentRun.getProjectId())
-                    .artifactType(request.getAgentType().getArtifactType().name())
-                    .title(request.getTitle())
-                    .content(outputContent)
-                    .createdAt(LocalDateTime.now())
-                    .updatedAt(LocalDateTime.now())
-                    .build();
-            agentArtifactMapper.insert(agentArtifact);
-
-
             log.info("[Agent] 执行成功 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                     request.getAgentType(), agentRun.getTimeTakenMs());
-            log.info("[Agent] 产物详情  artifactUuid={} ",agentArtifact.getArtifactUuid());        
             return toVO(agentRun);
         } catch (BusinessException exception) {
             agentRun.setStatus(AgentRunStatus.FAILED.name());
@@ -166,7 +149,8 @@ public class AgentRunServiceImpl implements AgentRunService {
             throw new BusinessException(ErrorCode.AGENT_RUN_NOT_FOUND);
         }
 
-        log.info("[Agent] 查询执行记录成功 userId={} runUuid={} status={}", userId, runUuid, agentRun.getStatus());
+        log.info("[Agent] 查询执行记录成功 userId={} runUuid={} status={}",
+                userId, runUuid, agentRun.getStatus());
         return toVO(agentRun);
     }
 
@@ -192,7 +176,7 @@ public class AgentRunServiceImpl implements AgentRunService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (Exception exception) {
-            log.warn("[Agent] 执行记录输入序列化失败，改为使用 String.valueOf 兜底", exception);
+            log.warn("[Agent] 执行记录输入序列化失败，改用 String.valueOf 兜底", exception);
             return String.valueOf(value);
         }
     }
