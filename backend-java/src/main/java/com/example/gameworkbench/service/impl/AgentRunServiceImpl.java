@@ -1,12 +1,6 @@
 package com.example.gameworkbench.service.impl;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import org.springframework.stereotype.Service;
-
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.gameworkbench.client.PythonAgentClient;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
@@ -21,9 +15,13 @@ import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -121,19 +119,18 @@ public class AgentRunServiceImpl implements AgentRunService {
     }
 
     @Override
-    public Page<AgentRunVO> listRuns(Long userId, Integer pageNum, Integer pageSize) {
+    public List<AgentRunVO> listRuns(Long userId) {
         if (userId == null) {
             log.warn("[Agent] 查询执行记录列表失败：未登录请求");
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Page<AgentRun> page = agentRunMapper.selectPage(new Page<>(pageNum, pageSize),
-        new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getUserId, userId).orderByDesc(AgentRun::getCreatedAt));
-        log.info("[执行记录] 获取执行记录列表成功 userId={} pageNum={} pageSize={} count={}",
-                userId, pageNum, pageSize, page.getTotal());
-        Page<AgentRunVO> pageVO = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
-        pageVO.setRecords(page.getRecords().stream().map(this::toVO).toList());
-        return pageVO;
+        log.info("[Agent] 查询执行记录列表开始 userId={}", userId);
+        List<AgentRun> runs = agentRunMapper.selectList(new LambdaQueryWrapper<AgentRun>()
+                .eq(AgentRun::getUserId, userId)
+                .orderByDesc(AgentRun::getCreatedAt));
+        log.info("[Agent] 查询执行记录列表成功 userId={} count={}", userId, runs.size());
+        return runs.stream().map(this::toVO).toList();
     }
 
     @Override
