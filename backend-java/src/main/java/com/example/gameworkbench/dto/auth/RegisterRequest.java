@@ -7,11 +7,11 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank(message = "用户名不能为空")
-    @Size(min = 4, max = 20, message = "用户名长度需要在 4 到 20 之间")
+    @NotBlank(message = "Username is required")
+    @Size(min = 4, max = 20, message = "Username length must be between 4 and 20")
     private String username;
 
-    @NotBlank(message = "密码不能为空")
-    @Size(min = 6, max = 32, message = "密码长度需要在 6 到 32 之间")
+    @NotBlank(message = "Password is required")
+    @Size(min = 6, max = 32, message = "Password length must be between 6 and 32")
     private String password;
 }

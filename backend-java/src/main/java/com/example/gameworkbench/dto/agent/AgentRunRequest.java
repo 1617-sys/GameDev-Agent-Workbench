@@ -17,19 +17,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AgentRunRequest {
 
-    @NotBlank(message = "项目UUID不能为空")
+    @NotBlank(message = "Project UUID is required")
     private String projectUuid;
 
-    @NotNull(message = "Agent类型不能为空")
+    @NotNull(message = "Agent type is required")
     private AgentType agentType;
 
-    @NotBlank(message = "标题不能为空")
-    @Size(max = 200, message = "标题长度不能超过200")
+    @NotBlank(message = "Title is required")
+    @Size(max = 200, message = "Title length must not exceed 200")
     private String title;
 
-    @NotBlank(message = "内容不能为空")
+    @NotBlank(message = "Content is required")
     private String content;
 
-    @Size(max = 2000, message = "上下文长度不能超过2000")
+    @Size(max = 2000, message = "Context length must not exceed 2000")
     private String context;
 }

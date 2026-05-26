@@ -54,7 +54,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<Void> handleException(Exception exception) {
-        log.error("[全局异常] 未处理异常", exception);
+        log.error("[GlobalException] unhandled exception", exception);
         return ApiResponse.error(
                 ErrorCode.SYSTEM_ERROR.getCode(),
                 ErrorCode.SYSTEM_ERROR.getMessage()

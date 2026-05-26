@@ -33,11 +33,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public UserVO register(RegisterRequest request) {
-        log.info("[认证] 注册开始 username={}", request.getUsername());
+        log.info("[Auth] register started username={}", request.getUsername());
         Long sameUsernameCount = sysUserMapper.selectCount(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getUsername, request.getUsername()));
         if (sameUsernameCount > 0) {
-            log.warn("[认证] 注册失败：用户名已存在 username={}", request.getUsername());
+            log.warn("[Auth] register rejected: username already exists username={}", request.getUsername());
             throw new BusinessException(ErrorCode.USERNAME_ALREADY_EXISTS);
         }
 
@@ -51,26 +51,26 @@ public class AuthServiceImpl implements AuthService {
 
         sysUserMapper.insert(user);
 
-        log.info("[认证] 注册成功 userId={} username={}", user.getId(), user.getUsername());
+        log.info("[Auth] register succeeded userId={} username={}", user.getId(), user.getUsername());
         return buildUserVO(user);
     }
 
     @Override
     public LoginResponse login(LoginRequest request) {
-        log.info("[认证] 登录开始 username={}", request.getUsername());
+        log.info("[Auth] login started username={}", request.getUsername());
         SysUser user = sysUserMapper.selectOne(new LambdaQueryWrapper<SysUser>()
                 .eq(SysUser::getUsername, request.getUsername()));
 
         if (user == null) {
-            log.warn("[认证] 登录失败：用户不存在 username={}", request.getUsername());
+            log.warn("[Auth] login rejected: user not found username={}", request.getUsername());
             throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
         }
         if (!NORMAL_STATUS.equals(user.getStatus())) {
-            log.warn("[认证] 登录失败：账号已被禁用 userId={} username={}", user.getId(), user.getUsername());
+            log.warn("[Auth] login rejected: account disabled userId={} username={}", user.getId(), user.getUsername());
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            log.warn("[认证] 登录失败：用户名或密码错误 userId={} username={}", user.getId(), user.getUsername());
+            log.warn("[Auth] login rejected: invalid password userId={} username={}", user.getId(), user.getUsername());
             throw new BusinessException(ErrorCode.INVALID_USERNAME_OR_PASSWORD);
         }
 
@@ -79,7 +79,7 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtService.generateToken(user.getId(), user.getUsername());
 
-        log.info("[认证] 登录成功 userId={} username={}", user.getId(), user.getUsername());
+        log.info("[Auth] login succeeded userId={} username={}", user.getId(), user.getUsername());
         return LoginResponse.builder()
                 .token(token)
                 .user(buildUserVO(user))
@@ -89,22 +89,22 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public UserVO me(Long userId) {
         if (userId == null) {
-            log.warn("[认证] 获取当前用户失败：未登录请求");
+            log.warn("[Auth] get current user rejected: unauthorized");
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        log.info("[认证] 获取当前用户开始 userId={}", userId);
+        log.info("[Auth] get current user started userId={}", userId);
         SysUser user = sysUserMapper.selectById(userId);
         if (user == null) {
-            log.warn("[认证] 获取当前用户失败：用户不存在 userId={}", userId);
+            log.warn("[Auth] get current user rejected: user not found userId={}", userId);
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         if (!NORMAL_STATUS.equals(user.getStatus())) {
-            log.warn("[认证] 获取当前用户失败：账号已被禁用 userId={} username={}", user.getId(), user.getUsername());
+            log.warn("[Auth] get current user rejected: account disabled userId={} username={}", user.getId(), user.getUsername());
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 
-        log.info("[认证] 获取当前用户成功 userId={} username={}", user.getId(), user.getUsername());
+        log.info("[Auth] get current user succeeded userId={} username={}", user.getId(), user.getUsername());
         return buildUserVO(user);
     }
 
