@@ -8,17 +8,17 @@ import lombok.Data;
 @Data
 public class WorkflowRunRequest {
 
-    @NotBlank(message = "项目UUID不能为空")
+    @NotBlank(message = "Project UUID is required")
     private String projectUuid;
 
-    @NotBlank(message = "工作流标题不能为空")
-    @Size(max = 200, message = "工作流标题长度不能超过200")
+    @NotBlank(message = "Workflow title is required")
+    @Size(max = 200, message = "Workflow title length must not exceed 200")
     private String title;
 
-    @NotBlank(message = "游戏想法不能为空")
-    @Size(max = 5000, message = "游戏想法长度不能超过5000")
+    @NotBlank(message = "Game idea is required")
+    @Size(max = 5000, message = "Game idea length must not exceed 5000")
     private String idea;
 
-    @Size(max = 5000, message = "补充上下文长度不能超过5000")
+    @Size(max = 5000, message = "Context length must not exceed 5000")
     private String context;
 }

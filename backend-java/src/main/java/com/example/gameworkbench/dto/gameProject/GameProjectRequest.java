@@ -6,15 +6,15 @@ import lombok.Data;
 @Data
 public class GameProjectRequest {
 
-    @NotBlank(message = "项目名称不能为空")
+    @NotBlank(message = "Project name is required")
     private String name;
 
-    @NotBlank(message = "游戏类型不能为空")
+    @NotBlank(message = "Game type is required")
     private String gameType;
 
-    @NotBlank(message = "目标平台不能为空")
+    @NotBlank(message = "Target platform is required")
     private String targetPlatform;
 
-    @NotBlank(message = "项目描述不能为空")
+    @NotBlank(message = "Project description is required")
     private String description;
 }

@@ -26,7 +26,7 @@ public class GameProjectServiceImpl implements GameProjectService {
     @Override
     public GameProjectVO createProject(Long userId, GameProjectRequest request) {
         if (userId == null) {
-            log.warn("[项目] 创建项目失败：未登录请求");
+            log.warn("[Project] create project rejected: unauthorized");
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -43,10 +43,10 @@ public class GameProjectServiceImpl implements GameProjectService {
         gameProject.setCreatedAt(now);
         gameProject.setUpdatedAt(now);
 
-        log.info("[项目] 创建项目开始 userId={} projectUuid={} name={}",
+        log.info("[Project] create project started userId={} projectUuid={} name={}",
                 userId, gameProject.getProjectUuid(), request.getName());
         gameProjectMapper.insert(gameProject);
-        log.info("[项目] 创建项目成功 userId={} projectUuid={} projectId={}",
+        log.info("[Project] create project succeeded userId={} projectUuid={} projectId={}",
                 userId, gameProject.getProjectUuid(), gameProject.getId());
         return toVo(gameProject);
     }
@@ -54,56 +54,56 @@ public class GameProjectServiceImpl implements GameProjectService {
     @Override
     public List<GameProjectVO> listProjects(Long userId) {
         if (userId == null) {
-            log.warn("[项目] 查询项目列表失败：未登录请求");
+            log.warn("[Project] list projects rejected: unauthorized");
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        log.info("[项目] 查询项目列表开始 userId={}", userId);
+        log.info("[Project] list projects started userId={}", userId);
         List<GameProject> projects = gameProjectMapper.selectList(new LambdaQueryWrapper<GameProject>()
                 .eq(GameProject::getUserId, userId)
                 .orderByDesc(GameProject::getCreatedAt));
-        log.info("[项目] 查询项目列表成功 userId={} count={}", userId, projects.size());
+        log.info("[Project] list projects succeeded userId={} count={}", userId, projects.size());
         return projects.stream().map(this::toVo).toList();
     }
 
     @Override
     public GameProjectVO getProject(Long userId, String projectUuid) {
         if (userId == null) {
-            log.warn("[项目] 查询项目失败：未登录请求 projectUuid={}", projectUuid);
+            log.warn("[Project] get project rejected: unauthorized projectUuid={}", projectUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        log.info("[项目] 查询项目开始 userId={} projectUuid={}", userId, projectUuid);
+        log.info("[Project] get project started userId={} projectUuid={}", userId, projectUuid);
         GameProject gameProject = findByProjectUuid(projectUuid);
         if (gameProject == null) {
-            log.warn("[项目] 查询项目失败：项目不存在 userId={} projectUuid={}", userId, projectUuid);
+            log.warn("[Project] get project rejected: project not found userId={} projectUuid={}", userId, projectUuid);
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
         if (!gameProject.getUserId().equals(userId)) {
-            log.warn("[项目] 查询项目失败：无权访问该项目 userId={} projectUuid={} ownerUserId={}",
+            log.warn("[Project] get project rejected: forbidden userId={} projectUuid={} ownerUserId={}",
                     userId, projectUuid, gameProject.getUserId());
             throw new BusinessException(ErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
-        log.info("[项目] 查询项目成功 userId={} projectUuid={}", userId, projectUuid);
+        log.info("[Project] get project succeeded userId={} projectUuid={}", userId, projectUuid);
         return toVo(gameProject);
     }
 
     @Override
     public GameProjectVO updateProject(Long userId, String projectUuid, GameProjectRequest request) {
         if (userId == null) {
-            log.warn("[项目] 更新项目失败：未登录请求 projectUuid={}", projectUuid);
+            log.warn("[Project] update project rejected: unauthorized projectUuid={}", projectUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        log.info("[项目] 更新项目开始 userId={} projectUuid={}", userId, projectUuid);
+        log.info("[Project] update project started userId={} projectUuid={}", userId, projectUuid);
         GameProject gameProject = findByProjectUuid(projectUuid);
         if (gameProject == null) {
-            log.warn("[项目] 更新项目失败：项目不存在 userId={} projectUuid={}", userId, projectUuid);
+            log.warn("[Project] update project rejected: project not found userId={} projectUuid={}", userId, projectUuid);
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
         if (!gameProject.getUserId().equals(userId)) {
-            log.warn("[项目] 更新项目失败：无权更新该项目 userId={} projectUuid={} ownerUserId={}",
+            log.warn("[Project] update project rejected: forbidden userId={} projectUuid={} ownerUserId={}",
                     userId, projectUuid, gameProject.getUserId());
             throw new BusinessException(ErrorCode.FORBIDDEN_PROJECT_UPDATE);
         }
@@ -115,7 +115,7 @@ public class GameProjectServiceImpl implements GameProjectService {
         gameProject.setUpdatedAt(LocalDateTime.now());
         gameProjectMapper.updateById(gameProject);
 
-        log.info("[项目] 更新项目成功 userId={} projectUuid={}", userId, projectUuid);
+        log.info("[Project] update project succeeded userId={} projectUuid={}", userId, projectUuid);
         return toVo(gameProject);
     }
 

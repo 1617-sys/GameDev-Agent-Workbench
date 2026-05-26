@@ -2,15 +2,26 @@ const state = {
   baseUrl: localStorage.getItem("gaw.baseUrl") || "http://localhost:8080",
   token: localStorage.getItem("gaw.token") || "",
   user: readJson(localStorage.getItem("gaw.user")),
+  authMode: "login",
   projects: [],
   activeProject: readJson(localStorage.getItem("gaw.activeProject")),
   runs: [],
-  artifacts: []
+  artifacts: [],
+  runsPage: {
+    current: 1,
+    size: 10,
+    total: 0,
+    pages: 1
+  }
 };
 
 const els = {
   authPanel: document.querySelector("#authPanel"),
   authMessage: document.querySelector("#authMessage"),
+  authTitle: document.querySelector("#authTitle"),
+  authSubmitButton: document.querySelector("#authSubmitButton"),
+  showLoginButton: document.querySelector("#showLoginButton"),
+  showRegisterButton: document.querySelector("#showRegisterButton"),
   baseUrlInput: document.querySelector("#baseUrlInput"),
   connectionDot: document.querySelector("#connectionDot"),
   connectionText: document.querySelector("#connectionText"),
@@ -18,6 +29,7 @@ const els = {
   projectList: document.querySelector("#projectList"),
   artifactGrid: document.querySelector("#artifactGrid"),
   runsTable: document.querySelector("#runsTable"),
+  runsPageText: document.querySelector("#runsPageText"),
   outputBox: document.querySelector("#outputBox"),
   workflowStatus: document.querySelector("#workflowStatus"),
   lastRunMeta: document.querySelector("#lastRunMeta"),
@@ -29,6 +41,7 @@ init();
 function init() {
   els.baseUrlInput.value = state.baseUrl;
   bindEvents();
+  renderAuthMode();
   renderAuthState();
   renderActiveProject();
   checkHealth();
@@ -42,7 +55,9 @@ function bindEvents() {
     button.addEventListener("click", () => switchView(button.dataset.view));
   });
 
-  document.querySelector("#loginButton").addEventListener("click", login);
+  els.showLoginButton.addEventListener("click", () => setAuthMode("login"));
+  els.showRegisterButton.addEventListener("click", () => setAuthMode("register"));
+  els.authSubmitButton.addEventListener("click", submitAuth);
   document.querySelector("#logoutButton").addEventListener("click", logout);
   document.querySelector("#refreshButton").addEventListener("click", refreshAll);
   document.querySelector("#saveSettingsButton").addEventListener("click", saveSettings);
@@ -50,8 +65,15 @@ function bindEvents() {
   document.querySelector("#createProjectButton").addEventListener("click", createProject);
   document.querySelector("#runWorkflowButton").addEventListener("click", runWorkflow);
   document.querySelector("#runAgentButton").addEventListener("click", runAgent);
-  document.querySelector("#runTypeFilter").addEventListener("change", loadRuns);
-  document.querySelector("#runStatusFilter").addEventListener("change", loadRuns);
+
+  ["#runProjectFilter", "#runTypeFilter", "#runStatusFilter", "#runPageSize"].forEach((selector) => {
+    document.querySelector(selector).addEventListener("change", () => {
+      state.runsPage.current = 1;
+      loadRuns();
+    });
+  });
+  document.querySelector("#prevRunsPageButton").addEventListener("click", () => changeRunsPage(-1));
+  document.querySelector("#nextRunsPageButton").addEventListener("click", () => changeRunsPage(1));
 }
 
 function switchView(viewName) {
@@ -65,9 +87,49 @@ function switchView(viewName) {
   if (viewName === "artifacts") loadArtifacts();
 }
 
+function setAuthMode(mode) {
+  state.authMode = mode;
+  els.authMessage.textContent = "";
+  renderAuthMode();
+}
+
+function renderAuthMode() {
+  const isLogin = state.authMode === "login";
+  els.authTitle.textContent = isLogin ? "登录工作台" : "注册账号";
+  els.authSubmitButton.textContent = isLogin ? "登录" : "注册";
+  els.showLoginButton.classList.toggle("active", isLogin);
+  els.showRegisterButton.classList.toggle("active", !isLogin);
+}
+
+async function submitAuth() {
+  if (state.authMode === "register") {
+    await register();
+    return;
+  }
+  await login();
+}
+
+async function register() {
+  const username = document.querySelector("#authUsername").value.trim();
+  const password = document.querySelector("#authPassword").value;
+  els.authMessage.textContent = "";
+
+  try {
+    await request("/api/auth/register", {
+      method: "POST",
+      body: { username, password },
+      auth: false
+    });
+    els.authMessage.textContent = "注册成功，请登录";
+    setAuthMode("login");
+  } catch (error) {
+    els.authMessage.textContent = error.message;
+  }
+}
+
 async function login() {
-  const username = document.querySelector("#loginUsername").value.trim();
-  const password = document.querySelector("#loginPassword").value;
+  const username = document.querySelector("#authUsername").value.trim();
+  const password = document.querySelector("#authPassword").value;
   els.authMessage.textContent = "";
 
   try {
@@ -140,6 +202,7 @@ async function loadProjects() {
   }
 
   renderProjects();
+  renderProjectFilter();
   renderActiveProject();
 }
 
@@ -204,6 +267,7 @@ async function executeWithOutput(label, runner) {
     els.workflowStatus.textContent = "SUCCESS";
     els.lastRunMeta.textContent = label;
     els.outputBox.textContent = formatOutput(data);
+    state.runsPage.current = 1;
     await Promise.allSettled([loadRuns(), loadArtifacts()]);
   } catch (error) {
     els.workflowStatus.textContent = "FAILED";
@@ -215,14 +279,24 @@ async function executeWithOutput(label, runner) {
 async function loadRuns() {
   if (!state.token) return;
   const params = new URLSearchParams();
+  const projectUuid = document.querySelector("#runProjectFilter").value;
   const type = document.querySelector("#runTypeFilter").value;
   const status = document.querySelector("#runStatusFilter").value;
+  const pageSize = Number(document.querySelector("#runPageSize").value || 10);
+
+  state.runsPage.size = pageSize;
+  params.set("pageNum", state.runsPage.current);
+  params.set("pageSize", state.runsPage.size);
+  if (projectUuid) params.set("projectUuid", projectUuid);
   if (type) params.set("agentType", type);
   if (status) params.set("status", status);
 
-  const suffix = params.toString() ? `?${params.toString()}` : "";
-  const runs = await request(`/api/agent/runs${suffix}`);
-  state.runs = normalizeList(runs);
+  const page = await request(`/api/agent/runs?${params.toString()}`);
+  state.runs = normalizeList(page);
+  state.runsPage.current = Number(page?.current || state.runsPage.current || 1);
+  state.runsPage.size = Number(page?.size || state.runsPage.size || pageSize);
+  state.runsPage.total = Number(page?.total || 0);
+  state.runsPage.pages = Number(page?.pages || Math.max(1, Math.ceil(state.runsPage.total / state.runsPage.size)));
   renderRuns();
 }
 
@@ -234,6 +308,13 @@ async function loadArtifacts() {
   const artifacts = await request(`/api/projects/${state.activeProject.projectUuid}/artifacts`);
   state.artifacts = Array.isArray(artifacts) ? artifacts : [];
   renderArtifacts();
+}
+
+function changeRunsPage(delta) {
+  const nextPage = state.runsPage.current + delta;
+  if (nextPage < 1 || nextPage > state.runsPage.pages) return;
+  state.runsPage.current = nextPage;
+  loadRuns();
 }
 
 function renderAuthState() {
@@ -270,10 +351,26 @@ function renderProjects() {
       state.activeProject = state.projects.find((project) => project.projectUuid === card.dataset.projectUuid);
       localStorage.setItem("gaw.activeProject", JSON.stringify(state.activeProject));
       renderProjects();
+      renderProjectFilter();
       renderActiveProject();
-      await loadArtifacts();
+      state.runsPage.current = 1;
+      await Promise.allSettled([loadRuns(), loadArtifacts()]);
     });
   });
+}
+
+function renderProjectFilter() {
+  const select = document.querySelector("#runProjectFilter");
+  const currentValue = select.value;
+  select.innerHTML = `<option value="">全部项目</option>` + state.projects.map((project) => `
+    <option value="${escapeHtml(project.projectUuid)}">${escapeHtml(project.name)}</option>
+  `).join("");
+
+  if (currentValue && state.projects.some((project) => project.projectUuid === currentValue)) {
+    select.value = currentValue;
+  } else if (state.activeProject) {
+    select.value = state.activeProject.projectUuid;
+  }
 }
 
 function renderActiveProject() {
@@ -291,20 +388,24 @@ function renderRuns() {
   }
   if (state.runs.length === 0) {
     els.runsTable.innerHTML = `<div class="table-row"><div class="row-title">暂无运行记录</div></div>`;
-    return;
+  } else {
+    els.runsTable.innerHTML = state.runs.map((run) => `
+      <article class="table-row">
+        <div class="row-title">${escapeHtml(run.agentType || "UNKNOWN")}</div>
+        <div class="row-meta">
+          <span>${escapeHtml(run.status || "")}</span>
+          <span>${escapeHtml(run.projectUuid || "")}</span>
+          <span>${escapeHtml(run.runUuid || "")}</span>
+          <span>${run.timeTakenMs ?? 0}ms</span>
+          <span>${formatTime(run.createdAt)}</span>
+        </div>
+      </article>
+    `).join("");
   }
 
-  els.runsTable.innerHTML = state.runs.map((run) => `
-    <article class="table-row">
-      <div class="row-title">${escapeHtml(run.agentType || "UNKNOWN")}</div>
-      <div class="row-meta">
-        <span>${escapeHtml(run.status || "")}</span>
-        <span>${escapeHtml(run.runUuid || "")}</span>
-        <span>${run.timeTakenMs ?? 0}ms</span>
-        <span>${formatTime(run.createdAt)}</span>
-      </div>
-    </article>
-  `).join("");
+  els.runsPageText.textContent = `第 ${state.runsPage.current} 页 / 共 ${state.runsPage.pages} 页，共 ${state.runsPage.total} 条`;
+  document.querySelector("#prevRunsPageButton").disabled = state.runsPage.current <= 1;
+  document.querySelector("#nextRunsPageButton").disabled = state.runsPage.current >= state.runsPage.pages;
 }
 
 function renderArtifacts() {
@@ -347,6 +448,11 @@ async function request(path, options = {}) {
 
   const text = await response.text();
   const payload = text ? JSON.parse(text) : null;
+  const hasApiCode = payload && Object.prototype.hasOwnProperty.call(payload, "code");
+
+  if (response.ok && !hasApiCode) {
+    return payload;
+  }
 
   if (!response.ok || (payload && payload.code !== 0)) {
     throw new Error(payload?.message || `请求失败：${response.status}`);

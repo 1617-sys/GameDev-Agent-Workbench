@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.example.gameworkbench.common.ApiResponse;
+import com.example.gameworkbench.common.enums.AgentRunStatus;
+import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
@@ -39,9 +41,12 @@ public class AgentController {
     public ApiResponse<Page<AgentRunVO>> listRuns(
             @AuthenticationPrincipal Long userId,
             @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "10") Integer pageSize
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) String projectUuid,
+            @RequestParam(required = false) AgentType agentType,
+            @RequestParam(required = false) AgentRunStatus status
     ) {
-        return ApiResponse.success(agentRunService.listRuns(userId, pageNum, pageSize));
+        return ApiResponse.success(agentRunService.listRuns(userId, pageNum, pageSize, projectUuid, agentType, status));
     }
 
     @GetMapping("/runs/{runUuid}")

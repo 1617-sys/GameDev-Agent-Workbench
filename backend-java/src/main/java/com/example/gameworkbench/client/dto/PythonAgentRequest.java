@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PythonAgentRequest {
 
+    @JsonProperty("project_uuid")
     private String projectUuid;
     private String title;
     private String content;

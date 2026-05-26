@@ -11,6 +11,7 @@ import com.example.gameworkbench.client.PythonAgentClient;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
 import com.example.gameworkbench.common.enums.AgentRunStatus;
+import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
@@ -38,7 +39,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
         if (userId == null) {
-            log.warn("[Agent] 执行失败：未登录请求 agentType={}", request.getAgentType());
+            log.warn("[Agent] run rejected: unauthorized agentType={}", request.getAgentType());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -46,7 +47,7 @@ public class AgentRunServiceImpl implements AgentRunService {
                 .eq(GameProject::getProjectUuid, request.getProjectUuid())
                 .eq(GameProject::getUserId, userId));
         if (gameProject == null) {
-            log.warn("[Agent] 执行失败：项目不存在或无权访问 userId={} projectUuid={}",
+            log.warn("[Agent] run rejected: project not found or forbidden userId={} projectUuid={}",
                     userId, request.getProjectUuid());
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
@@ -66,7 +67,7 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setUpdatedAt(now);
         agentRunMapper.insert(agentRun);
 
-        log.info("[Agent] 执行开始 userId={} projectId={} projectUuid={} runUuid={} agentType={}",
+        log.info("[Agent] run started userId={} projectId={} projectUuid={} runUuid={} agentType={}",
                 userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                 request.getAgentType());
 
@@ -91,7 +92,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.info("[Agent] 执行成功 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
+            log.info("[Agent] run succeeded userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                     request.getAgentType(), agentRun.getTimeTakenMs());
             return toVO(agentRun);
@@ -102,7 +103,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.warn("[Agent] 执行失败 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={} message={}",
+            log.warn("[Agent] run failed userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={} message={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                     request.getAgentType(), agentRun.getTimeTakenMs(), exception.getMessage());
             throw exception;
@@ -113,7 +114,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
 
-            log.error("[Agent] 执行异常 userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
+            log.error("[Agent] run exception userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
                     request.getAgentType(), agentRun.getTimeTakenMs(), exception);
             throw new BusinessException(ErrorCode.AGENT_RUN_ERROR);
@@ -121,38 +122,67 @@ public class AgentRunServiceImpl implements AgentRunService {
     }
 
     @Override
-    public Page<AgentRunVO> listRuns(Long userId, Integer pageNum, Integer pageSize) {
+    public Page<AgentRunVO> listRuns(
+            Long userId,
+            Integer pageNum,
+            Integer pageSize,
+            String projectUuid,
+            AgentType agentType,
+            AgentRunStatus status
+    ) {
         if (userId == null) {
-            log.warn("[Agent] 查询执行记录列表失败：未登录请求");
+            log.warn("[Agent] list runs rejected: unauthorized");
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        Page<AgentRun> page = agentRunMapper.selectPage(new Page<>(pageNum, pageSize),
-        new LambdaQueryWrapper<AgentRun>().eq(AgentRun::getUserId, userId).orderByDesc(AgentRun::getCreatedAt));
-        log.info("[执行记录] 获取执行记录列表成功 userId={} pageNum={} pageSize={} count={}",
-                userId, pageNum, pageSize, page.getTotal());
+        Long projectId = null;
+        if (projectUuid != null && !projectUuid.isBlank()) {
+            GameProject gameProject = gameProjectMapper.selectOne(new LambdaQueryWrapper<GameProject>()
+                    .eq(GameProject::getProjectUuid, projectUuid)
+                    .eq(GameProject::getUserId, userId));
+            if (gameProject == null) {
+                log.warn("[Agent] list runs rejected: project not found or forbidden userId={} projectUuid={}",
+                        userId, projectUuid);
+                throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
+            }
+            projectId = gameProject.getId();
+        }
+
+        Page<AgentRun> page = agentRunMapper.selectPage(
+                new Page<>(normalizePageNum(pageNum), normalizePageSize(pageSize)),
+                new LambdaQueryWrapper<AgentRun>()
+                        .eq(AgentRun::getUserId, userId)
+                        .eq(projectId != null, AgentRun::getProjectId, projectId)
+                        .eq(agentType != null, AgentRun::getAgentType, agentType == null ? null : agentType.name())
+                        .eq(status != null, AgentRun::getStatus, status == null ? null : status.name())
+                        .orderByDesc(AgentRun::getCreatedAt)
+        );
+
         Page<AgentRunVO> pageVO = new Page<>(page.getCurrent(), page.getSize(), page.getTotal());
         pageVO.setRecords(page.getRecords().stream().map(this::toVO).toList());
+
+        log.info("[AgentRun] list runs succeeded userId={} projectUuid={} agentType={} status={} pageNum={} pageSize={} total={}",
+                userId, projectUuid, agentType, status, page.getCurrent(), page.getSize(), page.getTotal());
         return pageVO;
     }
 
     @Override
     public AgentRunVO getRun(Long userId, String runUuid) {
         if (userId == null) {
-            log.warn("[Agent] 查询执行记录失败：未登录请求 runUuid={}", runUuid);
+            log.warn("[Agent] get run rejected: unauthorized runUuid={}", runUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        log.info("[Agent] 查询执行记录开始 userId={} runUuid={}", userId, runUuid);
+        log.info("[Agent] get run started userId={} runUuid={}", userId, runUuid);
         AgentRun agentRun = agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>()
                 .eq(AgentRun::getRunUuid, runUuid)
                 .eq(AgentRun::getUserId, userId));
         if (agentRun == null) {
-            log.warn("[Agent] 查询执行记录失败：记录不存在 userId={} runUuid={}", userId, runUuid);
+            log.warn("[Agent] get run rejected: run not found userId={} runUuid={}", userId, runUuid);
             throw new BusinessException(ErrorCode.AGENT_RUN_NOT_FOUND);
         }
 
-        log.info("[Agent] 查询执行记录成功 userId={} runUuid={} status={}",
+        log.info("[Agent] get run succeeded userId={} runUuid={} status={}",
                 userId, runUuid, agentRun.getStatus());
         return toVO(agentRun);
     }
@@ -179,8 +209,22 @@ public class AgentRunServiceImpl implements AgentRunService {
         try {
             return objectMapper.writeValueAsString(value);
         } catch (Exception exception) {
-            log.warn("[Agent] 执行记录输入序列化失败，改用 String.valueOf 兜底", exception);
+            log.warn("[Agent] input serialization failed, fallback to String.valueOf", exception);
             return String.valueOf(value);
         }
+    }
+
+    private long normalizePageNum(Integer pageNum) {
+        if (pageNum == null || pageNum < 1) {
+            return 1L;
+        }
+        return pageNum.longValue();
+    }
+
+    private long normalizePageSize(Integer pageSize) {
+        if (pageSize == null || pageSize < 1) {
+            return 10L;
+        }
+        return Math.min(pageSize, 100);
     }
 }

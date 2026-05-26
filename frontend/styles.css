@@ -152,7 +152,9 @@ textarea {
 
 .topbar-actions,
 .button-row,
-.filter-row {
+.filter-row,
+.pagination,
+.auth-tabs {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -323,11 +325,37 @@ textarea {
   background: var(--primary-strong);
 }
 
+.primary-button:disabled,
+.ghost-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .ghost-button,
-.icon-button {
+.icon-button,
+.auth-tab {
   color: var(--text);
   background: #ffffff;
   border-color: var(--line);
+}
+
+.auth-tabs {
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.auth-tab.active {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .wide {
@@ -393,6 +421,13 @@ textarea {
   color: #344054;
   white-space: pre-wrap;
   line-height: 1.55;
+}
+
+.pagination {
+  justify-content: flex-end;
+  margin-top: 16px;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 dialog {

@@ -47,7 +47,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public WorkflowRunVO getWorkflowRun(Long userId, String workflowRunUuid) {
         if (userId == null) {
-            log.warn("[Workflow] 查询失败：未登录请求 workflowRunUuid={}", workflowRunUuid);
+            log.warn("[Workflow] get workflow rejected: unauthorized workflowRunUuid={}", workflowRunUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -55,7 +55,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .eq(WorkflowRun::getWorkflowRunUuid, workflowRunUuid)
                 .eq(WorkflowRun::getUserId, userId));
         if (workflowRun == null) {
-            log.warn("[Workflow] 查询失败：工作流记录不存在 userId={} workflowRunUuid={}",
+            log.warn("[Workflow] get workflow rejected: workflow run not found userId={} workflowRunUuid={}",
                     userId, workflowRunUuid);
             throw new BusinessException(ErrorCode.WORKFLOW_RUN_NOT_FOUND);
         }
@@ -63,14 +63,14 @@ public class WorkflowServiceImpl implements WorkflowService {
         GameProject gameProject = gameProjectMapper.selectById(workflowRun.getProjectId());
         String projectUuid = gameProject == null ? null : gameProject.getProjectUuid();
 
-        log.info("[Workflow] 查询成功 userId={} workflowRunUuid={} status={}",
+        log.info("[Workflow] get workflow succeeded userId={} workflowRunUuid={} status={}",
                 userId, workflowRunUuid, workflowRun.getStatus());
         return toVO(workflowRun, projectUuid, List.of());
     }
 
     public WorkflowRunVO createWorkflowRun(Long userId, WorkflowRunRequest request) {
         if (userId == null) {
-            log.warn("[Workflow] 创建失败：未登录请求 projectUuid={}", request.getProjectUuid());
+            log.warn("[Workflow] create workflow rejected: unauthorized projectUuid={}", request.getProjectUuid());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -80,7 +80,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject);
         workflowRunMapper.insert(workflowRun);
 
-        log.info("[Workflow] 执行开始 userId={} projectId={} workflowRunUuid={}",
+        log.info("[Workflow] run started userId={} projectId={} workflowRunUuid={}",
                 userId, gameProject.getId(), workflowRun.getWorkflowRunUuid());
 
         try {
@@ -99,18 +99,18 @@ public class WorkflowServiceImpl implements WorkflowService {
                     buildSummary(gameConceptStep, coreLoopDesignStep, taskBreakdownStep)
             );
 
-            log.info("[Workflow] 执行成功 userId={} projectId={} workflowRunUuid={} timeTakenMs={}",
+            log.info("[Workflow] run succeeded userId={} projectId={} workflowRunUuid={} timeTakenMs={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), workflowRun.getTimeTakenMs());
 
             return toVO(workflowRun, gameProject.getProjectUuid(), steps);
         } catch (BusinessException exception) {
             markWorkflowFailed(workflowRun, startTime, exception.getMessage());
-            log.warn("[Workflow] 执行失败 userId={} projectId={} workflowRunUuid={} message={}",
+            log.warn("[Workflow] run failed userId={} projectId={} workflowRunUuid={} message={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
             markWorkflowFailed(workflowRun, startTime, ErrorCode.SYSTEM_ERROR.getMessage());
-            log.error("[Workflow] 执行异常 userId={} projectId={} workflowRunUuid={}",
+            log.error("[Workflow] run exception userId={} projectId={} workflowRunUuid={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
@@ -212,7 +212,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
         AgentArtifact artifact = createArtifact(agentRun, workflowRequest.getTitle(), agentType);
 
-        log.info("[Workflow] 步骤完成 stepOrder={} agentType={} agentRunUuid={} artifactUuid={}",
+        log.info("[Workflow] step completed stepOrder={} agentType={} agentRunUuid={} artifactUuid={}",
                 stepOrder, agentType, agentRun.getRunUuid(), artifact.getArtifactUuid());
 
         return WorkflowRunVO.WorkflowStepVO.builder()
@@ -249,9 +249,9 @@ public class WorkflowServiceImpl implements WorkflowService {
             builder.append(baseContext).append("\n\n");
         }
         for (WorkflowRunVO.WorkflowStepVO step : previousSteps) {
-            builder.append("上一阶段 ")
+            builder.append("Previous step ")
                     .append(step.getAgentType())
-                    .append(" 输出：\n")
+                    .append(" output:\n")
                     .append(step.getContent())
                     .append("\n\n");
         }
@@ -259,7 +259,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private String buildSummary(WorkflowRunVO.WorkflowStepVO... steps) {
-        return "已完成游戏设计工作流，共生成 " + steps.length + " 个产物";
+        return "Game design workflow completed. Generated " + steps.length + " artifacts.";
     }
 
     private WorkflowRunVO toVO(
@@ -290,7 +290,7 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .eq(GameProject::getProjectUuid, projectUuid)
                 .eq(GameProject::getUserId, userId));
         if (gameProject == null) {
-            log.warn("[Workflow] 项目不存在或无权访问 userId={} projectUuid={}", userId, projectUuid);
+            log.warn("[Workflow] project not found or forbidden userId={} projectUuid={}", userId, projectUuid);
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
         return gameProject;

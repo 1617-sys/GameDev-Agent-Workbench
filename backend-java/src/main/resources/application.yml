@@ -10,10 +10,18 @@ spring:
 server:
   port: 8080
 
+logging:
+  charset:
+    console: UTF-8
+    file: UTF-8
+  level:
+    org.apache.ibatis: warn
+    com.baomidou.mybatisplus: warn
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
   global-config:
     db-config:
       id-type: auto

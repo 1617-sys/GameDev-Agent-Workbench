@@ -26,7 +26,7 @@ public class AgentArtifactServiceImpl implements AgentArtifactService {
     @Override
     public List<AgentArtifactVO> listProjectArtifacts(Long userId, String projectUuid) {
         if (userId == null) {
-            log.warn("[产物] 查询项目产物列表失败：未登录请求 projectUuid={}", projectUuid);
+            log.warn("[Artifact] list project artifacts rejected: unauthorized projectUuid={}", projectUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
@@ -34,16 +34,16 @@ public class AgentArtifactServiceImpl implements AgentArtifactService {
                 .eq(GameProject::getProjectUuid, projectUuid)
                 .eq(GameProject::getUserId, userId));
         if (gameProject == null) {
-            log.warn("[产物] 查询项目产物列表失败：项目不存在或无权访问 userId={} projectUuid={}", userId, projectUuid);
+            log.warn("[Artifact] list project artifacts rejected: project not found or forbidden userId={} projectUuid={}", userId, projectUuid);
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
 
-        log.info("[产物] 查询项目产物列表开始 userId={} projectId={} projectUuid={}",
+        log.info("[Artifact] list project artifacts started userId={} projectId={} projectUuid={}",
                 userId, gameProject.getId(), projectUuid);
         List<AgentArtifact> artifacts = agentArtifactMapper.selectList(new LambdaQueryWrapper<AgentArtifact>()
                 .eq(AgentArtifact::getProjectId, gameProject.getId())
                 .orderByDesc(AgentArtifact::getCreatedAt));
-        log.info("[产物] 查询项目产物列表成功 userId={} projectId={} count={}",
+        log.info("[Artifact] list project artifacts succeeded userId={} projectId={} count={}",
                 userId, gameProject.getId(), artifacts.size());
         return artifacts.stream().map(this::toVO).toList();
     }
@@ -51,25 +51,25 @@ public class AgentArtifactServiceImpl implements AgentArtifactService {
     @Override
     public AgentArtifactVO getArtifact(Long userId, String artifactUuid) {
         if (userId == null) {
-            log.warn("[产物] 查询产物详情失败：未登录请求 artifactUuid={}", artifactUuid);
+            log.warn("[Artifact] get artifact rejected: unauthorized artifactUuid={}", artifactUuid);
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
         AgentArtifact artifact = agentArtifactMapper.selectOne(new LambdaQueryWrapper<AgentArtifact>()
                 .eq(AgentArtifact::getArtifactUuid, artifactUuid));
         if (artifact == null) {
-            log.warn("[产物] 查询产物详情失败：产物不存在 userId={} artifactUuid={}", userId, artifactUuid);
+            log.warn("[Artifact] get artifact rejected: artifact not found userId={} artifactUuid={}", userId, artifactUuid);
             throw new BusinessException(ErrorCode.ARTIFACT_NOT_FOUND);
         }
 
         GameProject gameProject = gameProjectMapper.selectById(artifact.getProjectId());
         if (gameProject == null || !gameProject.getUserId().equals(userId)) {
-            log.warn("[产物] 查询产物详情失败：无权访问该产物 userId={} artifactUuid={} projectId={}",
+            log.warn("[Artifact] get artifact rejected: forbidden userId={} artifactUuid={} projectId={}",
                     userId, artifactUuid, artifact.getProjectId());
             throw new BusinessException(ErrorCode.FORBIDDEN_ARTIFACT_ACCESS);
         }
 
-        log.info("[产物] 查询产物详情成功 userId={} artifactUuid={} projectId={}",
+        log.info("[Artifact] get artifact succeeded userId={} artifactUuid={} projectId={}",
                 userId, artifactUuid, artifact.getProjectId());
         return toVO(artifact);
     }
