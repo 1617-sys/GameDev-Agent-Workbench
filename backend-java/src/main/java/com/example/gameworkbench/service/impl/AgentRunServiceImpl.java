@@ -3,6 +3,8 @@ package com.example.gameworkbench.service.impl;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import com.example.gameworkbench.entity.PromptTemplate;
+import com.example.gameworkbench.mapper.PromptTemplateMapper;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -35,6 +37,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final GameProjectMapper gameProjectMapper;
     private final PythonAgentClient pythonAgentClient;
     private final ObjectMapper objectMapper;
+    private final PromptTemplateMapper promptTemplateMapper;
 
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
@@ -42,7 +45,6 @@ public class AgentRunServiceImpl implements AgentRunService {
             log.warn("[Agent] run rejected: unauthorized agentType={}", request.getAgentType());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-
         GameProject gameProject = gameProjectMapper.selectOne(new LambdaQueryWrapper<GameProject>()
                 .eq(GameProject::getProjectUuid, request.getProjectUuid())
                 .eq(GameProject::getUserId, userId));
@@ -72,11 +74,33 @@ public class AgentRunServiceImpl implements AgentRunService {
                 request.getAgentType());
 
         try {
+
+            PromptTemplate promptTemplate = promptTemplateMapper.selectOne(
+                    new LambdaQueryWrapper<PromptTemplate>()
+                            .eq(PromptTemplate::getAgentType, request.getAgentType().name())
+                            .eq(PromptTemplate::getStatus, "ACTIVE")
+                            .orderByDesc(PromptTemplate::getVersion)
+                            .last("LIMIT 1")
+            );
+            if (promptTemplate == null) {
+                log.warn("[Agent] active prompt template missing userId={} projectUuid={} runUuid={} agentType={}",
+                        userId, agentRun.getProjectUuid(), agentRun.getRunUuid(), request.getAgentType());
+                throw new BusinessException(ErrorCode.ACTIVE_PROMPT_TEMPLATE_NOT_FOUND);
+            }
+
+            log.info("[Agent] prompt template selected userId={} runUuid={} agentType={} templateUuid={} version={}",
+                    userId, agentRun.getRunUuid(), request.getAgentType(),
+                    promptTemplate.getTemplateUuid(), promptTemplate.getVersion());
+
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
                     .projectUuid(request.getProjectUuid())
                     .title(request.getTitle())
                     .content(request.getContent())
                     .context(request.getContext())
+                    .systemPrompt(promptTemplate.getSystemPrompt())
+                    .userPromptTemplate(promptTemplate.getUserPromptTemplate())
+                    .templateUuid(promptTemplate.getTemplateUuid())
+                    .templateVersion(promptTemplate.getVersion())
                     .userId(userId)
                     .build();
 

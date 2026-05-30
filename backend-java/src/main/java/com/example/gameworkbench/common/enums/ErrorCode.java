@@ -23,6 +23,8 @@ public enum ErrorCode {
     AGENT_RUN_NOT_FOUND(40401, "Agent run not found", "Agent run detail"),
     ARTIFACT_NOT_FOUND(40401, "Artifact not found", "Artifact detail"),
     WORKFLOW_RUN_NOT_FOUND(40401, "Workflow run not found", "Workflow detail"),
+    PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
+    ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 
     SYSTEM_ERROR(50000, "Internal server error", "Global fallback"),
     AGENT_RUN_ERROR(50001, "Agent run failed", "Agent run"),
