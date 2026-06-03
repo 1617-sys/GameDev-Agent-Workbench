@@ -68,53 +68,80 @@ public class WorkflowServiceImpl implements WorkflowService {
         return toVO(workflowRun, projectUuid, List.of());
     }
 
+
+    /**
+     * 创建并执行一次工作流运行，按顺序串联三个Agent阶段：游戏概念生成 → 核心玩法设计 → 任务拆解。
+     * <p>
+     * 流程：校验用户权限 → 获取项目 → 创建RUNNING状态的工作流记录 →
+     * 依次执行三个步骤（后一步依赖前一步的输出作为上下文） → 标记成功并返回完整VO。
+     * 任意步骤抛出的 {@link BusinessException} 直接向上传播；未知异常统一包装为
+     * {@code BusinessException(ErrorCode.SYSTEM_ERROR)} 抛出，确保上层能统一处理。
+     *
+     * @param userId  当前请求用户的唯一标识，为 {@code null} 时抛出 {@link BusinessException}
+     * @param request 包含项目UUID、创意描述、上下文等信息的工作流请求参数
+     * @return 包含工作流运行信息及三个步骤结果的视图对象
+     * @throws BusinessException 用户未授权或工作流执行失败时抛出
+     */
     public WorkflowRunVO createWorkflowRun(Long userId, WorkflowRunRequest request) {
         if (userId == null) {
             log.warn("[Workflow] create workflow rejected: unauthorized projectUuid={}", request.getProjectUuid());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
-
+    
+        /*
+         * 校验用户对项目的归属权限，获取项目信息并创建RUNNING状态的工作流记录写入数据库。
+         */
         GameProject gameProject = getUserProject(userId, request.getProjectUuid());
         long startTime = System.currentTimeMillis();
-
+    
         WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject);
         workflowRunMapper.insert(workflowRun);
-
+    
         log.info("[Workflow] run started userId={} projectId={} workflowRunUuid={}",
                 userId, gameProject.getId(), workflowRun.getWorkflowRunUuid());
-
+    
+        /*
+         * 按依赖顺序串联执行三个Agent阶段，后一步以前一步的输出作为上下文输入。
+         */
         try {
             WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(userId, request);
             WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
                     runCoreLoopDesignStep(userId, request, gameConceptStep);
             WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
                     runTaskBreakdownStep(userId, request, gameConceptStep, coreLoopDesignStep);
-
+    
             List<WorkflowRunVO.WorkflowStepVO> steps =
                     List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep);
-
+    
             markWorkflowSuccess(
                     workflowRun,
                     startTime,
                     buildSummary(gameConceptStep, coreLoopDesignStep, taskBreakdownStep)
             );
-
+    
             log.info("[Workflow] run succeeded userId={} projectId={} workflowRunUuid={} timeTakenMs={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), workflowRun.getTimeTakenMs());
-
+    
             return toVO(workflowRun, gameProject.getProjectUuid(), steps);
         } catch (BusinessException exception) {
+            /*
+             * 业务异常：标记工作流失败，保留原始异常信息后继续向上传播。
+             */
             markWorkflowFailed(workflowRun, startTime, exception.getMessage());
             log.warn("[Workflow] run failed userId={} projectId={} workflowRunUuid={} message={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
+            /*
+             * 未知异常：标记工作流失败，包装为BusinessException(SYSTEM_ERROR)再抛出，避免暴露内部细节。
+             */
             markWorkflowFailed(workflowRun, startTime, ErrorCode.SYSTEM_ERROR.getMessage());
             log.error("[Workflow] run exception userId={} projectId={} workflowRunUuid={}",
                     userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception);
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
     }
+
 
     private WorkflowRun createRunningWorkflowRun(
             Long userId,
