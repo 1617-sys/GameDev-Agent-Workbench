@@ -32,3 +32,6 @@ app:
     expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
   python:
     base-url: ${PYTHON_AGENT_BASE_URL:http://127.0.0.1:8000}
+
+game-build:
+  base-url: http://localhost:5173

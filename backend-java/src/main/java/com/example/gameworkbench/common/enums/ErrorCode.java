@@ -34,7 +34,8 @@ public enum ErrorCode {
     PYTHON_EMPTY_RESPONSE(50202, "Python service returned empty response", "Python response"),
     PYTHON_INVALID_RESPONSE(50202, "Python service returned invalid response", "Python response format"),
     PYTHON_RESPONSE_PARSE_FAILED(50202, "Failed to parse Python response", "Python JSON parse"),
-    PYTHON_RESPONSE_FAILED(50203, "Python service returned failure", "Python business response");
+    PYTHON_RESPONSE_FAILED(50203, "Python service returned failure", "Python business response"),
+    GAME_BUILD_FAILED(50003, "Failed to invoke game build service", "Game build");
 
     private final int code;
     private final String message;

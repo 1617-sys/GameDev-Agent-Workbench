@@ -39,12 +39,29 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final ObjectMapper objectMapper;
     private final PromptTemplateMapper promptTemplateMapper;
 
+    /**
+     * 执行一次 Agent 运行任务。
+     * <p>
+     * 流程包括：校验用户权限与项目归属 → 创建运行记录 → 查询匹配的激活提示词模板 →
+     * 构建请求并调用 Python Agent 服务 → 更新运行结果。
+     * 无论成功或失败，都会将最终状态写回运行记录。
+     *
+     * @param userId  当前操作用户的 ID，不能为 {@code null}
+     * @param request 包含项目 UUID、Agent 类型、标题、内容及上下文等参数的运行请求
+     * @return 本次运行的结果 VO，包含运行 UUID、状态、耗时、输入/输出内容等信息
+     */
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
+        /*
+         * 校验用户身份：未登录或 userId 为空则直接拒绝。
+         */
         if (userId == null) {
             log.warn("[Agent] run rejected: unauthorized agentType={}", request.getAgentType());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
+        /*
+         * 校验项目归属：只有项目创建者才能对该项目发起 Agent 运行。
+         */
         GameProject gameProject = gameProjectMapper.selectOne(new LambdaQueryWrapper<GameProject>()
                 .eq(GameProject::getProjectUuid, request.getProjectUuid())
                 .eq(GameProject::getUserId, userId));
@@ -54,6 +71,9 @@ public class AgentRunServiceImpl implements AgentRunService {
             throw new BusinessException(ErrorCode.PROJECT_NOT_FOUND);
         }
 
+        /*
+         * 初始化运行记录并持久化，状态置为 RUNNING，便于追踪与恢复。
+         */
         long startTime = System.currentTimeMillis();
         LocalDateTime now = LocalDateTime.now();
 
@@ -75,6 +95,9 @@ public class AgentRunServiceImpl implements AgentRunService {
 
         try {
 
+            /*
+             * 查询当前 Agent 类型对应的最新激活版提示词模板。
+             */
             PromptTemplate promptTemplate = promptTemplateMapper.selectOne(
                     new LambdaQueryWrapper<PromptTemplate>()
                             .eq(PromptTemplate::getAgentType, request.getAgentType().name())
@@ -92,6 +115,9 @@ public class AgentRunServiceImpl implements AgentRunService {
                     userId, agentRun.getRunUuid(), request.getAgentType(),
                     promptTemplate.getTemplateUuid(), promptTemplate.getVersion());
 
+            /*
+             * 组装请求参数，将前端输入与后端查询到的提示词模板合并，通过 Python 客户端调用 Agent 服务。
+             */
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
                     .projectUuid(request.getProjectUuid())
                     .title(request.getTitle())
@@ -105,6 +131,9 @@ public class AgentRunServiceImpl implements AgentRunService {
                     .build();
 
             PythonAgentResponse pythonResponse = pythonAgentClient.invoke(request.getAgentType(), pythonRequest);
+            /*
+             * 将 Python 服务返回结果序列化为 JSON 字符串，写入运行记录并标记成功。
+             */
             String outputContent = pythonResponse.getData() == null
                     ? null
                     : objectMapper.writeValueAsString(pythonResponse.getData());
@@ -121,6 +150,9 @@ public class AgentRunServiceImpl implements AgentRunService {
                     request.getAgentType(), agentRun.getTimeTakenMs());
             return toVO(agentRun);
         } catch (BusinessException exception) {
+            /*
+             * 业务异常处理：记录失败信息并重新抛出，由上层统一处理。
+             */
             agentRun.setStatus(AgentRunStatus.FAILED.name());
             agentRun.setErrorMessage(exception.getMessage());
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
@@ -132,6 +164,9 @@ public class AgentRunServiceImpl implements AgentRunService {
                     request.getAgentType(), agentRun.getTimeTakenMs(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
+            /*
+             * 未知异常兜底：记录错误日志并包装为业务异常抛出，避免暴露内部细节。
+             */
             agentRun.setStatus(AgentRunStatus.FAILED.name());
             agentRun.setErrorMessage(ErrorCode.AGENT_RUN_ERROR.getMessage());
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
