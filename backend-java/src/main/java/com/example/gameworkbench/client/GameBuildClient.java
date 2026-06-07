@@ -9,6 +9,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.UUID;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -18,15 +22,27 @@ public class GameBuildClient {
     private String baseUrl;
 
     public GameBuildResponse invoke(GameBuildRequest request) {
+        long startTime = System.currentTimeMillis();
         try {
             log.info("[GameBuild] mock build started projectUuid={} title={}",
                     request.getProjectUuid(), request.getTitle());
+
+            String demoUrl = baseUrl
+                    + "/demo/mock-game.html"
+                    + "?projectUuid=" + encode(request.getProjectUuid())
+                    + "&title=" + encode(request.getTitle());
+            long timeTakenMs = System.currentTimeMillis() - startTime;
+
+            log.info("[GameBuild] mock build succeeded projectUuid={} demoUrl={} timeTakenMs={}",
+                    request.getProjectUuid(), demoUrl, timeTakenMs);
 
             return GameBuildResponse.builder()
                     .status("SUCCESS")
                     .title(request.getTitle())
                     .content(request.getContent())
-                    .demoUrl(baseUrl + "/demo/mock-game")
+                    .demoUrl(demoUrl)
+                    .buildId(UUID.randomUUID().toString())
+                    .timeTakenMs(timeTakenMs)
                     .message("Mock game build completed")
                     .build();
 
@@ -36,5 +52,12 @@ public class GameBuildClient {
 
             throw new BusinessException(ErrorCode.GAME_BUILD_FAILED);
         }
+    }
+
+    private String encode(String value) {
+        if (value == null) {
+            return "";
+        }
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 }

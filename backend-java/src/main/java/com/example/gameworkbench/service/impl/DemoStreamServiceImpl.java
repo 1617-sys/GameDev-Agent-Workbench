@@ -127,7 +127,8 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                     .eventTime(LocalDateTime.now())
                     .build());
 
-            log.info("[DemoStream] completed userId={} projectUuid={}", userId, request.getProjectUuid());
+            log.info("[DemoStream] completed userId={} projectUuid={} demoUrl={}",
+                    userId, request.getProjectUuid(), gameBuildResponse.getDemoUrl());
             emitter.complete();
         } catch (BusinessException exception) {
             /* 业务异常：将具体错误消息透传给客户端 */
