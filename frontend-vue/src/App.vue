@@ -3,6 +3,65 @@ import { computed, onMounted, reactive } from "vue";
 
 const AGENT_TYPES = ["GAME_CONCEPT", "CORE_LOOP_DESIGN", "TASK_BREAKDOWN"];
 
+const AGENT_TYPE_LABELS = {
+  GAME_CONCEPT: "游戏概念",
+  CORE_LOOP_DESIGN: "核心循环",
+  TASK_BREAKDOWN: "任务拆解"
+};
+
+const STAGE_LABELS = {
+  WORKFLOW_STARTED: "工作流启动",
+  GAME_CONCEPT: "游戏概念生成",
+  CORE_LOOP_DESIGN: "核心循环设计",
+  TASK_BREAKDOWN: "开发任务拆解",
+  GAME_BUILD: "可玩 Demo 构建",
+  COMPLETED: "生成完成",
+  FAILED: "生成失败",
+  RAW: "原始事件"
+};
+
+const STATUS_LABELS = {
+  READY: "待运行",
+  RUNNING: "运行中",
+  SUCCESS: "成功",
+  FAILED: "失败",
+  TIMEOUT: "超时",
+  INFO: "提示"
+};
+
+const DEFAULT_PROMPT_TEMPLATES = [
+  {
+    agentType: "GAME_CONCEPT",
+    name: "默认游戏概念生成模板",
+    systemPrompt:
+      "你是一个专业的游戏创意策划 Agent，擅长把用户的粗略想法转化为清晰、可执行、适合 MVP 开发的游戏设计方案。",
+    userPromptTemplate:
+      "任务标题：{title}\n\n用户游戏想法：{content}\n\n补充上下文：{context}\n\n请输出：1. 一句话概念；2. 核心卖点；3. 目标玩家；4. 美术风格；5. MVP 范围。",
+    version: 1,
+    status: "ACTIVE"
+  },
+  {
+    agentType: "CORE_LOOP_DESIGN",
+    name: "默认核心循环设计模板",
+    systemPrompt:
+      "你是一个专业的玩法系统设计 Agent，擅长把游戏概念拆解成玩家可以反复体验的核心循环。",
+    userPromptTemplate:
+      "任务标题：{title}\n\n游戏想法：{content}\n\n上一步输出和上下文：{context}\n\n请输出：1. 玩家目标；2. 核心操作；3. 奖励反馈；4. 失败条件；5. 3 分钟可演示玩法循环。",
+    version: 1,
+    status: "ACTIVE"
+  },
+  {
+    agentType: "TASK_BREAKDOWN",
+    name: "默认开发任务拆解模板",
+    systemPrompt:
+      "你是一个游戏项目开发拆解 Agent，擅长把玩法方案拆成前端、后端、资源和测试任务。",
+    userPromptTemplate:
+      "任务标题：{title}\n\n游戏想法：{content}\n\n前置设计结果：{context}\n\n请输出：1. 前端任务；2. 后端任务；3. 资源任务；4. 测试任务；5. 今日最小可交付清单。",
+    version: 1,
+    status: "ACTIVE"
+  }
+];
+
 const state = reactive({
   baseUrl: localStorage.getItem("gaw.vue.baseUrl") || "http://localhost:8080",
   token: localStorage.getItem("gaw.vue.token") || "",
@@ -45,6 +104,7 @@ const state = reactive({
   health: "UNKNOWN",
   loading: false,
   streamRunning: false,
+  templateLoading: false,
   message: ""
 });
 
@@ -53,9 +113,9 @@ const activeProject = computed(() => {
 });
 
 const statusText = computed(() => {
-  if (state.streamRunning) return "RUNNING";
-  if (state.demoUrl) return "SUCCESS";
-  return "READY";
+  if (state.streamRunning) return STATUS_LABELS.RUNNING;
+  if (state.demoUrl) return STATUS_LABELS.SUCCESS;
+  return STATUS_LABELS.READY;
 });
 
 onMounted(async () => {
@@ -200,6 +260,45 @@ async function createProject() {
     state.message = error.message;
   } finally {
     state.loading = false;
+  }
+}
+
+function fillDemoExample() {
+  state.projectForm.name = "像素地牢 Demo";
+  state.projectForm.gameType = "RPG";
+  state.projectForm.targetPlatform = "PC";
+  state.projectForm.description = "一个由 AI 工作流生成的最小可玩小游戏原型。";
+  state.demoForm.title = "像素地牢探索 Demo";
+  state.demoForm.idea = "做一个像素风地牢探索游戏，玩家需要收集宝石、躲避怪物，并找到出口。";
+  state.demoForm.context = "目标平台是浏览器，优先做成功能快速演示的 MVP，玩法要简单直观。";
+  state.message = "已填入示范用例。下一步可以新建项目，或直接为当前项目创建三步默认模板。";
+}
+
+async function createDefaultPromptTemplates() {
+  if (!state.token) {
+    state.message = "请先登录，再创建 Prompt 模板。";
+    return;
+  }
+
+  state.templateLoading = true;
+  state.message = "";
+  try {
+    const createdTypes = [];
+    for (const template of DEFAULT_PROMPT_TEMPLATES) {
+      const created = await api("/api/promptTemplate/modify", {
+        method: "POST",
+        body: {
+          ...template,
+          projectUuid: activeProject.value?.projectUuid || ""
+        }
+      });
+      createdTypes.push(AGENT_TYPE_LABELS[created.agentType] || created.agentType);
+    }
+    state.message = `三步默认模板已创建：${createdTypes.join("、")}。现在可以重新运行 Demo。`;
+  } catch (error) {
+    state.message = `模板创建失败：${explainError(error.message)}`;
+  } finally {
+    state.templateLoading = false;
   }
 }
 
@@ -355,6 +454,54 @@ function handleSseBlock(block) {
   }
 }
 
+function stageLabel(stage) {
+  return STAGE_LABELS[stage] || stage || "未知阶段";
+}
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || status || "未知状态";
+}
+
+function translateMessage(message) {
+  if (!message) return "";
+  if (message.includes("Active prompt template not found")) {
+    return "缺少激活的 Prompt 模板，请先创建三步默认模板。";
+  }
+  if (message.includes("Failed to call Python service")) {
+    return "调用 Python Agent 失败，请确认 Python 服务已启动，并检查模板字段是否完整。";
+  }
+  if (message.includes("Game demo workflow started")) return "游戏 Demo 工作流已启动";
+  if (message.includes("Generating game concept")) return "正在生成游戏概念";
+  if (message.includes("Designing core gameplay loop")) return "正在设计核心循环";
+  if (message.includes("Breaking down development tasks")) return "正在拆解开发任务";
+  if (message.includes("Building playable game demo")) return "正在构建可玩 Demo";
+  if (message.includes("Playable game demo generated")) return "可玩 Demo 已生成";
+  if (message.includes("Game demo workflow completed")) return "游戏 Demo 工作流已完成";
+  return message;
+}
+
+function eventHint(event) {
+  const message = event?.message || "";
+  if (message.includes("Active prompt template not found")) {
+    return "操作建议：先点击“创建三步默认模板”，确保 GAME_CONCEPT、CORE_LOOP_DESIGN、TASK_BREAKDOWN 都有 ACTIVE 模板。";
+  }
+  if (message.includes("Failed to call Python service")) {
+    return "操作建议：确认 Python 服务运行在 127.0.0.1:8000，并单独调用 /agent/game-concept 测试。";
+  }
+  return "";
+}
+
+function explainError(message) {
+  if (!message) return "请查看后端日志定位具体原因。";
+  if (message.includes("Token is invalid") || message.includes("Unauthorized")) {
+    return "登录态失效，请重新登录后再试。";
+  }
+  if (message.includes("Project not found")) {
+    return "项目不存在或不属于当前用户，请先创建/选择自己的项目。";
+  }
+  return message;
+}
+
 function formatJson(value) {
   if (!value) return "暂无输出";
   return JSON.stringify(value, null, 2);
@@ -381,6 +528,7 @@ function openDemo() {
       <nav>
         <a href="#workspace">工作台</a>
         <a href="#projects">项目</a>
+        <a href="#templates">模板</a>
         <a href="#runs">运行记录</a>
         <a href="#artifacts">产物库</a>
       </nav>
@@ -500,9 +648,27 @@ function openDemo() {
               </label>
             </div>
 
+            <div id="templates" class="demo-guide">
+              <div>
+                <strong>演示前准备</strong>
+                <p>如果运行失败提示缺少模板，先创建三步默认模板；如果不知道填什么，先填入示范用例。</p>
+              </div>
+              <div class="guide-actions">
+                <button class="ghost" type="button" @click="fillDemoExample">填入示范用例</button>
+                <button type="button" :disabled="state.templateLoading" @click="createDefaultPromptTemplates">
+                  {{ state.templateLoading ? "创建中" : "创建三步默认模板" }}
+                </button>
+              </div>
+              <ol>
+                <li>先登录，并确认 Java 服务地址是当前后端地址。</li>
+                <li>创建或选择一个项目。</li>
+                <li>点击创建三步默认模板，再运行 Demo Workflow。</li>
+              </ol>
+            </div>
+
             <div class="agent-buttons">
               <button v-for="type in AGENT_TYPES" :key="type" class="ghost" type="button" @click="runSingleAgent(type)">
-                {{ type }}
+                {{ AGENT_TYPE_LABELS[type] || type }}
               </button>
             </div>
 
@@ -518,9 +684,10 @@ function openDemo() {
             </div>
             <div class="timeline">
               <div v-for="event in state.events" :key="`${event.stage}-${event.eventTime}-${event.message}`" class="timeline-item">
-                <span :class="['badge', event.status?.toLowerCase()]">{{ event.status }}</span>
-                <strong>{{ event.stage }}</strong>
-                <p>{{ event.message }}</p>
+                <span :class="['badge', event.status?.toLowerCase()]">{{ statusLabel(event.status) }}</span>
+                <strong>{{ stageLabel(event.stage) }}</strong>
+                <p>{{ translateMessage(event.message) }}</p>
+                <small v-if="eventHint(event)">{{ eventHint(event) }}</small>
               </div>
             </div>
           </div>

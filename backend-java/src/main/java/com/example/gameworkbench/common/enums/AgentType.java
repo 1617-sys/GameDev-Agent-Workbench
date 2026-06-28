@@ -7,7 +7,8 @@ public enum AgentType {
     PROMPT_GENERATE("/agent/prompt-generate", ArtifactType.PROMPT_GENERATE_RESULT),
     GAME_CONCEPT("/agent/game-concept", ArtifactType.GAME_CONCEPT_RESULT),
     CORE_LOOP_DESIGN("/agent/core-loop-design", ArtifactType.CORE_LOOP_DESIGN_RESULT),
-    TASK_BREAKDOWN("/agent/task-breakdown", ArtifactType.TASK_BREAKDOWN_RESULT);
+    TASK_BREAKDOWN("/agent/task-breakdown", ArtifactType.TASK_BREAKDOWN_RESULT),
+    GAME_CONFIG_GENERATE("/agent/game-config-generate", ArtifactType.GAME_CONFIG);
 
     private final String pythonPath;
     private final ArtifactType artifactType;

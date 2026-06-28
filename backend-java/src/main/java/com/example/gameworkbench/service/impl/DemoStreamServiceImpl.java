@@ -7,13 +7,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
-import com.example.gameworkbench.client.GameBuildClient;
-import com.example.gameworkbench.client.dto.GameBuildRequest;
-import com.example.gameworkbench.client.dto.GameBuildResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import com.example.gameworkbench.client.GameBuildClient;
+import com.example.gameworkbench.client.dto.GameBuildRequest;
+import com.example.gameworkbench.client.dto.GameBuildResponse;
 import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
@@ -26,6 +26,8 @@ import com.example.gameworkbench.service.DemoStreamService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.demo.GameDemoStreamEventVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,25 +45,15 @@ public class DemoStreamServiceImpl implements DemoStreamService {
     private final AgentRunService agentRunService;
     private final AgentArtifactMapper agentArtifactMapper;
     private final GameBuildClient gameBuildClient;
+    private final ObjectMapper objectMapper;
 
     @Override
     public SseEmitter streamGameDemo(Long userId, GameDemoStreamRequest request) {
         SseEmitter emitter = new SseEmitter(SSE_TIMEOUT_MS);
-
         CompletableFuture.runAsync(() -> runDemoStream(userId, request, emitter), demoStreamExecutor);
         return emitter;
     }
 
-    /**
-     * 执行游戏 Demo 生成工作流，通过 SSE 向客户端实时推送各阶段进度。
-     * <p>
-     * 工作流按顺序执行三个步骤：游戏概念生成 → 核心玩法设计 → 开发任务拆分。
-     * 任一阶段失败均通过 {@link #sendFailedEvent} 通知客户端并终止流程。
-     *
-     * @param userId  当前用户 ID，为 {@code null} 时将抛出 {@link BusinessException}
-     * @param request 游戏 Demo 生成请求，包含项目 UUID、标题和创意描述
-     * @param emitter SSE 发射器，用于向客户端推送流式事件，流程结束时调用 {@code complete()}
-     */
     private void runDemoStream(Long userId, GameDemoStreamRequest request, SseEmitter emitter) {
         try {
             if (userId == null) {
@@ -71,29 +63,19 @@ public class DemoStreamServiceImpl implements DemoStreamService {
             log.info("[DemoStream] started userId={} projectUuid={} title={}",
                     userId, request.getProjectUuid(), request.getTitle());
 
-            /* 通知客户端工作流已启动 */
-            sendEvent(emitter, event(
-                    "WORKFLOW_STARTED",
-                    "RUNNING",
-                    "Game demo workflow started",
-                    request,
-                    null
-            ));
+            sendEvent(emitter, event("WORKFLOW_STARTED", "RUNNING",
+                    "Demo workflow started", request, null));
 
-            /* 按顺序执行三步流水线：概念 → 核心玩法 → 任务拆分 */
             WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(userId, request, emitter);
             WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
                     runCoreLoopDesignStep(userId, request, gameConceptStep, emitter);
             WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
                     runTaskBreakdownStep(userId, request, gameConceptStep, coreLoopDesignStep, emitter);
+            WorkflowRunVO.WorkflowStepVO gameConfigStep =
+                    runGameConfigStep(userId, request, gameConceptStep, coreLoopDesignStep, taskBreakdownStep, emitter);
 
-            sendEvent(emitter, event(
-                    "GAME_BUILD",
-                    "RUNNING",
-                    "Building playable game demo",
-                    request,
-                    null
-            ));
+            sendEvent(emitter, event("GAME_BUILD", "RUNNING",
+                    "Building playable demo URL", request, null));
 
             GameBuildResponse gameBuildResponse = gameBuildClient.invoke(GameBuildRequest.builder()
                     .userId(userId)
@@ -103,41 +85,48 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                     .gameConcept(gameConceptStep.getContent())
                     .coreLoopDesign(coreLoopDesignStep.getContent())
                     .taskBreakdown(taskBreakdownStep.getContent())
-                    .artifactUuids(List.of(gameConceptStep.getArtifactUuid(), coreLoopDesignStep.getArtifactUuid(), taskBreakdownStep.getArtifactUuid()))
-                    .buildMode("DEMO")
+                    .gameConfig(gameConfigStep.getContent())
+                    .gameConfigArtifactUuid(gameConfigStep.getArtifactUuid())
+                    .artifactUuids(List.of(
+                            gameConceptStep.getArtifactUuid(),
+                            coreLoopDesignStep.getArtifactUuid(),
+                            taskBreakdownStep.getArtifactUuid(),
+                            gameConfigStep.getArtifactUuid()
+                    ))
+                    .buildMode("PHASER_DEMO")
                     .build());
 
-            sendEvent(emitter, event(
-                    "GAME_BUILD",
-                    "SUCCESS",
-                    "Playable game demo generated",
-                    request,
-                    gameBuildResponse
-            ));
-
-
-            /* 汇总所有步骤结果，推送完成事件 */
             sendEvent(emitter, GameDemoStreamEventVO.builder()
-                    .stage("COMPLETED")
+                    .stage("GAME_BUILD")
                     .status("SUCCESS")
-                    .message("Game demo workflow completed")
+                    .message("Playable demo URL generated")
                     .projectUuid(request.getProjectUuid())
+                    .artifactUuid(gameConfigStep.getArtifactUuid())
                     .demoUrl(gameBuildResponse.getDemoUrl())
-                    .data(List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep))
+                    .data(gameBuildResponse)
                     .eventTime(LocalDateTime.now())
                     .build());
 
-            log.info("[DemoStream] completed userId={} projectUuid={} demoUrl={}",
-                    userId, request.getProjectUuid(), gameBuildResponse.getDemoUrl());
+            sendEvent(emitter, GameDemoStreamEventVO.builder()
+                    .stage("COMPLETED")
+                    .status("SUCCESS")
+                    .message("Demo workflow completed")
+                    .projectUuid(request.getProjectUuid())
+                    .artifactUuid(gameConfigStep.getArtifactUuid())
+                    .demoUrl(gameBuildResponse.getDemoUrl())
+                    .data(List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep, gameConfigStep))
+                    .eventTime(LocalDateTime.now())
+                    .build());
+
+            log.info("[DemoStream] completed userId={} projectUuid={} gameConfigArtifactUuid={} demoUrl={}",
+                    userId, request.getProjectUuid(), gameConfigStep.getArtifactUuid(), gameBuildResponse.getDemoUrl());
             emitter.complete();
         } catch (BusinessException exception) {
-            /* 业务异常：将具体错误消息透传给客户端 */
             log.warn("[DemoStream] failed userId={} projectUuid={} message={}",
                     userId, request.getProjectUuid(), exception.getMessage());
             sendFailedEvent(emitter, request, exception.getMessage());
             emitter.complete();
         } catch (Exception exception) {
-            /* 未知异常：统一使用系统错误消息，避免敏感信息泄漏 */
             log.error("[DemoStream] exception userId={} projectUuid={}",
                     userId, request.getProjectUuid(), exception);
             sendFailedEvent(emitter, request, ErrorCode.SYSTEM_ERROR.getMessage());
@@ -150,16 +139,8 @@ public class DemoStreamServiceImpl implements DemoStreamService {
             GameDemoStreamRequest request,
             SseEmitter emitter
     ) {
-        return runAgentStep(
-                1,
-                userId,
-                request,
-                emitter,
-                AgentType.GAME_CONCEPT,
-                "Generating game concept",
-                request.getIdea(),
-                request.getContext()
-        );
+        return runAgentStep(1, userId, request, emitter, AgentType.GAME_CONCEPT,
+                "Generating game concept", request.getIdea(), request.getContext(), false);
     }
 
     private WorkflowRunVO.WorkflowStepVO runCoreLoopDesignStep(
@@ -168,16 +149,9 @@ public class DemoStreamServiceImpl implements DemoStreamService {
             WorkflowRunVO.WorkflowStepVO gameConceptStep,
             SseEmitter emitter
     ) {
-        return runAgentStep(
-                2,
-                userId,
-                request,
-                emitter,
-                AgentType.CORE_LOOP_DESIGN,
-                "Designing core gameplay loop",
-                request.getIdea(),
-                buildStepContext(request.getContext(), gameConceptStep)
-        );
+        return runAgentStep(2, userId, request, emitter, AgentType.CORE_LOOP_DESIGN,
+                "Designing core loop", request.getIdea(),
+                buildStepContext(request.getContext(), gameConceptStep), false);
     }
 
     private WorkflowRunVO.WorkflowStepVO runTaskBreakdownStep(
@@ -187,16 +161,22 @@ public class DemoStreamServiceImpl implements DemoStreamService {
             WorkflowRunVO.WorkflowStepVO coreLoopDesignStep,
             SseEmitter emitter
     ) {
-        return runAgentStep(
-                3,
-                userId,
-                request,
-                emitter,
-                AgentType.TASK_BREAKDOWN,
-                "Breaking down development tasks",
-                request.getIdea(),
-                buildStepContext(request.getContext(), gameConceptStep, coreLoopDesignStep)
-        );
+        return runAgentStep(3, userId, request, emitter, AgentType.TASK_BREAKDOWN,
+                "Breaking down development tasks", request.getIdea(),
+                buildStepContext(request.getContext(), gameConceptStep, coreLoopDesignStep), false);
+    }
+
+    private WorkflowRunVO.WorkflowStepVO runGameConfigStep(
+            Long userId,
+            GameDemoStreamRequest request,
+            WorkflowRunVO.WorkflowStepVO gameConceptStep,
+            WorkflowRunVO.WorkflowStepVO coreLoopDesignStep,
+            WorkflowRunVO.WorkflowStepVO taskBreakdownStep,
+            SseEmitter emitter
+    ) {
+        return runAgentStep(4, userId, request, emitter, AgentType.GAME_CONFIG_GENERATE,
+                "Generating Phaser game configuration", request.getIdea(),
+                buildStepContext(request.getContext(), gameConceptStep, coreLoopDesignStep, taskBreakdownStep), true);
     }
 
     private WorkflowRunVO.WorkflowStepVO runAgentStep(
@@ -207,7 +187,8 @@ public class DemoStreamServiceImpl implements DemoStreamService {
             AgentType agentType,
             String message,
             String content,
-            String context
+            String context,
+            boolean saveGameConfigOnly
     ) {
         sendEvent(emitter, event(agentType.name(), "RUNNING", message, request, null));
 
@@ -219,25 +200,22 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                 .context(context)
                 .build());
 
-        AgentArtifact artifact = createArtifact(agentRun, request.getTitle(), agentType);
+        String artifactContent = saveGameConfigOnly
+                ? extractGameConfigContent(agentRun.getOutputContent())
+                : agentRun.getOutputContent();
+        AgentArtifact artifact = createArtifact(agentRun, request.getTitle(), agentType, artifactContent);
 
         WorkflowRunVO.WorkflowStepVO step = WorkflowRunVO.WorkflowStepVO.builder()
                 .stepOrder(stepOrder)
                 .agentType(agentType.name())
                 .artifactType(agentType.getArtifactType().name())
                 .title(request.getTitle())
-                .content(agentRun.getOutputContent())
+                .content(artifactContent)
                 .agentRunUuid(agentRun.getRunUuid())
                 .artifactUuid(artifact.getArtifactUuid())
                 .build();
 
-        sendEvent(emitter, event(
-                agentType.name(),
-                "SUCCESS",
-                message + " completed",
-                request,
-                step
-        ));
+        sendEvent(emitter, event(agentType.name(), "SUCCESS", successMessage(agentType), request, step));
 
         log.info("[DemoStream] step completed stepOrder={} agentType={} agentRunUuid={} artifactUuid={} timeTakenMs={}",
                 stepOrder, agentType, agentRun.getRunUuid(), artifact.getArtifactUuid(), agentRun.getTimeTakenMs());
@@ -245,7 +223,7 @@ public class DemoStreamServiceImpl implements DemoStreamService {
         return step;
     }
 
-    private AgentArtifact createArtifact(AgentRunVO agentRun, String title, AgentType agentType) {
+    private AgentArtifact createArtifact(AgentRunVO agentRun, String title, AgentType agentType, String content) {
         LocalDateTime now = LocalDateTime.now();
 
         AgentArtifact artifact = AgentArtifact.builder()
@@ -254,12 +232,32 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                 .agentRunId(agentRun.getId())
                 .artifactType(agentType.getArtifactType().name())
                 .title(title)
-                .content(agentRun.getOutputContent())
+                .content(content)
                 .createdAt(now)
                 .updatedAt(now)
                 .build();
         agentArtifactMapper.insert(artifact);
         return artifact;
+    }
+
+    private String extractGameConfigContent(String outputContent) {
+        if (outputContent == null || outputContent.isBlank()) {
+            return outputContent;
+        }
+        try {
+            JsonNode root = objectMapper.readTree(outputContent);
+            JsonNode gameConfig = root.path("game_config");
+            if (gameConfig.isMissingNode() || gameConfig.isNull()) {
+                gameConfig = root.path("gameConfig");
+            }
+            if (gameConfig.isMissingNode() || gameConfig.isNull()) {
+                return outputContent;
+            }
+            return objectMapper.writeValueAsString(gameConfig);
+        } catch (Exception exception) {
+            log.warn("[DemoStream] game config extraction failed, fallback to full output");
+            return outputContent;
+        }
     }
 
     private String buildStepContext(String baseContext, WorkflowRunVO.WorkflowStepVO... previousSteps) {
@@ -294,13 +292,6 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                 .build();
     }
 
-    /**
-     * 向客户端推送 SSE 进度事件。
-     *
-     * @param emitter SSE 发射器，用于向客户端发送事件
-     * @param event   待推送的游戏 Demo 流事件对象
-     * @throws IllegalStateException 当 SSE 发送过程发生 I/O 异常时抛出
-     */
     private void sendEvent(SseEmitter emitter, GameDemoStreamEventVO event) {
         try {
             emitter.send(SseEmitter.event()
@@ -319,9 +310,32 @@ public class DemoStreamServiceImpl implements DemoStreamService {
 
     private void sendFailedEvent(SseEmitter emitter, GameDemoStreamRequest request, String message) {
         try {
-            sendEvent(emitter, event("FAILED", "FAILED", message, request, null));
+            sendEvent(emitter, event("FAILED", "FAILED", userFacingFailureMessage(message), request, null));
         } catch (Exception ignored) {
             log.warn("[DemoStream] failed to send failed event projectUuid={}", request.getProjectUuid());
         }
+    }
+
+    private String successMessage(AgentType agentType) {
+        return switch (agentType) {
+            case GAME_CONCEPT -> "Game concept generated";
+            case CORE_LOOP_DESIGN -> "Core loop designed";
+            case TASK_BREAKDOWN -> "Development tasks generated";
+            case GAME_CONFIG_GENERATE -> "Game configuration generated";
+            default -> "Agent step completed";
+        };
+    }
+
+    private String userFacingFailureMessage(String message) {
+        if (ErrorCode.ACTIVE_PROMPT_TEMPLATE_NOT_FOUND.getMessage().equals(message)) {
+            return "Active prompt template missing. Please create ACTIVE templates for GAME_CONCEPT, CORE_LOOP_DESIGN, TASK_BREAKDOWN and GAME_CONFIG_GENERATE.";
+        }
+        if (ErrorCode.PYTHON_CALL_FAILED.getMessage().equals(message)) {
+            return "Failed to call Python Agent. Please check that python-agent is running at 127.0.0.1:8000 and test the target /agent endpoint first.";
+        }
+        if (ErrorCode.SYSTEM_ERROR.getMessage().equals(message)) {
+            return "Internal server error. Please check Java logs for DemoStream or AgentRun errors.";
+        }
+        return message;
     }
 }

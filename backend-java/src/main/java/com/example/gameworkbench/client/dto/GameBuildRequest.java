@@ -34,6 +34,12 @@ public class GameBuildRequest {
     @JsonProperty("task_breakdown")
     private String taskBreakdown;
 
+    @JsonProperty("game_config")
+    private String gameConfig;
+
+    @JsonProperty("game_config_artifact_uuid")
+    private String gameConfigArtifactUuid;
+
     @JsonProperty("artifact_uuids")
     private List<String> artifactUuids;
 

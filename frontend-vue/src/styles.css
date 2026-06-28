@@ -339,6 +339,37 @@ label {
   margin-top: 14px;
 }
 
+.demo-guide {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  border-left: 4px solid #2563eb;
+  padding: 12px 14px;
+  background: #f8fbff;
+}
+
+.demo-guide strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.demo-guide p,
+.demo-guide ol {
+  margin: 0;
+  color: #66778d;
+  line-height: 1.6;
+}
+
+.demo-guide ol {
+  padding-left: 18px;
+}
+
+.guide-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .demo-button {
   width: 100%;
   margin-top: 14px;
@@ -367,6 +398,13 @@ label {
 .timeline-item p {
   margin: 0;
   color: #66778d;
+}
+
+.timeline-item small {
+  display: block;
+  margin-top: 8px;
+  color: #9a3412;
+  line-height: 1.5;
 }
 
 .badge {

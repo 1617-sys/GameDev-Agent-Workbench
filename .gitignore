@@ -8,7 +8,11 @@ node_modules/
 dist/
 frontend-vue/node_modules/
 frontend-vue/dist/
+frontend-vue/.vite/
 
 *.log
 .DS_Store
+.env
+.env.local
+!.env.example
 

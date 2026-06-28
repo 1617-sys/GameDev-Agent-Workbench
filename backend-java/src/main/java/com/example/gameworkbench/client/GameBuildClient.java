@@ -28,9 +28,10 @@ public class GameBuildClient {
                     request.getProjectUuid(), request.getTitle());
 
             String demoUrl = baseUrl
-                    + "/demo/mock-game.html"
+                    + "/demo/play"
                     + "?projectUuid=" + encode(request.getProjectUuid())
-                    + "&title=" + encode(request.getTitle());
+                    + "&title=" + encode(request.getTitle())
+                    + "&artifactUuid=" + encode(request.getGameConfigArtifactUuid());
             long timeTakenMs = System.currentTimeMillis() - startTime;
 
             log.info("[GameBuild] mock build succeeded projectUuid={} demoUrl={} timeTakenMs={}",

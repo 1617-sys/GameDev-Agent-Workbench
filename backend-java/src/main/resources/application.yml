@@ -34,4 +34,4 @@ app:
     base-url: ${PYTHON_AGENT_BASE_URL:http://127.0.0.1:8000}
 
 game-build:
-  base-url: http://localhost:5173
+  base-url: ${GAME_BUILD_BASE_URL:http://localhost:5173}
