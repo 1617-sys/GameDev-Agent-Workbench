@@ -7,6 +7,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+import com.example.gameworkbench.service.RedisService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
@@ -46,6 +47,7 @@ public class DemoStreamServiceImpl implements DemoStreamService {
     private final AgentArtifactMapper agentArtifactMapper;
     private final GameBuildClient gameBuildClient;
     private final ObjectMapper objectMapper;
+    private final RedisService redisService;
 
     @Override
     public SseEmitter streamGameDemo(Long userId, GameDemoStreamRequest request) {
@@ -55,72 +57,76 @@ public class DemoStreamServiceImpl implements DemoStreamService {
     }
 
     private void runDemoStream(Long userId, GameDemoStreamRequest request, SseEmitter emitter) {
+        String lockedKey = "demoStream:" + userId;
+        Boolean locked = redisService.setIfAbsent(lockedKey, userId+":"+LocalDateTime.now(), 300);
         try {
             if (userId == null) {
                 throw new BusinessException(ErrorCode.UNAUTHORIZED);
             }
+            if(!Boolean.TRUE.equals(locked)) {
 
-            log.info("[DemoStream] started userId={} projectUuid={} title={}",
-                    userId, request.getProjectUuid(), request.getTitle());
+                log.info("[DemoStream] started userId={} projectUuid={} title={}",
+                        userId, request.getProjectUuid(), request.getTitle());
 
-            sendEvent(emitter, event("WORKFLOW_STARTED", "RUNNING",
-                    "Demo workflow started", request, null));
+                sendEvent(emitter, event("WORKFLOW_STARTED", "RUNNING",
+                        "Demo workflow started", request, null));
 
-            WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(userId, request, emitter);
-            WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
-                    runCoreLoopDesignStep(userId, request, gameConceptStep, emitter);
-            WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
-                    runTaskBreakdownStep(userId, request, gameConceptStep, coreLoopDesignStep, emitter);
-            WorkflowRunVO.WorkflowStepVO gameConfigStep =
-                    runGameConfigStep(userId, request, gameConceptStep, coreLoopDesignStep, taskBreakdownStep, emitter);
+                WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(userId, request, emitter);
+                WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
+                        runCoreLoopDesignStep(userId, request, gameConceptStep, emitter);
+                WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
+                        runTaskBreakdownStep(userId, request, gameConceptStep, coreLoopDesignStep, emitter);
+                WorkflowRunVO.WorkflowStepVO gameConfigStep =
+                        runGameConfigStep(userId, request, gameConceptStep, coreLoopDesignStep, taskBreakdownStep, emitter);
 
-            sendEvent(emitter, event("GAME_BUILD", "RUNNING",
-                    "Building playable demo URL", request, null));
+                sendEvent(emitter, event("GAME_BUILD", "RUNNING",
+                        "Building playable demo URL", request, null));
 
-            GameBuildResponse gameBuildResponse = gameBuildClient.invoke(GameBuildRequest.builder()
-                    .userId(userId)
-                    .projectUuid(request.getProjectUuid())
-                    .title(request.getTitle())
-                    .content(request.getIdea())
-                    .gameConcept(gameConceptStep.getContent())
-                    .coreLoopDesign(coreLoopDesignStep.getContent())
-                    .taskBreakdown(taskBreakdownStep.getContent())
-                    .gameConfig(gameConfigStep.getContent())
-                    .gameConfigArtifactUuid(gameConfigStep.getArtifactUuid())
-                    .artifactUuids(List.of(
-                            gameConceptStep.getArtifactUuid(),
-                            coreLoopDesignStep.getArtifactUuid(),
-                            taskBreakdownStep.getArtifactUuid(),
-                            gameConfigStep.getArtifactUuid()
-                    ))
-                    .buildMode("PHASER_DEMO")
-                    .build());
+                GameBuildResponse gameBuildResponse = gameBuildClient.invoke(GameBuildRequest.builder()
+                        .userId(userId)
+                        .projectUuid(request.getProjectUuid())
+                        .title(request.getTitle())
+                        .content(request.getIdea())
+                        .gameConcept(gameConceptStep.getContent())
+                        .coreLoopDesign(coreLoopDesignStep.getContent())
+                        .taskBreakdown(taskBreakdownStep.getContent())
+                        .gameConfig(gameConfigStep.getContent())
+                        .gameConfigArtifactUuid(gameConfigStep.getArtifactUuid())
+                        .artifactUuids(List.of(
+                                gameConceptStep.getArtifactUuid(),
+                                coreLoopDesignStep.getArtifactUuid(),
+                                taskBreakdownStep.getArtifactUuid(),
+                                gameConfigStep.getArtifactUuid()
+                        ))
+                        .buildMode("PHASER_DEMO")
+                        .build());
 
-            sendEvent(emitter, GameDemoStreamEventVO.builder()
-                    .stage("GAME_BUILD")
-                    .status("SUCCESS")
-                    .message("Playable demo URL generated")
-                    .projectUuid(request.getProjectUuid())
-                    .artifactUuid(gameConfigStep.getArtifactUuid())
-                    .demoUrl(gameBuildResponse.getDemoUrl())
-                    .data(gameBuildResponse)
-                    .eventTime(LocalDateTime.now())
-                    .build());
+                sendEvent(emitter, GameDemoStreamEventVO.builder()
+                        .stage("GAME_BUILD")
+                        .status("SUCCESS")
+                        .message("Playable demo URL generated")
+                        .projectUuid(request.getProjectUuid())
+                        .artifactUuid(gameConfigStep.getArtifactUuid())
+                        .demoUrl(gameBuildResponse.getDemoUrl())
+                        .data(gameBuildResponse)
+                        .eventTime(LocalDateTime.now())
+                        .build());
 
-            sendEvent(emitter, GameDemoStreamEventVO.builder()
-                    .stage("COMPLETED")
-                    .status("SUCCESS")
-                    .message("Demo workflow completed")
-                    .projectUuid(request.getProjectUuid())
-                    .artifactUuid(gameConfigStep.getArtifactUuid())
-                    .demoUrl(gameBuildResponse.getDemoUrl())
-                    .data(List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep, gameConfigStep))
-                    .eventTime(LocalDateTime.now())
-                    .build());
+                sendEvent(emitter, GameDemoStreamEventVO.builder()
+                        .stage("COMPLETED")
+                        .status("SUCCESS")
+                        .message("Demo workflow completed")
+                        .projectUuid(request.getProjectUuid())
+                        .artifactUuid(gameConfigStep.getArtifactUuid())
+                        .demoUrl(gameBuildResponse.getDemoUrl())
+                        .data(List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep, gameConfigStep))
+                        .eventTime(LocalDateTime.now())
+                        .build());
 
-            log.info("[DemoStream] completed userId={} projectUuid={} gameConfigArtifactUuid={} demoUrl={}",
-                    userId, request.getProjectUuid(), gameConfigStep.getArtifactUuid(), gameBuildResponse.getDemoUrl());
-            emitter.complete();
+                log.info("[DemoStream] completed userId={} projectUuid={} gameConfigArtifactUuid={} demoUrl={}",
+                        userId, request.getProjectUuid(), gameConfigStep.getArtifactUuid(), gameBuildResponse.getDemoUrl());
+                emitter.complete();
+            }
         } catch (BusinessException exception) {
             log.warn("[DemoStream] failed userId={} projectUuid={} message={}",
                     userId, request.getProjectUuid(), exception.getMessage());
@@ -131,6 +137,8 @@ public class DemoStreamServiceImpl implements DemoStreamService {
                     userId, request.getProjectUuid(), exception);
             sendFailedEvent(emitter, request, ErrorCode.SYSTEM_ERROR.getMessage());
             emitter.complete();
+        }finally {
+            redisService.delete(lockedKey);
         }
     }
 

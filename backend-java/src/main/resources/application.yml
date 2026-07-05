@@ -26,6 +26,13 @@ mybatis-plus:
     db-config:
       id-type: auto
 
+data:
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    password: ${REDIS_PASSWORD:}
+
 app:
   jwt:
     secret: ${JWT_SECRET:gamedev-agent-workbench-local-secret-key-please-change}

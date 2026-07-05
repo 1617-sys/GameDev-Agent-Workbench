@@ -5,6 +5,10 @@ import com.example.gameworkbench.common.enums.AgentRunStatus;
 import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
+import com.example.gameworkbench.vo.project.AgentRunTypeSummaryVO;
+import com.example.gameworkbench.vo.project.ProjectRunSummaryVO;
+
+import java.util.List;
 
 public interface AgentRunService {
 
@@ -20,4 +24,6 @@ public interface AgentRunService {
             AgentType agentType,
             AgentRunStatus status
     );
+
+    List<AgentRunTypeSummaryVO> selectAgentRunTypeSummary(Long userId);
 }

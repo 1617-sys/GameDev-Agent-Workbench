@@ -1,7 +1,10 @@
 package com.example.gameworkbench.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.example.gameworkbench.entity.PromptTemplate;
 import com.example.gameworkbench.mapper.PromptTemplateMapper;
@@ -23,6 +26,7 @@ import com.example.gameworkbench.mapper.AgentRunMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
+import com.example.gameworkbench.vo.project.AgentRunTypeSummaryVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -244,6 +248,52 @@ public class AgentRunServiceImpl implements AgentRunService {
         log.info("[Agent] get run succeeded userId={} runUuid={} status={}",
                 userId, runUuid, agentRun.getStatus());
         return toVO(agentRun);
+    }
+
+    @Override
+    public List<AgentRunTypeSummaryVO> selectAgentRunTypeSummary(Long userId) {
+        if (userId == null) {
+            log.warn("[Agent] select agent run type summary rejected: unauthorized");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        List<AgentRun> runs = agentRunMapper.selectList(
+                new LambdaQueryWrapper<AgentRun>()
+                        .eq(AgentRun::getUserId, userId)
+        );
+
+        Map<String, List<AgentRun>> groupedByType = runs.stream()
+                .collect(Collectors.groupingBy(AgentRun::getAgentType));
+
+        List<AgentRunTypeSummaryVO> result = groupedByType.entrySet().stream()
+                .map(entry -> {
+                    List<AgentRun> typeRuns = entry.getValue();
+                    long totalCount = typeRuns.size();
+                    long successCount = typeRuns.stream()
+                            .filter(r -> AgentRunStatus.SUCCESS.name().equals(r.getStatus()))
+                            .count();
+                    long failedCount = typeRuns.stream()
+                            .filter(r -> AgentRunStatus.FAILED.name().equals(r.getStatus()))
+                            .count();
+                    double avgTimeTakenMs = typeRuns.stream()
+                            .filter(r -> r.getTimeTakenMs() != null)
+                            .mapToLong(AgentRun::getTimeTakenMs)
+                            .average()
+                            .orElse(0.0);
+
+                    return AgentRunTypeSummaryVO.builder()
+                            .agentType(entry.getKey())
+                            .totalCount(totalCount)
+                            .successCount(successCount)
+                            .failedCount(failedCount)
+                            .avgTimeTakenMs(avgTimeTakenMs)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+        log.info("[Agent] select agent run type summary succeeded userId={} resultSize={}",
+                userId, result.size());
+        return result;
     }
 
     private AgentRunVO toVO(AgentRun agentRun) {

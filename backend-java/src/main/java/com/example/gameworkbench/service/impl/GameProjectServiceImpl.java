@@ -8,6 +8,7 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.service.GameProjectService;
 import com.example.gameworkbench.vo.project.GameProjectVO;
+import com.example.gameworkbench.vo.project.ProjectRunSummaryVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -117,6 +118,19 @@ public class GameProjectServiceImpl implements GameProjectService {
 
         log.info("[Project] update project succeeded userId={} projectUuid={}", userId, projectUuid);
         return toVo(gameProject);
+    }
+
+    @Override
+    public List<ProjectRunSummaryVO> selectProjectRunSummary(Long userId) {
+        if (userId == null) {
+            log.warn("[Project] select project run summary rejected: unauthorized");
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        log.info("[Project] select project run summary started userId={}", userId);
+        List<ProjectRunSummaryVO> summaries = gameProjectMapper.selectProjectRunSummary(userId);
+        log.info("[Project] select project run summary succeeded userId={} count={}", userId, summaries.size());
+        return summaries;
     }
 
     private GameProject findByProjectUuid(String projectUuid) {

@@ -9,10 +9,12 @@ import com.example.gameworkbench.entity.SysUser;
 import com.example.gameworkbench.mapper.SysUserMapper;
 import com.example.gameworkbench.service.AuthService;
 import com.example.gameworkbench.service.JwtService;
+import com.example.gameworkbench.service.RedisService;
 import com.example.gameworkbench.vo.auth.LoginResponse;
 import com.example.gameworkbench.vo.auth.UserVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +32,7 @@ public class AuthServiceImpl implements AuthService {
     private final SysUserMapper sysUserMapper;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RedisService redisService;
 
     @Override
     public UserVO register(RegisterRequest request) {
@@ -94,7 +97,13 @@ public class AuthServiceImpl implements AuthService {
         }
 
         log.info("[Auth] get current user started userId={}", userId);
-        SysUser user = sysUserMapper.selectById(userId);
+        SysUser user = (SysUser) redisService.get(String.valueOf(userId));
+        if (user != null) {
+            log.info("缓存命中");
+            return buildUserVO((SysUser) user);
+        }
+        log.info("缓存未命中");
+        user = sysUserMapper.selectById(userId);
         if (user == null) {
             log.warn("[Auth] get current user rejected: user not found userId={}", userId);
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
@@ -104,6 +113,7 @@ public class AuthServiceImpl implements AuthService {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 
+        redisService.set(String.valueOf(userId), user,300);
         log.info("[Auth] get current user succeeded userId={} username={}", user.getId(), user.getUsername());
         return buildUserVO(user);
     }
