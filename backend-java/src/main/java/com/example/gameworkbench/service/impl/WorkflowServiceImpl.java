@@ -136,8 +136,8 @@ public class WorkflowServiceImpl implements WorkflowService {
              * 未知异常：标记工作流失败，包装为BusinessException(SYSTEM_ERROR)再抛出，避免暴露内部细节。
              */
             markWorkflowFailed(workflowRun, startTime, ErrorCode.SYSTEM_ERROR.getMessage());
-            log.error("[Workflow] run exception userId={} projectId={} workflowRunUuid={}",
-                    userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception);
+            log.error("[Workflow] run exception userId={} projectId={} workflowRunUuid={} exceptionType={}",
+                    userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception.getClass().getName());
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
     }
