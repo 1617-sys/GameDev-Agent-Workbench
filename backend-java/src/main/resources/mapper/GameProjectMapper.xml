@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.example.gameworkbench.mapper.GameProjectMapper">
+
+    <select id="selectProjectRunSummary"
+            resultType="com.example.gameworkbench.vo.project.ProjectRunSummaryVO">
+        SELECT
+            p.id AS projectId,
+            p.project_uuid AS projectUuid,
+            p.name AS projectName,
+            COUNT(ar.id) AS totalRunCount,
+            SUM(CASE WHEN ar.status = 'SUCCESS' THEN 1 ELSE 0 END) AS successRunCount,
+            SUM(CASE WHEN ar.status = 'FAILED' THEN 1 ELSE 0 END) AS failedRunCount,
+            MAX(ar.created_at) AS lastRunTime
+        FROM game_project p
+        LEFT JOIN agent_run ar
+            ON p.id = ar.project_id
+            AND ar.deleted = 0
+        WHERE p.user_id = #{userId}
+          AND p.deleted = 0
+        GROUP BY p.id, p.project_uuid, p.name
+        ORDER BY lastRunTime DESC
+    </select>
+</mapper>

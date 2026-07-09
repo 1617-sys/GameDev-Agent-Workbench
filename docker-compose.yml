@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: gamedev-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: gamedev_agent_workbench
+      TZ: Asia/Shanghai
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  python-agent:
+    build:
+      context: ./python-agent
+    container_name: gamedev-python-agent
+    environment:
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL}
+      LLM_MODEL: ${LLM_MODEL}
+      LLM_ENABLE_MOCK_FALLBACK: ${LLM_ENABLE_MOCK_FALLBACK}
+    ports:
+      - "8000:8000"
+
+  backend-java:
+    build:
+      context: ./backend-java
+    container_name: gamedev-backend-java
+    depends_on:
+      mysql:
+        condition: service_healthy
+      python-agent:
+        condition: service_started
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRE_SECONDS: ${JWT_EXPIRE_SECONDS}
+      PYTHON_AGENT_BASE_URL: http://python-agent:8000
+      GAME_BUILD_BASE_URL: http://localhost:5173
+    ports:
+      - "8080:8080"
+
+  frontend-vue:
+    build:
+      context: ./frontend-vue
+    container_name: gamedev-frontend-vue
+    depends_on:
+      - backend-java
+    ports:
+      - "5173:5173"
+
+volumes:
+  mysql-data:

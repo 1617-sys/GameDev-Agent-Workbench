@@ -1,0 +1,109 @@
+import logging
+import os
+import time
+from dataclasses import dataclass
+from typing import Any
+
+import httpx
+
+logger = logging.getLogger("python-agent.llm")
+
+
+@dataclass
+class LLMResult:
+    content: str
+    model: str
+    time_taken_ms: int
+    raw_response: dict[str, Any] | None = None
+    success: bool = True
+    fallback_used: bool = False
+    error_type: str | None = None
+    error_message: str | None = None
+
+
+class LLMClient:
+    def __init__(self) -> None:
+        self.base_url = os.getenv("LLM_BASE_URL", "").rstrip("/")
+        self.api_key = os.getenv("LLM_API_KEY", "")
+        self.model = os.getenv("LLM_MODEL", "deepseek-chat")
+        self.timeout_seconds = float(os.getenv("LLM_TIMEOUT_SECONDS", "30"))
+        self.enable_mock_fallback = os.getenv("LLM_ENABLE_MOCK_FALLBACK", "false").lower() == "true"
+
+    def generate(self, system_prompt: str, user_prompt: str) -> LLMResult:
+        start_time = time.perf_counter()
+
+        if not self.base_url or not self.api_key:
+            error_message = "LLM_BASE_URL or LLM_API_KEY is missing"
+            logger.warning("LLM config missing model=%s fallbackEnabled=%s", self.model, self.enable_mock_fallback)
+            if self.enable_mock_fallback:
+                return self._mock_result(start_time, user_prompt, "LLMConfigError", error_message)
+            raise RuntimeError(error_message)
+
+        url = f"{self.base_url}/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        body = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            "temperature": 0.7,
+        }
+
+        try:
+            logger.info("LLM request started model=%s url=%s", self.model, url)
+            with httpx.Client(timeout=self.timeout_seconds) as client:
+                response = client.post(url, headers=headers, json=body)
+                response.raise_for_status()
+
+            data = response.json()
+            content = data["choices"][0]["message"]["content"]
+            time_taken_ms = int((time.perf_counter() - start_time) * 1000)
+            logger.info("LLM request succeeded model=%s timeTakenMs=%s", self.model, time_taken_ms)
+
+            return LLMResult(
+                content=content,
+                model=self.model,
+                time_taken_ms=time_taken_ms,
+                raw_response=data,
+            )
+        except Exception as exception:
+            time_taken_ms = int((time.perf_counter() - start_time) * 1000)
+            error_type = type(exception).__name__
+            error_message = str(exception)
+
+            if isinstance(exception, httpx.HTTPStatusError) and exception.response.text:
+                error_message = exception.response.text
+
+            logger.exception(
+                "LLM request failed model=%s timeTakenMs=%s errorType=%s errorMessage=%s",
+                self.model,
+                time_taken_ms,
+                error_type,
+                error_message,
+            )
+
+            if self.enable_mock_fallback:
+                return self._mock_result(start_time, user_prompt, error_type, error_message)
+
+            raise
+
+    def _mock_result(
+        self,
+        start_time: float,
+        user_prompt: str,
+        error_type: str | None = None,
+        error_message: str | None = None,
+    ) -> LLMResult:
+        return LLMResult(
+            content=f"Mock fallback result. User prompt: {user_prompt}",
+            model="mock",
+            time_taken_ms=int((time.perf_counter() - start_time) * 1000),
+            success=False,
+            fallback_used=True,
+            error_type=error_type,
+            error_message=error_message,
+        )
