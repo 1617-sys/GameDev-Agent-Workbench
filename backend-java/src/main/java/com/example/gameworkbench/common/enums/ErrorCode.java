@@ -18,6 +18,8 @@ public enum ErrorCode {
     FORBIDDEN_PROJECT_UPDATE(40301, "Forbidden project update", "Project update"),
     FORBIDDEN_ARTIFACT_ACCESS(40301, "Forbidden artifact access", "Artifact detail"),
 
+    DEMO_WORKFLOW_ALREADY_RUNNING(40901, "Demo workflow is already running", "Demo stream duplicate submission"),
+
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
     AGENT_RUN_NOT_FOUND(40401, "Agent run not found", "Agent run detail"),
