@@ -1,175 +1,128 @@
-# GameConfig 协议与 Demo 生成链路
+# GameConfig Contract
 
-这份文档对应“两周执行计划”里从 AI 设计结果走向可玩 Demo 的部分。核心思路是：不要让大模型直接生成一整个游戏工程，而是先让它生成稳定的 `GameConfig` JSON，再由前端 Phaser 运行时把 JSON 渲染成一个轻量小游戏。
+GameConfig is the data boundary between AI output and the Phaser runtime. The model may produce text, but only a validated GameConfig object can be normalized and passed to the game runtime.
 
-## 目标
-
-让链路从“AI 生成设计文档”升级为“AI 生成可试玩 Demo”：
-
-```text
-用户输入游戏想法
--> Java 触发 Demo SSE 工作流
--> Java 依次调用 Python Agent
--> Python 通过 LangChain 调用 LLM
--> 生成游戏概念、核心循环、任务拆解
--> 再生成 GameConfig
--> Java 保存 artifact
--> Java 返回 /demo/play?artifactUuid=...
--> Vue3 + Phaser 读取 GameConfig 并运行小游戏
-```
-
-## 为什么需要 GameConfig
-
-大模型直接生成完整游戏代码不稳定，容易出现语法错误、文件结构混乱、依赖不一致等问题。
-
-`GameConfig` 的作用是把 AI 输出约束成前端能稳定执行的数据协议。前端只要认识这套字段，就可以把不同题材渲染成同一种轻量玩法。
-
-当前 MVP 只支持一种玩法：
+Current supported game type:
 
 ```text
 top_down_collect
-俯视角移动 -> 收集物品 -> 避开敌人 -> 到达出口
 ```
 
-这类玩法规则简单、代码少、演示直观，适合求职项目展示。
+Flow:
 
-## 模块拆分
+```text
+raw AI output
+-> extract GameConfig
+-> validate required runtime fields
+-> normalize optional fields and aliases
+-> mount Phaser runtime
+```
 
-### 1. Python GameConfig Agent
+Validation must happen before normalization. Defaults may fill optional visual fields, but they must not hide a missing required structure from raw AI output.
 
-职责：
+## Required Fields
 
-- 新增 `POST /agent/game-config-generate`
-- 接收 Java 传来的 `title/content/context/systemPrompt/userPromptTemplate`
-- 通过 LangChain 调用真实 LLM
-- 要求模型只返回 JSON
-- 如果模型返回不规范，Python 做兜底归一化
-
-核心文件：
-
-- `python-agent/app/routers/agent.py`
-- `python-agent/app/services/langchain_agent.py`
-- `python-agent/app/prompts/agent_prompts.py`
-- `python-agent/app/schemas/agent.py`
-
-### 2. Java Demo Stream Service
-
-职责：
-
-- 通过 SSE 实时推送工作流进度
-- 按顺序调用 4 个 Agent：
-  - `GAME_CONCEPT`
-  - `CORE_LOOP_DESIGN`
-  - `TASK_BREAKDOWN`
-  - `GAME_CONFIG_GENERATE`
-- 每一步成功后保存为 `agent_artifact`
-- 第 4 步只保存可执行的 `game_config` 内容
-- 调用 `GameBuildClient` 生成可打开的 Demo URL
-
-核心文件：
-
-- `backend-java/src/main/java/com/example/gameworkbench/service/impl/DemoStreamServiceImpl.java`
-- `backend-java/src/main/java/com/example/gameworkbench/client/GameBuildClient.java`
-- `backend-java/src/main/java/com/example/gameworkbench/common/enums/AgentType.java`
-- `backend-java/src/main/java/com/example/gameworkbench/common/enums/ArtifactType.java`
-
-### 3. Vue3 + Phaser Demo Runtime
-
-职责：
-
-- 打开 `/demo/play`
-- 读取 URL 中的 `artifactUuid`
-- 从后端查询 artifact
-- 解析 artifact.content 里的 GameConfig
-- 使用 Phaser 渲染可玩 Demo
-
-核心文件：
-
-- `frontend-vue/src/game/GameDemoPage.vue`
-- `frontend-vue/src/game/topDownCollectRuntime.js`
-- `frontend-vue/src/game/defaultGameConfig.js`
-
-## GameConfig 字段
-
-| 字段 | 类型 | 说明 |
+| Field | Type | Notes |
 | --- | --- | --- |
-| `version` | string | 协议版本，当前为 `1.0` |
-| `gameType` | string | 当前固定为 `top_down_collect` |
-| `title` | string | 游戏标题 |
-| `theme` | string | 游戏主题 |
-| `world` | object | 世界宽高和背景色 |
-| `player` | object | 玩家出生点、速度、颜色 |
-| `collectibles` | array | 收集物列表 |
-| `enemies` | array | 敌人列表 |
-| `exit` | object | 出口配置 |
-| `winCondition` | object | 胜利条件 |
-| `ui` | object | 页面提示文案 |
+| `version` | string | Current protocol version is `1.0`. |
+| `title` | string | Display title. |
+| `gameType` | string | Must be `top_down_collect`. |
+| `world` | object | Must include numeric `width` and `height`. |
+| `player` | object | Must include numeric `x` and `y`. |
+| `items` | array | Collectible objects consumed by the runtime. |
+| `enemies` | array | Enemy objects consumed by the runtime. |
+| `exit` | object | Must include numeric `x` and `y`. |
+| `rules` | object | Runtime rule settings, including target item count. |
+| `ui` | object | HUD text such as objective and controls. |
 
-## 示例 JSON
+## Supported Aliases
+
+Only aliases covered by tests should be retained:
+
+| Alias | Normalized Field |
+| --- | --- |
+| `game_type` | `gameType` |
+| `collectibles` | `items` |
+| `game_config` wrapper | extracted GameConfig |
+| `gameConfig` wrapper | extracted GameConfig |
+| `data` wrapper | extracted GameConfig |
+| `raw_result.game_config` wrapper | extracted GameConfig |
+| `rawResult.gameConfig` wrapper | extracted GameConfig |
+
+`winCondition` is not part of the current runtime contract. Use `rules` instead.
+
+## Example
 
 ```json
 {
   "version": "1.0",
+  "title": "Pixel Dungeon Demo",
   "gameType": "top_down_collect",
-  "title": "像素地牢逃脱",
-  "theme": "玩家在地牢中收集宝石并找到出口。",
   "world": {
     "width": 960,
     "height": 540,
-    "backgroundColor": "#111827"
+    "backgroundColor": "#101827"
+  },
+  "theme": {
+    "palette": {
+      "floor": "#14213d",
+      "wall": "#24324a",
+      "player": "#5eead4",
+      "item": "#facc15",
+      "enemy": "#fb7185",
+      "exit": "#22c55e"
+    }
   },
   "player": {
-    "x": 96,
-    "y": 96,
-    "speed": 220,
-    "color": "#60a5fa"
+    "x": 120,
+    "y": 260,
+    "size": 28,
+    "speed": 210,
+    "color": "#5eead4"
   },
-  "collectibles": [
-    { "id": "gem-1", "x": 260, "y": 140, "label": "宝石" },
-    { "id": "gem-2", "x": 520, "y": 300, "label": "钥匙" },
-    { "id": "gem-3", "x": 760, "y": 180, "label": "能量核心" }
+  "items": [
+    { "id": "gem-1", "x": 260, "y": 150, "size": 18, "label": "Gem" },
+    { "id": "gem-2", "x": 520, "y": 340, "size": 18, "label": "Gem" },
+    { "id": "gem-3", "x": 740, "y": 180, "size": 18, "label": "Gem" }
   ],
   "enemies": [
-    { "id": "enemy-1", "x": 420, "y": 220, "speed": 90, "patrolAxis": "x", "patrolDistance": 180 },
-    { "id": "enemy-2", "x": 700, "y": 380, "speed": 80, "patrolAxis": "y", "patrolDistance": 140 }
+    { "id": "enemy-1", "x": 420, "y": 220, "size": 28, "speed": 90, "range": 150 },
+    { "id": "enemy-2", "x": 700, "y": 380, "size": 28, "speed": 120, "range": 180 }
   ],
   "exit": {
     "x": 860,
-    "y": 450,
-    "lockedUntilCollected": true
+    "y": 270,
+    "width": 54,
+    "height": 72,
+    "label": "EXIT"
   },
-  "winCondition": {
-    "collectAll": true,
-    "reachExit": true
+  "rules": {
+    "targetItems": 3,
+    "winCondition": "collect_all_then_exit",
+    "loseCondition": "touch_enemy"
   },
   "ui": {
-    "objective": "收集全部物品后前往出口",
-    "controlHint": "使用 WASD 或方向键移动"
+    "objective": "Collect every gem, then reach the exit.",
+    "controls": "Move with WASD or arrow keys. Press R to restart."
   }
 }
 ```
 
-## 调试前置条件
+## Rejection Rules
 
-Demo 工作流现在需要 4 个 ACTIVE 模板：
+The validator must reject:
 
-- `GAME_CONCEPT`
-- `CORE_LOOP_DESIGN`
-- `TASK_BREAKDOWN`
-- `GAME_CONFIG_GENERATE`
+- Invalid JSON.
+- Missing required structures such as `world`, `player`, `items`, `enemies`, `exit`, `rules`, or `ui`.
+- Unsupported `gameType`.
+- Non-numeric `world.width`, `world.height`, `player.x`, `player.y`, `exit.x`, or `exit.y`.
+- Non-array `items` or `enemies`.
+- Empty or unrelated objects that only become playable because defaults are applied.
 
-如果缺少任意一个模板，SSE 会返回提示：先配置 ACTIVE prompt template。
+## Verification
 
-`GAME_CONFIG_GENERATE` 的种子 SQL 见：
-
-```text
-backend-java/src/main/resources/db/seed_game_config_prompt_template.sql
+```powershell
+cd frontend-vue
+npm run test:game-config
+npm run build
 ```
-
-## 完成标准
-
-- Python `POST /agent/game-config-generate` 可以返回 `game_config`
-- Java `POST /api/demo/game/stream` 可以推送 4 个 Agent 阶段
-- 三个设计 artifact 和一个 GameConfig artifact 都能保存
-- SSE 最终返回 `demoUrl`
-- 浏览器打开 `/demo/play?artifactUuid=...` 可以运行可玩 Demo

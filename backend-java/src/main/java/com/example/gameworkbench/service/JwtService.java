@@ -21,6 +21,12 @@ public class JwtService {
             @Value("${app.jwt.secret}") String secret,
             @Value("${app.jwt.expire-seconds}") long expireSeconds
     ) {
+        if (!StringUtils.hasText(secret)
+                || secret.contains("REPLACE_WITH")
+                || secret.contains("SET_ME")
+                || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            throw new IllegalStateException("app.jwt.secret must be configured with at least 32 bytes");
+        }
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expireSeconds = expireSeconds;
     }

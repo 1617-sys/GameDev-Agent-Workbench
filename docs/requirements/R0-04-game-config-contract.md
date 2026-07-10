@@ -1,6 +1,6 @@
 # R0-04：GameConfig 契约测试
 
-> 状态：`READY_AFTER_R0-01`
+> 状态：`DONE`
 >
 > 前置任务：`R0-01`
 >
@@ -147,4 +147,3 @@ cd ..
 - 文档示例与测试 fixture 一致。
 - diff 只涉及 GameConfig 契约、测试、必要 npm script 和对应文档。
 - 你能解释“提取、校验、归一化”三步为什么不能混为一谈。
-

@@ -197,7 +197,7 @@ const state = reactive({
   token: localStorage.getItem("gaw.token") || "",
   auth: {
     username: localStorage.getItem("gaw.username") || "vandick",
-    password: "123456"
+    password: ""
   },
   projects: [],
   activeProjectUuid: localStorage.getItem("gaw.activeProjectUuid") || "",

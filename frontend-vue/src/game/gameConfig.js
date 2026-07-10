@@ -84,6 +84,55 @@ export function extractGameConfig(source) {
   return null;
 }
 
+function requiredObject(value) {
+  return value && typeof value === "object" && !Array.isArray(value);
+}
+
+function requiredNumber(value) {
+  return Number.isFinite(Number(value));
+}
+
+function rawContractShape(rawConfig) {
+  const source = extractGameConfig(rawConfig);
+  if (!requiredObject(source)) {
+    return {
+      source: null,
+      errors: ["GameConfig must be a JSON object with required runtime fields"]
+    };
+  }
+
+  const errors = [];
+  const gameType = source.gameType || source.game_type;
+  const items = source.items || source.collectibles;
+
+  if (!source.version) errors.push("missing version");
+  if (!source.title) errors.push("missing title");
+  if (!gameType) errors.push("missing gameType");
+  if (gameType && gameType !== "top_down_collect") errors.push("unsupported gameType");
+  if (!requiredObject(source.world)) errors.push("missing world");
+  if (!requiredObject(source.player)) errors.push("missing player");
+  if (!Array.isArray(items)) errors.push("items must be an array");
+  if (!Array.isArray(source.enemies)) errors.push("enemies must be an array");
+  if (!requiredObject(source.exit)) errors.push("missing exit");
+  if (!requiredObject(source.rules)) errors.push("missing rules");
+  if (!requiredObject(source.ui)) errors.push("missing ui");
+
+  if (requiredObject(source.world) && (!requiredNumber(source.world.width) || !requiredNumber(source.world.height))) {
+    errors.push("world.width / world.height must be numbers");
+  }
+  if (requiredObject(source.player) && (!requiredNumber(source.player.x) || !requiredNumber(source.player.y))) {
+    errors.push("player.x / player.y must be numbers");
+  }
+  if (requiredObject(source.exit) && (!requiredNumber(source.exit.x) || !requiredNumber(source.exit.y))) {
+    errors.push("exit.x / exit.y must be numbers");
+  }
+
+  return {
+    source,
+    errors
+  };
+}
+
 export function extractGameConfigFromArtifacts(artifacts = []) {
   const preferred = artifacts.find((artifact) =>
     ["GAME_CONFIG_GENERATE_RESULT", "GAME_CONFIG", "PHASER_GAME_CONFIG"].includes(artifact.artifactType)
@@ -137,8 +186,17 @@ export function normalizeGameConfig(rawConfig) {
 }
 
 export function validateGameConfig(rawConfig) {
-  const errors = [];
-  const config = normalizeGameConfig(rawConfig);
+  const contract = rawContractShape(rawConfig);
+  if (!contract.source) {
+    return {
+      valid: false,
+      errors: contract.errors,
+      config: null
+    };
+  }
+
+  const errors = [...contract.errors];
+  const config = normalizeGameConfig(contract.source);
 
   if (!config.version) errors.push("缺少 version");
   if (!config.title) errors.push("缺少 title");
