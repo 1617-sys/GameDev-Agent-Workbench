@@ -1,6 +1,6 @@
 # R1-01：接入 Flyway 与 Baseline 迁移
 
-> 状态：`READY_AFTER_R1-00`
+> 状态：`DONE`
 >
 > 前置任务：`R1-00`
 >

@@ -4,6 +4,15 @@ spring:
     username: test_user
     password: test-only-database-password
     driver-class-name: com.mysql.cj.jdbc.Driver
+  flyway:
+    # Unit and MVC tests must not require a locally provisioned MySQL account.
+    # Deployment and dedicated migration checks use the main configuration.
+    enabled: false
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 1
+    validate-on-migrate: true
+    clean-disabled: true
   data:
     redis:
       host: localhost
