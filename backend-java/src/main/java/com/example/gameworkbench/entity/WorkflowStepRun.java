@@ -37,6 +37,8 @@ public class WorkflowStepRun {
 
     private String artifactType;
 
+    private Long agentRunId;
+
     private String status;
 
     private Integer attempt;
@@ -46,6 +48,12 @@ public class WorkflowStepRun {
     private String contextSnapshot;
 
     private String outputSnapshot;
+
+    private String schemaKey;
+
+    private String schemaVersion;
+
+    private String validationSummary;
 
     private String errorMessage;
 
