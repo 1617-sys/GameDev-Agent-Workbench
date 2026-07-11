@@ -49,22 +49,22 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 WorkflowStatusPolicy.requireTransition(WorkflowStepRunStatus.PENDING, WorkflowStepRunStatus.RUNNING,
                         context.dependenciesSatisfied(plan));
                 step.setStatus(WorkflowStepRunStatus.RUNNING.name()); step.setStartedAt(LocalDateTime.now());
-                workflowStepRunMapper.updateById(step); safe(safeListener, "STEP_STARTED", plan.stepKey());
+                requireUpdated(workflowStepRunMapper.updateById(step), "step claim"); safe(safeListener, "STEP_STARTED", plan.stepKey());
                 WorkflowStepExecutor executor = executors.stream().filter(e -> e.supports(plan)).findFirst()
                         .orElseThrow(() -> new IllegalStateException("No executor for step: " + plan.stepKey()));
                 StepExecutionResult result = executor.execute(context, plan);
                 step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setOutputSnapshot(result.output().content());
-                step.setFinishedAt(LocalDateTime.now()); workflowStepRunMapper.updateById(step);
+                step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
                 context.recordCompletedOutput(plan.stepKey(), result.output()); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
             } catch (Exception exception) {
                 step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage("Workflow step failed");
-                step.setFinishedAt(LocalDateTime.now()); workflowStepRunMapper.updateById(step);
-                run.setStatus(WorkflowRunStatus.FAILED.name()); workflowRunMapper.updateById(run);
+                step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step failure");
+                run.setStatus(WorkflowRunStatus.FAILED.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow failure");
                 safe(safeListener, "STEP_FAILED", plan.stepKey()); safe(safeListener, "WORKFLOW_COMPLETED", null);
                 throw exception;
             }
         }
-        run.setStatus(WorkflowRunStatus.SUCCESS.name()); workflowRunMapper.updateById(run);
+        run.setStatus(WorkflowRunStatus.SUCCESS.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow success");
         safe(safeListener, "WORKFLOW_COMPLETED", null);
     }
 
@@ -81,5 +81,6 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 });
     }
     private boolean isTerminal(String status) { return WorkflowRunStatus.SUCCESS.name().equals(status) || WorkflowRunStatus.FAILED.name().equals(status) || WorkflowRunStatus.CANCELED.name().equals(status); }
+    private void requireUpdated(int affectedRows, String operation) { if (affectedRows != 1) throw new IllegalStateException("Workflow state update lost ownership: " + operation); }
     private void safe(WorkflowExecutionListener listener, String type, String stepKey) { try { listener.onEvent(type, stepKey); } catch (Exception ignored) { } }
 }
