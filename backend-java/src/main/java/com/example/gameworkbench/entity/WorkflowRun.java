@@ -42,6 +42,10 @@ public class WorkflowRun {
 
     private Long statusVersion;
 
+    private String idempotencyKey;
+
+    private String requestFingerprint;
+
     private String status;
 
     private String inputContent;
