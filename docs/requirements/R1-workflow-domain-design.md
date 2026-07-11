@@ -438,7 +438,7 @@ GameConfig schema version 关联规则：
 
 ### WorkflowRun 状态
 
-R1 引入的目标状态集：
+R1-02 已实现的领域状态集：
 
 ```text
 PENDING
@@ -447,7 +447,6 @@ RUNNING
 SUCCESS
 FAILED
 TIMEOUT
-CANCEL_REQUESTED
 CANCELED
 ```
 
@@ -462,14 +461,14 @@ R0 兼容状态：
 | From | To | 触发 | 说明 |
 | --- | --- | --- | --- |
 | `PENDING` | `QUEUED` | Outbox/消息准备完成 | R3 使用 |
+| `PENDING` | `RUNNING` | 旧同步 Service 直接执行 | R0 兼容路径 |
 | `PENDING` | `CANCELED` | 执行前取消 | 未开始可取消 |
 | `QUEUED` | `RUNNING` | Worker 抢占成功 | 条件更新校验旧状态 |
 | `QUEUED` | `CANCELED` | 执行前取消 | 不再投递执行 |
 | `RUNNING` | `SUCCESS` | 所有必需 Step 成功 | 终态 |
 | `RUNNING` | `FAILED` | 不可重试错误或重试耗尽 | 终态或人工重试入口 |
 | `RUNNING` | `TIMEOUT` | Workflow 超时 | 可按策略重试 |
-| `RUNNING` | `CANCEL_REQUESTED` | 用户请求取消 | 协作式取消 |
-| `CANCEL_REQUESTED` | `CANCELED` | 当前步骤停止或安全点到达 | 终态 |
+| `RUNNING` | `CANCELED` | 取消完成 | 终态 |
 | `FAILED` | `QUEUED` | 人工重试 | attempt + 1 |
 | `TIMEOUT` | `QUEUED` | 策略允许重试 | attempt + 1 |
 
@@ -498,12 +497,10 @@ WHERE workflow_run_uuid = ?
 
 ```text
 PENDING
-BLOCKED
 RUNNING
 SUCCESS
 FAILED
 TIMEOUT
-CANCEL_REQUESTED
 CANCELED
 SKIPPED
 ```
@@ -512,14 +509,11 @@ SKIPPED
 
 | From | To | 触发 |
 | --- | --- | --- |
-| `PENDING` | `BLOCKED` | 依赖未完成 |
-| `BLOCKED` | `PENDING` | 依赖全部成功 |
-| `PENDING` | `RUNNING` | Runner 抢占步骤 |
+| `PENDING` | `RUNNING` | Runner 抢占步骤，且全部依赖为 `SUCCESS` |
 | `RUNNING` | `SUCCESS` | Agent/评测成功 |
 | `RUNNING` | `FAILED` | 不可重试错误 |
 | `RUNNING` | `TIMEOUT` | 步骤超时 |
-| `RUNNING` | `CANCEL_REQUESTED` | Workflow 请求取消 |
-| `CANCEL_REQUESTED` | `CANCELED` | 停止完成 |
+| `RUNNING` | `CANCELED` | 停止完成 |
 | `PENDING` | `SKIPPED` | 可选步骤因条件不满足跳过 |
 | `FAILED` | `PENDING` | 新 attempt 重试 |
 | `TIMEOUT` | `PENDING` | 新 attempt 重试 |
@@ -659,4 +653,3 @@ cd ..
 - R1 不是“先改执行器”，而是先让运行事实可被数据库表达。
 - 只有先冻结 definition、step、prompt、snapshot 和状态转换，R2 Runner 才能做到行为可验证而不是大重写。
 - R1 不接 MQ、不改 SSE、不做 RAG，是为了把数据一致性、迁移和兼容风险隔离在最小阶段内。
-
