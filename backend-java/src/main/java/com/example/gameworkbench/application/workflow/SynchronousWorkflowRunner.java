@@ -57,7 +57,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                         .orElseThrow(() -> new IllegalStateException("No executor for step: " + plan.stepKey()));
                 StepExecutionResult result = executor.execute(context, plan);
                 StepOutput output = artifactWriter.write(context, plan, step, result);
-                step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setOutputSnapshot(output.content());
+                step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setAgentRunId(result.agentRunId()); step.setOutputSnapshot(output.content());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
                 context.recordCompletedOutput(plan.stepKey(), output); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
             } catch (Exception exception) {

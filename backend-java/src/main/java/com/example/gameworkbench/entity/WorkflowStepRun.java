@@ -37,6 +37,8 @@ public class WorkflowStepRun {
 
     private String artifactType;
 
+    private Long agentRunId;
+
     private String status;
 
     private Integer attempt;
