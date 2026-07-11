@@ -23,6 +23,7 @@ import com.example.gameworkbench.entity.WorkflowDefinitionVersion;
 import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.entity.PromptVersion;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
+import com.example.gameworkbench.mapper.AgentRunMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
@@ -30,6 +31,8 @@ import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
 import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.service.WorkflowService;
+import com.example.gameworkbench.application.workflow.WorkflowRunner;
+import com.example.gameworkbench.application.workflow.WorkflowExecutionListener;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
 
@@ -55,6 +58,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final WorkflowDefinitionVersionService workflowDefinitionVersionService;
     private final PromptVersionService promptVersionService;
     private final ObjectMapper objectMapper;
+    private final WorkflowRunner workflowRunner;
+    private final AgentRunMapper agentRunMapper;
 
     @Override
     public WorkflowRunVO run(Long userId, WorkflowRunRequest request) {
@@ -124,44 +129,26 @@ public class WorkflowServiceImpl implements WorkflowService {
          * 按依赖顺序串联执行三个Agent阶段，后一步以前一步的输出作为上下文输入。
          */
         try {
-            WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(
-                    workflowRun, definitionVersion, userId, request);
-            WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
-                    runCoreLoopDesignStep(workflowRun, definitionVersion, userId, request, gameConceptStep);
-            WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
-                    runTaskBreakdownStep(
-                            workflowRun, definitionVersion, userId, request, gameConceptStep, coreLoopDesignStep);
-    
-            List<WorkflowRunVO.WorkflowStepVO> steps =
-                    List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep);
-    
-            markWorkflowSuccess(
-                    workflowRun,
-                    startTime,
-                    buildSummary(gameConceptStep, coreLoopDesignStep, taskBreakdownStep)
-            );
-    
-            log.info("[Workflow] run succeeded userId={} projectId={} workflowRunUuid={} timeTakenMs={}",
-                    userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), workflowRun.getTimeTakenMs());
-    
+            workflowRunner.run(workflowRun.getWorkflowRunUuid(), gameProject.getProjectUuid(), WorkflowExecutionListener.noop());
+            List<WorkflowRunVO.WorkflowStepVO> steps = workflowStepRunMapper.selectByWorkflowRunUuid(workflowRun.getWorkflowRunUuid())
+                    .stream().map(this::toStepVo).toList();
             return toVO(workflowRun, gameProject.getProjectUuid(), steps);
         } catch (BusinessException exception) {
-            /*
-             * 业务异常：标记工作流失败，保留原始异常信息后继续向上传播。
-             */
             markWorkflowFailed(workflowRun, startTime, exception.getMessage());
-            log.warn("[Workflow] run failed userId={} projectId={} workflowRunUuid={} message={}",
-                    userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception.getMessage());
             throw exception;
         } catch (Exception exception) {
-            /*
-             * 未知异常：标记工作流失败，包装为BusinessException(SYSTEM_ERROR)再抛出，避免暴露内部细节。
-             */
             markWorkflowFailed(workflowRun, startTime, ErrorCode.SYSTEM_ERROR.getMessage());
-            log.error("[Workflow] run exception userId={} projectId={} workflowRunUuid={} exceptionType={}",
-                    userId, gameProject.getId(), workflowRun.getWorkflowRunUuid(), exception.getClass().getName());
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
+    }
+
+    private WorkflowRunVO.WorkflowStepVO toStepVo(WorkflowStepRun stepRun) {
+        AgentArtifact artifact = agentArtifactMapper.selectLatestByStepRunId(stepRun.getId());
+        com.example.gameworkbench.entity.AgentRun agentRun = stepRun.getAgentRunId() == null ? null : agentRunMapper.selectById(stepRun.getAgentRunId());
+        return WorkflowRunVO.WorkflowStepVO.builder().stepOrder(stepRun.getStepOrder()).agentType(stepRun.getAgentType())
+                .artifactType(stepRun.getArtifactType()).content(stepRun.getOutputSnapshot())
+                .agentRunUuid(agentRun == null ? null : agentRun.getRunUuid())
+                .artifactUuid(artifact == null ? null : artifact.getArtifactUuid()).build();
     }
 
 

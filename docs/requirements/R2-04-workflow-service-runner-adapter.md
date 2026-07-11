@@ -1,6 +1,6 @@
 # R2-04: GAME_DESIGN 旧入口迁移为 WorkflowRunner 适配器
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R2-03`
 >
