@@ -13,6 +13,7 @@ import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +25,7 @@ public class AsyncWorkflowSubmitCommandService {
     private final WorkflowRunMapper workflowRunMapper;
     private final WorkflowStepRunMapper workflowStepRunMapper;
     private final OutboxEventMapper outboxEventMapper;
+    private final WorkflowRunEventRecorder workflowRunEventRecorder;
 
     @Transactional
     public WorkflowRun create(WorkflowRun workflowRun, List<WorkflowStepRun> stepRuns, String eventPayload, String traceId) {
@@ -33,6 +35,8 @@ public class AsyncWorkflowSubmitCommandService {
             stepRun.setWorkflowRunId(workflowRun.getId());
             workflowStepRunMapper.insert(stepRun);
         }
+        workflowRunEventRecorder.record(workflowRun.getWorkflowRunUuid(), "run.created", "run.created", null,
+                workflowRun.getStatus(), workflowRun.getAttempt(), null, traceId);
 
         LocalDateTime now = LocalDateTime.now();
         outboxEventMapper.insert(OutboxEvent.builder()

@@ -16,6 +16,7 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.service.RedisService;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.rabbitmq.client.Channel;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,12 +38,13 @@ class WorkflowMessageConsumerTest {
     @Mock private Channel channel;
     @Mock private WorkflowErrorClassifier classifier;
     @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private WorkflowRunEventRecorder events;
     private WorkflowMessageConsumer consumer;
 
     @BeforeEach
     void setUp() {
         consumer = new WorkflowMessageConsumer(runs, projects, redis, runner, new WorkflowConsumerProperties(900),
-                classifier, new WorkflowRetryProperties(3, 30000, 300000, 1800000), rabbitTemplate);
+                classifier, new WorkflowRetryProperties(3, 30000, 300000, 1800000), rabbitTemplate, events);
     }
 
     @Test

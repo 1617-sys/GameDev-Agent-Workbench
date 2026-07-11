@@ -21,6 +21,7 @@ public class WorkflowRunDetailVO {
     private Long definitionVersionId;
     private String schemaVersion;
     private Long statusVersion;
+    private Long lastSequence;
     private Long timeTakenMs;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

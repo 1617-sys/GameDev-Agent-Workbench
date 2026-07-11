@@ -12,6 +12,7 @@ import com.example.gameworkbench.config.RabbitMqInfrastructureProperties;
 import com.example.gameworkbench.entity.OutboxEvent;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.example.gameworkbench.messaging.WorkflowRunMessage;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,13 +32,14 @@ class OutboxPublisherTest {
     @Mock private OutboxEventMapper outboxEvents;
     @Mock private WorkflowRunMapper workflowRuns;
     @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private WorkflowRunEventRecorder events;
     private OutboxPublisher publisher;
 
     @BeforeEach
     void setUp() {
         publisher = new OutboxPublisher(outboxEvents, workflowRuns, rabbitTemplate,
                 new RabbitMqInfrastructureProperties("workflow.events", "workflow.run.execute", "workflow.run.requested"),
-                new OutboxPublisherProperties(20, 1000, 30000, 5000));
+                new OutboxPublisherProperties(20, 1000, 30000, 5000), events);
     }
 
     @Test

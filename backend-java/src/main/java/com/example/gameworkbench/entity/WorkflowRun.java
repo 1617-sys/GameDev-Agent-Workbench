@@ -48,6 +48,8 @@ public class WorkflowRun {
 
     private String traceId;
 
+    private Long eventSequence;
+
     private LocalDateTime heartbeatAt;
 
     private LocalDateTime lastActivityAt;

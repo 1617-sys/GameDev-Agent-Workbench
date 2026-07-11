@@ -3,6 +3,7 @@ package com.example.gameworkbench.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
 import com.example.gameworkbench.entity.OutboxEvent;
@@ -11,6 +12,7 @@ import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,7 +29,7 @@ class OutboxEventCommandServiceTest {
 
     @Test
     void createsInitialPendingOutboxOnlyAfterRunAndStepPlanArePrepared() {
-        AsyncWorkflowSubmitCommandService service = new AsyncWorkflowSubmitCommandService(runs, steps, outboxEvents);
+        AsyncWorkflowSubmitCommandService service = new AsyncWorkflowSubmitCommandService(runs, steps, outboxEvents, mock(WorkflowRunEventRecorder.class));
         WorkflowRun run = WorkflowRun.builder().workflowRunUuid("run").build();
         WorkflowStepRun step = WorkflowStepRun.builder().workflowRunUuid("run").stepRunUuid("step").build();
         doAnswer(invocation -> {

@@ -7,6 +7,7 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRecoveryAuditEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.example.gameworkbench.messaging.WorkflowRunMessage;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +32,7 @@ public class WorkflowRecoveryService {
     private final WorkflowRecoveryAuditEventMapper auditEvents;
     private final WorkflowRecoveryProperties properties;
     private final ObjectMapper objectMapper;
+    private final WorkflowRunEventRecorder workflowRunEventRecorder;
 
     @Scheduled(fixedDelayString = "${app.workflow-recovery.scan-delay-ms:30000}")
     public void scanScheduled() {
@@ -65,6 +67,8 @@ public class WorkflowRecoveryService {
             auditEvents.insert(WorkflowRecoveryAuditEvent.builder().workflowRunUuid(run.getWorkflowRunUuid())
                     .previousStatus(run.getStatus()).newStatus(nextStatus).reason(reason + "_MAX_ATTEMPTS")
                     .recoveryAttempt(currentAttempts + 1).traceId(traceId).createdAt(now).build());
+            workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "run.recovered",
+                    "recovery." + currentAttempts + ".FAILED", null, nextStatus, run.getAttempt(), null, traceId);
             return;
         }
         String eventId = UUID.randomUUID().toString();
@@ -78,6 +82,8 @@ public class WorkflowRecoveryService {
         auditEvents.insert(WorkflowRecoveryAuditEvent.builder().workflowRunUuid(run.getWorkflowRunUuid())
                 .previousStatus(run.getStatus()).newStatus(nextStatus).reason(reason).recoveryAttempt(currentAttempts + 1)
                 .eventId(eventId).traceId(traceId).createdAt(now).build());
+        workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "run.recovered",
+                "recovery." + currentAttempts + "." + nextStatus, null, nextStatus, run.getAttempt(), null, traceId);
         log.info("[WorkflowRecovery] recovered workflowRunUuid={} previousStatus={} newStatus={} recoveryAttempt={} eventId={} traceId={}",
                 run.getWorkflowRunUuid(), run.getStatus(), nextStatus, currentAttempts + 1, eventId, traceId);
     }

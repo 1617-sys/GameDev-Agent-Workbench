@@ -74,6 +74,7 @@ public class WorkflowRunQueryServiceImpl implements WorkflowRunQueryService {
                 .definitionVersionId(run.getWorkflowDefinitionVersionId())
                 .schemaVersion(run.getSchemaVersion())
                 .statusVersion(run.getStatusVersion())
+                .lastSequence(run.getEventSequence())
                 .timeTakenMs(run.getTimeTakenMs())
                 .createdAt(run.getCreatedAt())
                 .updatedAt(run.getUpdatedAt())

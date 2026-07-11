@@ -13,6 +13,7 @@ import com.example.gameworkbench.entity.WorkflowRecoveryAuditEvent;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRecoveryAuditEventMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +27,7 @@ class WorkflowRecoveryServiceTest {
     @Mock private WorkflowRunMapper runs;
     @Mock private OutboxEventMapper outbox;
     @Mock private WorkflowRecoveryAuditEventMapper audits;
+    @Mock private WorkflowRunEventRecorder events;
     private final WorkflowRecoveryProperties properties = new WorkflowRecoveryProperties(true, 10, 1_000, 1_000, 1_000, 3);
 
     @Test
@@ -68,7 +70,7 @@ class WorkflowRecoveryServiceTest {
     }
 
     private WorkflowRecoveryService service() {
-        return new WorkflowRecoveryService(runs, outbox, audits, properties, new ObjectMapper().findAndRegisterModules());
+        return new WorkflowRecoveryService(runs, outbox, audits, properties, new ObjectMapper().findAndRegisterModules(), events);
     }
 
     private WorkflowRun run(String status, int recoveryAttempt) {

@@ -15,6 +15,7 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
+import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 
 @Service
 public class SynchronousWorkflowRunner implements WorkflowRunner {
@@ -24,22 +25,30 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
     private final List<WorkflowStepExecutor> executors;
     private final ArtifactWriter artifactWriter;
     private final List<WorkflowEvaluationHook> evaluationHooks;
+    private final WorkflowRunEventRecorder workflowRunEventRecorder;
 
     public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
             WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter) {
-        this(workflowRunMapper, workflowStepRunMapper, planParser, executors, artifactWriter, List.of());
+        this(workflowRunMapper, workflowStepRunMapper, planParser, executors, artifactWriter, List.of(), noopRecorder());
+    }
+
+    public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
+            WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter,
+            List<WorkflowEvaluationHook> evaluationHooks) {
+        this(workflowRunMapper, workflowStepRunMapper, planParser, executors, artifactWriter, evaluationHooks, noopRecorder());
     }
 
     @Autowired
     public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
             WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter,
-            List<WorkflowEvaluationHook> evaluationHooks) {
+            List<WorkflowEvaluationHook> evaluationHooks, WorkflowRunEventRecorder workflowRunEventRecorder) {
         this.workflowRunMapper = workflowRunMapper;
         this.workflowStepRunMapper = workflowStepRunMapper;
         this.planParser = planParser;
         this.executors = executors;
         this.artifactWriter = artifactWriter;
         this.evaluationHooks = evaluationHooks;
+        this.workflowRunEventRecorder = workflowRunEventRecorder;
     }
 
     @Override
@@ -64,6 +73,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                         context.dependenciesSatisfied(plan));
                 step.setStatus(WorkflowStepRunStatus.RUNNING.name()); step.setStartedAt(LocalDateTime.now());
                 requireUpdated(workflowStepRunMapper.updateById(step), "step claim"); safe(safeListener, "STEP_STARTED", plan.stepKey());
+                recordStep(run, step, "RUNNING");
                 WorkflowStepExecutor executor = executors.stream().filter(e -> e.supports(plan)).findFirst()
                         .orElseThrow(() -> new IllegalStateException("No executor for step: " + plan.stepKey()));
                 StepExecutionResult result = executor.execute(context, plan);
@@ -74,6 +84,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setAgentRunId(result.agentRunId()); step.setOutputSnapshot(output.content());
                 step.setSchemaKey(output.schemaKey()); step.setSchemaVersion(output.schemaVersion()); step.setValidationSummary(result.evaluation().summary());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
+                recordStep(run, step, "SUCCESS");
                 context.recordCompletedOutput(plan.stepKey(), output); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
                 heartbeat(workflowRunUuid);
             } catch (Exception exception) {
@@ -81,11 +92,14 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 if (exception instanceof WorkflowEvaluationException) step.setValidationSummary(exception.getMessage());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step failure");
                 run.setStatus(WorkflowRunStatus.FAILED.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow failure");
+                recordStep(run, step, "FAILED");
+                recordRun(run, "run.terminal", "FAILED");
                 safe(safeListener, "STEP_FAILED", plan.stepKey()); safe(safeListener, "WORKFLOW_COMPLETED", null);
                 throw exception;
             }
         }
         run.setStatus(WorkflowRunStatus.SUCCESS.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow success");
+        recordRun(run, "run.terminal", "SUCCESS");
         safe(safeListener, "WORKFLOW_COMPLETED", null);
     }
 
@@ -100,9 +114,21 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                             .stepOrder(plan.stepOrder()).agentType(plan.agentType().name())
                             .artifactType(plan.artifactType().name()).status(WorkflowStepRunStatus.PENDING.name())
                             .attempt(1).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).build();
-                    workflowStepRunMapper.insert(step); return step;
+                    workflowStepRunMapper.insert(step);
+                    recordStep(run, step, "PENDING");
+                    return step;
                 });
     }
+    private void recordStep(WorkflowRun run, WorkflowStepRun step, String status) {
+        workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "step.status-changed",
+                "step." + step.getStepKey() + "." + step.getAttempt() + "." + status, step.getStepKey(), status,
+                step.getAttempt(), null, run.getTraceId());
+    }
+    private void recordRun(WorkflowRun run, String eventType, String status) {
+        workflowRunEventRecorder.record(run.getWorkflowRunUuid(), eventType,
+                "run." + status + "." + run.getAttempt(), null, status, run.getAttempt(), null, run.getTraceId());
+    }
+    private static WorkflowRunEventRecorder noopRecorder() { return (a, b, c, d, e, f, g, h) -> null; }
     private boolean isTerminal(String status) { return WorkflowRunStatus.SUCCESS.name().equals(status) || WorkflowRunStatus.FAILED.name().equals(status) || WorkflowRunStatus.CANCELED.name().equals(status); }
     private void requireUpdated(int affectedRows, String operation) { if (affectedRows != 1) throw new IllegalStateException("Workflow state update lost ownership: " + operation); }
     private void safe(WorkflowExecutionListener listener, String type, String stepKey) { try { listener.onEvent(type, stepKey); } catch (Exception ignored) { } }
