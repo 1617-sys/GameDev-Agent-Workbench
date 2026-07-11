@@ -92,6 +92,12 @@ public class WorkflowMessageConsumer {
             }
             workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "run.status-changed",
                     "consumer." + message.messageId() + ".RUNNING", null, "RUNNING", message.attempt(), null, message.traceId());
+            WorkflowRun beforeRunner = workflowRunMapper.selectOne(new LambdaQueryWrapper<WorkflowRun>()
+                    .eq(WorkflowRun::getWorkflowRunUuid, run.getWorkflowRunUuid()));
+            if (beforeRunner == null || "CANCELED".equals(beforeRunner.getStatus())) {
+                ack(channel, deliveryTag);
+                return;
+            }
             GameProject project = gameProjectMapper.selectById(run.getProjectId());
             if (project == null) {
                 routeFailure(run, message, new IllegalArgumentException("Workflow project is unavailable"), channel, deliveryTag);

@@ -50,6 +50,8 @@ public class WorkflowRun {
 
     private Long eventSequence;
 
+    private String commandKey;
+
     private LocalDateTime heartbeatAt;
 
     private LocalDateTime lastActivityAt;
