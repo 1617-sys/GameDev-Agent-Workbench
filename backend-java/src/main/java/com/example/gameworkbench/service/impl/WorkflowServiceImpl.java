@@ -130,9 +130,15 @@ public class WorkflowServiceImpl implements WorkflowService {
          */
         try {
             workflowRunner.run(workflowRun.getWorkflowRunUuid(), gameProject.getProjectUuid(), WorkflowExecutionListener.noop());
+            WorkflowRun persistedRun = workflowRunMapper.selectOne(new LambdaQueryWrapper<WorkflowRun>()
+                    .eq(WorkflowRun::getWorkflowRunUuid, workflowRun.getWorkflowRunUuid())
+                    .eq(WorkflowRun::getUserId, userId));
+            if (persistedRun == null) {
+                throw new IllegalStateException("Workflow run disappeared after execution");
+            }
             List<WorkflowRunVO.WorkflowStepVO> steps = workflowStepRunMapper.selectByWorkflowRunUuid(workflowRun.getWorkflowRunUuid())
                     .stream().map(this::toStepVo).toList();
-            return toVO(workflowRun, gameProject.getProjectUuid(), steps);
+            return toVO(persistedRun, gameProject.getProjectUuid(), steps);
         } catch (BusinessException exception) {
             markWorkflowFailed(workflowRun, startTime, exception.getMessage());
             throw exception;
@@ -178,202 +184,12 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .build();
     }
 
-    private void markWorkflowSuccess(WorkflowRun workflowRun, long startTime, String summary) {
-        workflowRun.setSummary(summary);
-        workflowRun.setStatus(AgentRunStatus.SUCCESS.name());
-        workflowRun.setErrorMessage(null);
-        workflowRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
-        workflowRun.setUpdatedAt(LocalDateTime.now());
-        workflowRunMapper.updateById(workflowRun);
-    }
-
     private void markWorkflowFailed(WorkflowRun workflowRun, long startTime, String errorMessage) {
         workflowRun.setStatus(AgentRunStatus.FAILED.name());
         workflowRun.setErrorMessage(errorMessage);
         workflowRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
         workflowRun.setUpdatedAt(LocalDateTime.now());
         workflowRunMapper.updateById(workflowRun);
-    }
-
-    private WorkflowRunVO.WorkflowStepVO runGameConceptStep(
-            WorkflowRun workflowRun,
-            WorkflowDefinitionVersion definitionVersion,
-            Long userId,
-            WorkflowRunRequest request
-    ) {
-        return runWorkflowStep(
-                workflowRun,
-                definitionVersion,
-                1,
-                "game_concept",
-                userId,
-                request,
-                AgentType.GAME_CONCEPT,
-                request.getIdea(),
-                request.getContext()
-        );
-    }
-
-    private WorkflowRunVO.WorkflowStepVO runCoreLoopDesignStep(
-            WorkflowRun workflowRun,
-            WorkflowDefinitionVersion definitionVersion,
-            Long userId,
-            WorkflowRunRequest request,
-            WorkflowRunVO.WorkflowStepVO gameConceptStep
-    ) {
-        return runWorkflowStep(
-                workflowRun,
-                definitionVersion,
-                2,
-                "core_loop_design",
-                userId,
-                request,
-                AgentType.CORE_LOOP_DESIGN,
-                request.getIdea(),
-                buildStepContext(request.getContext(), gameConceptStep)
-        );
-    }
-
-    private WorkflowRunVO.WorkflowStepVO runTaskBreakdownStep(
-            WorkflowRun workflowRun,
-            WorkflowDefinitionVersion definitionVersion,
-            Long userId,
-            WorkflowRunRequest request,
-            WorkflowRunVO.WorkflowStepVO gameConceptStep,
-            WorkflowRunVO.WorkflowStepVO coreLoopStep
-    ) {
-        return runWorkflowStep(
-                workflowRun,
-                definitionVersion,
-                3,
-                "task_breakdown",
-                userId,
-                request,
-                AgentType.TASK_BREAKDOWN,
-                request.getIdea(),
-                buildStepContext(request.getContext(), gameConceptStep, coreLoopStep)
-        );
-    }
-
-    private WorkflowRunVO.WorkflowStepVO runWorkflowStep(
-            WorkflowRun workflowRun,
-            WorkflowDefinitionVersion definitionVersion,
-            Integer stepOrder,
-            String stepKey,
-            Long userId,
-            WorkflowRunRequest workflowRequest,
-            AgentType agentType,
-            String content,
-            String context
-    ) {
-        WorkflowStepRun stepRun = createRunningStepRun(
-                workflowRun, definitionVersion, stepOrder, stepKey, agentType, content, context);
-        workflowStepRunMapper.insert(stepRun);
-
-        try {
-            AgentRunVO agentRun = agentRunService.run(userId, AgentRunRequest.builder()
-                    .projectUuid(workflowRequest.getProjectUuid())
-                    .agentType(agentType)
-                    .title(workflowRequest.getTitle())
-                    .content(content)
-                    .context(context)
-                    .build());
-
-            AgentArtifact artifact = createArtifact(agentRun, stepRun, workflowRequest.getTitle(), agentType);
-            markStepRunSuccess(stepRun, agentRun.getOutputContent());
-
-            log.info("[Workflow] step completed stepOrder={} stepRunUuid={} agentType={} agentRunUuid={} artifactUuid={}",
-                    stepOrder, stepRun.getStepRunUuid(), agentType, agentRun.getRunUuid(), artifact.getArtifactUuid());
-
-            return WorkflowRunVO.WorkflowStepVO.builder()
-                    .stepOrder(stepOrder)
-                    .agentType(agentType.name())
-                    .artifactType(agentType.getArtifactType().name())
-                    .title(workflowRequest.getTitle())
-                    .content(agentRun.getOutputContent())
-                    .agentRunUuid(agentRun.getRunUuid())
-                    .artifactUuid(artifact.getArtifactUuid())
-                    .build();
-        } catch (BusinessException exception) {
-            markStepRunFailed(stepRun, exception.getMessage());
-            throw exception;
-        } catch (Exception exception) {
-            markStepRunFailed(stepRun, ErrorCode.SYSTEM_ERROR.getMessage());
-            throw exception;
-        }
-    }
-
-    private WorkflowStepRun createRunningStepRun(
-            WorkflowRun workflowRun,
-            WorkflowDefinitionVersion definitionVersion,
-            Integer stepOrder,
-            String stepKey,
-            AgentType agentType,
-            String inputSnapshot,
-            String contextSnapshot
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-        return WorkflowStepRun.builder()
-                .stepRunUuid(UUID.randomUUID().toString())
-                .workflowRunId(workflowRun.getId())
-                .workflowRunUuid(workflowRun.getWorkflowRunUuid())
-                .definitionVersionId(definitionVersion == null ? null : definitionVersion.getId())
-                .stepKey(stepKey)
-                .stepOrder(stepOrder)
-                .agentType(agentType.name())
-                .artifactType(agentType.getArtifactType().name())
-                .status(WorkflowStepRunStatus.RUNNING.name())
-                .attempt(1)
-                .inputSnapshot(inputSnapshot)
-                .contextSnapshot(contextSnapshot)
-                .startedAt(now)
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
-    }
-
-    private void markStepRunSuccess(WorkflowStepRun stepRun, String outputSnapshot) {
-        LocalDateTime now = LocalDateTime.now();
-        stepRun.setStatus(WorkflowStepRunStatus.SUCCESS.name());
-        stepRun.setOutputSnapshot(outputSnapshot);
-        stepRun.setErrorMessage(null);
-        stepRun.setFinishedAt(now);
-        stepRun.setTimeTakenMs(java.time.Duration.between(stepRun.getStartedAt(), now).toMillis());
-        stepRun.setUpdatedAt(now);
-        workflowStepRunMapper.updateById(stepRun);
-    }
-
-    private void markStepRunFailed(WorkflowStepRun stepRun, String errorMessage) {
-        LocalDateTime now = LocalDateTime.now();
-        stepRun.setStatus(WorkflowStepRunStatus.FAILED.name());
-        stepRun.setErrorMessage(errorMessage);
-        stepRun.setFinishedAt(now);
-        stepRun.setTimeTakenMs(java.time.Duration.between(stepRun.getStartedAt(), now).toMillis());
-        stepRun.setUpdatedAt(now);
-        workflowStepRunMapper.updateById(stepRun);
-    }
-
-    private AgentArtifact createArtifact(
-            AgentRunVO agentRun,
-            WorkflowStepRun stepRun,
-            String title,
-            AgentType agentType
-    ) {
-        LocalDateTime now = LocalDateTime.now();
-
-        AgentArtifact agentArtifact = AgentArtifact.builder()
-                .artifactUuid(UUID.randomUUID().toString())
-                .projectId(agentRun.getProjectId())
-                .agentRunId(agentRun.getId())
-                .stepRunId(stepRun.getId())
-                .artifactType(agentType.getArtifactType().name())
-                .title(title)
-                .content(agentRun.getOutputContent())
-                .createdAt(now)
-                .updatedAt(now)
-                .build();
-        agentArtifactMapper.insert(agentArtifact);
-        return agentArtifact;
     }
 
     private WorkflowRunSnapshot freezeWorkflowRunSnapshot(WorkflowDefinitionVersion definitionVersion) {
@@ -419,25 +235,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         versionSnapshot.put("outputSchemaKey", promptVersion.getOutputSchemaKey());
         versionSnapshot.put("outputSchemaVersion", promptVersion.getOutputSchemaVersion());
         promptVersions.put(agentType.name(), versionSnapshot);
-    }
-
-    private String buildStepContext(String baseContext, WorkflowRunVO.WorkflowStepVO... previousSteps) {
-        StringBuilder builder = new StringBuilder();
-        if (baseContext != null && !baseContext.isBlank()) {
-            builder.append(baseContext).append("\n\n");
-        }
-        for (WorkflowRunVO.WorkflowStepVO step : previousSteps) {
-            builder.append("Previous step ")
-                    .append(step.getAgentType())
-                    .append(" output:\n")
-                    .append(step.getContent())
-                    .append("\n\n");
-        }
-        return builder.toString();
-    }
-
-    private String buildSummary(WorkflowRunVO.WorkflowStepVO... steps) {
-        return "Game design workflow completed. Generated " + steps.length + " artifacts.";
     }
 
     private WorkflowRunVO toVO(

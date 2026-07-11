@@ -40,10 +40,11 @@ class WorkflowServiceImplTest {
     @Test void shouldDelegateLegacyRunToRunner() {
         GameProject project = project(); when(projects.selectOne(any())).thenReturn(project); when(definitions.findActiveDefinition("GAME_DESIGN")).thenReturn(definition()); stubPrompts();
         doAnswer(i -> { WorkflowRun run = i.getArgument(0); run.setId(1L); return 1; }).when(runs).insert(any(WorkflowRun.class));
+        when(runs.selectOne(any())).thenReturn(WorkflowRun.builder().workflowRunUuid("persisted").status("SUCCESS").build());
         when(steps.selectByWorkflowRunUuid(any())).thenReturn(List.of());
         WorkflowRunVO result = service.run(7L, request());
         verify(runner).run(any(), eq("project"), any()); verifyNoInteractions(agentRuns);
-        assertThat(result.getStatus()).isEqualTo("RUNNING");
+        assertThat(result.getStatus()).isEqualTo("SUCCESS");
     }
 
     @Test void shouldMapRunnerFailureToLegacySystemError() {

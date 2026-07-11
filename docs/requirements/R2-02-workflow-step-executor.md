@@ -1,6 +1,6 @@
 # R2-02: WorkflowStepExecutor、ArtifactWriter 与 Evaluation Hook
 
-> 状态：`PARTIAL_CORE_DONE`
+> 状态：`DONE`
 >
 > 前置任务：`R2-00`、`R2-01`
 >
