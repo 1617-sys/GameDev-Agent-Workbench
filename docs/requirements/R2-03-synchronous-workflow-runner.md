@@ -1,6 +1,6 @@
 # R2-03: 同步 WorkflowRunner 与持久化状态推进
 
-> 状态：`TODO`
+> 状态：`DONE_CORE_TESTED`
 >
 > 前置任务：`R2-01`、`R2-02`
 >
