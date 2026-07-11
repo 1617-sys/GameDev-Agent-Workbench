@@ -21,7 +21,6 @@ public final class WorkflowStatusPolicy {
             transitions(WorkflowRunStatus.class, Map.of(
                     WorkflowRunStatus.PENDING, EnumSet.of(
                             WorkflowRunStatus.QUEUED,
-                            WorkflowRunStatus.RUNNING,
                             WorkflowRunStatus.CANCELED),
                     WorkflowRunStatus.QUEUED, EnumSet.of(
                             WorkflowRunStatus.RUNNING,
@@ -29,7 +28,11 @@ public final class WorkflowStatusPolicy {
                     WorkflowRunStatus.RUNNING, EnumSet.of(
                             WorkflowRunStatus.SUCCESS,
                             WorkflowRunStatus.FAILED,
+                            WorkflowRunStatus.RETRY_WAIT,
                             WorkflowRunStatus.TIMEOUT,
+                            WorkflowRunStatus.CANCELED),
+                    WorkflowRunStatus.RETRY_WAIT, EnumSet.of(
+                            WorkflowRunStatus.QUEUED,
                             WorkflowRunStatus.CANCELED),
                     WorkflowRunStatus.FAILED, EnumSet.of(WorkflowRunStatus.QUEUED),
                     WorkflowRunStatus.TIMEOUT, EnumSet.of(WorkflowRunStatus.QUEUED)

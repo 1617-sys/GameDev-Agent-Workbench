@@ -13,10 +13,12 @@ class WorkflowStatusPolicyTest {
     @Test
     void shouldAllowLegalWorkflowRunTransitions() {
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.PENDING, WorkflowRunStatus.QUEUED)).isTrue();
-        assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.PENDING, WorkflowRunStatus.RUNNING)).isTrue();
+        assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.PENDING, WorkflowRunStatus.RUNNING)).isFalse();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.QUEUED, WorkflowRunStatus.RUNNING)).isTrue();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RUNNING, WorkflowRunStatus.SUCCESS)).isTrue();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RUNNING, WorkflowRunStatus.FAILED)).isTrue();
+        assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RUNNING, WorkflowRunStatus.RETRY_WAIT)).isTrue();
+        assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RETRY_WAIT, WorkflowRunStatus.QUEUED)).isTrue();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RUNNING, WorkflowRunStatus.TIMEOUT)).isTrue();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.RUNNING, WorkflowRunStatus.CANCELED)).isTrue();
         assertThat(WorkflowStatusPolicy.canTransition(WorkflowRunStatus.FAILED, WorkflowRunStatus.QUEUED)).isTrue();

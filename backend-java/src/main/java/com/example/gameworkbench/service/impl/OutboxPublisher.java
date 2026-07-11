@@ -17,6 +17,7 @@ import com.example.gameworkbench.config.OutboxPublisherProperties;
 import com.example.gameworkbench.config.RabbitMqInfrastructureProperties;
 import com.example.gameworkbench.entity.OutboxEvent;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
+import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.messaging.WorkflowRunMessage;
 
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 public class OutboxPublisher {
 
     private final OutboxEventMapper outboxEventMapper;
+    private final WorkflowRunMapper workflowRunMapper;
     private final RabbitTemplate rabbitTemplate;
     private final RabbitMqInfrastructureProperties messagingProperties;
     private final OutboxPublisherProperties publisherProperties;
@@ -93,7 +95,9 @@ public class OutboxPublisher {
         if (ack) {
             OutboxEvent event = outboxEventMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<OutboxEvent>()
                     .eq(OutboxEvent::getEventUuid, eventId));
-            if (event != null && outboxEventMapper.markPublished(event.getId(), publisherOwner, eventId, LocalDateTime.now()) == 1) {
+            LocalDateTime now = LocalDateTime.now();
+            if (event != null && outboxEventMapper.markPublished(event.getId(), publisherOwner, eventId, now) == 1) {
+                workflowRunMapper.markQueuedAfterOutboxConfirm(event.getWorkflowRunUuid(), now);
                 log.info("[OutboxPublisher] confirmed traceId={} workflowRunUuid={} outboxEventId={} messageId={}",
                         event.getTraceId(), event.getWorkflowRunUuid(), event.getId(), eventId);
             }

@@ -11,6 +11,7 @@ import com.example.gameworkbench.config.OutboxPublisherProperties;
 import com.example.gameworkbench.config.RabbitMqInfrastructureProperties;
 import com.example.gameworkbench.entity.OutboxEvent;
 import com.example.gameworkbench.mapper.OutboxEventMapper;
+import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.messaging.WorkflowRunMessage;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -28,12 +29,13 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 class OutboxPublisherTest {
 
     @Mock private OutboxEventMapper outboxEvents;
+    @Mock private WorkflowRunMapper workflowRuns;
     @Mock private RabbitTemplate rabbitTemplate;
     private OutboxPublisher publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new OutboxPublisher(outboxEvents, rabbitTemplate,
+        publisher = new OutboxPublisher(outboxEvents, workflowRuns, rabbitTemplate,
                 new RabbitMqInfrastructureProperties("workflow.events", "workflow.run.execute", "workflow.run.requested"),
                 new OutboxPublisherProperties(20, 1000, 30000, 5000));
     }
@@ -74,6 +76,7 @@ class OutboxPublisherTest {
         publisher.onConfirm(new CorrelationData("event-uuid"), true, null);
 
         verify(outboxEvents).markPublished(eq(1L), any(), eq("event-uuid"), any());
+        verify(workflowRuns).markQueuedAfterOutboxConfirm(eq("run-uuid"), any());
     }
 
     @Test

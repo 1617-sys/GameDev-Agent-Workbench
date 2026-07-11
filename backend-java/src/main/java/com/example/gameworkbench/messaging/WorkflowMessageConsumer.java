@@ -53,6 +53,18 @@ public class WorkflowMessageConsumer {
             ack(channel, deliveryTag);
             return;
         }
+        if ("PENDING".equals(run.getStatus())) {
+            nackForRedelivery(channel, deliveryTag);
+            return;
+        }
+        if ("RETRY_WAIT".equals(run.getStatus())) {
+            if (workflowRunMapper.queueRetryForDelivery(run.getWorkflowRunUuid(), run.getStatusVersion(), LocalDateTime.now()) != 1) {
+                ack(channel, deliveryTag);
+                return;
+            }
+            run.setStatus("QUEUED");
+            run.setStatusVersion(run.getStatusVersion() + 1);
+        }
 
         String ownerToken = UUID.randomUUID().toString();
         String lockKey = LOCK_PREFIX + run.getWorkflowRunUuid();
@@ -70,7 +82,7 @@ public class WorkflowMessageConsumer {
         }
 
         try {
-            if (workflowRunMapper.claimForExecution(run.getWorkflowRunUuid(), message.attempt(), LocalDateTime.now()) != 1) {
+            if (workflowRunMapper.claimForExecution(run.getWorkflowRunUuid(), message.attempt(), run.getStatusVersion(), LocalDateTime.now()) != 1) {
                 ack(channel, deliveryTag);
                 return;
             }

@@ -58,7 +58,7 @@ class WorkflowMessageConsumerTest {
 
     @Test
     void redisLockFailureDoesNotExecuteRunnerAndIsAckedAsDuplicate() throws Exception {
-        when(runs.selectOne(any())).thenReturn(run("PENDING"));
+        when(runs.selectOne(any())).thenReturn(run("QUEUED"));
         when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(false);
 
         consumer.consume(message(), channel, 12L);
@@ -69,9 +69,9 @@ class WorkflowMessageConsumerTest {
 
     @Test
     void mysqlClaimFailureDoesNotExecuteRunnerAndReleasesOnlyOwnedLock() throws Exception {
-        when(runs.selectOne(any())).thenReturn(run("PENDING"));
+        when(runs.selectOne(any())).thenReturn(run("QUEUED"));
         when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(true);
-        when(runs.claimForExecution(eq("run"), eq(1), any())).thenReturn(0);
+        when(runs.claimForExecution(eq("run"), eq(1), any(), any())).thenReturn(0);
 
         consumer.consume(message(), channel, 13L);
 
@@ -82,11 +82,11 @@ class WorkflowMessageConsumerTest {
 
     @Test
     void runnerSuccessIsDurablyTerminalBeforeManualAck() throws Exception {
-        WorkflowRun pending = run("PENDING");
+        WorkflowRun pending = run("QUEUED");
         WorkflowRun success = run("SUCCESS");
         when(runs.selectOne(any())).thenReturn(pending, success);
         when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(true);
-        when(runs.claimForExecution(eq("run"), eq(1), any())).thenReturn(1);
+        when(runs.claimForExecution(eq("run"), eq(1), any(), any())).thenReturn(1);
         when(projects.selectById(1L)).thenReturn(project());
 
         consumer.consume(message(), channel, 14L);
@@ -98,7 +98,7 @@ class WorkflowMessageConsumerTest {
 
     @Test
     void redisExceptionNacksForRedeliveryWithoutRunnerOrLockRelease() throws Exception {
-        when(runs.selectOne(any())).thenReturn(run("PENDING"));
+        when(runs.selectOne(any())).thenReturn(run("QUEUED"));
         when(redis.tryLock(any(), any(), any(Long.class))).thenThrow(new IllegalStateException("redis unavailable"));
 
         consumer.consume(message(), channel, 15L);
@@ -110,9 +110,9 @@ class WorkflowMessageConsumerTest {
 
     @Test
     void retryableRunnerFailureIsPersistedThenHandedOffBeforeAck() throws Exception {
-        when(runs.selectOne(any())).thenReturn(run("PENDING"));
+        when(runs.selectOne(any())).thenReturn(run("QUEUED"));
         when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(true);
-        when(runs.claimForExecution(eq("run"), eq(1), any())).thenReturn(1);
+        when(runs.claimForExecution(eq("run"), eq(1), any(), any())).thenReturn(1);
         when(projects.selectById(1L)).thenReturn(project());
         doThrow(new IllegalStateException("runner failed")).when(runner).run(any(), any(), any());
         when(classifier.classify(any())).thenReturn(WorkflowErrorCode.NETWORK_TIMEOUT);
@@ -126,12 +126,38 @@ class WorkflowMessageConsumerTest {
         verify(redis).releaseLock(eq("workflow:execute:run"), any());
     }
 
+    @Test
+    void pendingDeliveryIsRequeuedUntilPublisherConfirmMakesTheRunQueued() throws Exception {
+        when(runs.selectOne(any())).thenReturn(run("PENDING"));
+
+        consumer.consume(message(), channel, 17L);
+
+        verify(channel).basicNack(17L, false, true);
+        verify(redis, never()).tryLock(any(), any(), any(Long.class));
+        verify(runner, never()).run(any(), any(), any());
+    }
+
+    @Test
+    void retryDeliveryMustPassVersionedRetryWaitToQueuedTransitionBeforeClaim() throws Exception {
+        WorkflowRun retryWait = run("RETRY_WAIT");
+        when(runs.selectOne(any())).thenReturn(retryWait, run("SUCCESS"));
+        when(runs.queueRetryForDelivery(eq("run"), eq(0L), any())).thenReturn(1);
+        when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(true);
+        when(runs.claimForExecution(eq("run"), eq(1), eq(1L), any())).thenReturn(1);
+        when(projects.selectById(1L)).thenReturn(project());
+
+        consumer.consume(message(), channel, 18L);
+
+        verify(runs).queueRetryForDelivery(eq("run"), eq(0L), any());
+        verify(runner).run(eq("run"), eq("project"), any());
+    }
+
     private WorkflowRunMessage message() {
         return new WorkflowRunMessage(1, "message", "event", "run", 1, "trace", LocalDateTime.now());
     }
 
     private WorkflowRun run(String status) {
-        return WorkflowRun.builder().id(1L).workflowRunUuid("run").projectId(1L).attempt(1).status(status).build();
+        return WorkflowRun.builder().id(1L).workflowRunUuid("run").projectId(1L).attempt(1).statusVersion(0L).status(status).build();
     }
 
     private GameProject project() {

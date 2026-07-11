@@ -27,6 +27,7 @@ public class AsyncWorkflowSubmitCommandService {
 
     @Transactional
     public WorkflowRun create(WorkflowRun workflowRun, List<WorkflowStepRun> stepRuns, String eventPayload, String traceId) {
+        workflowRun.setTraceId(traceId);
         workflowRunMapper.insert(workflowRun);
         for (WorkflowStepRun stepRun : stepRuns) {
             stepRun.setWorkflowRunId(workflowRun.getId());

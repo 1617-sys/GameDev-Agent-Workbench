@@ -25,10 +25,27 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
     @Update("""
             update workflow_run
             set status = 'RUNNING', status_version = status_version + 1, heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
-            where workflow_run_uuid = #{workflowRunUuid} and status in ('PENDING', 'QUEUED', 'RETRY_WAIT') and attempt = #{attempt}
+            where workflow_run_uuid = #{workflowRunUuid} and status = 'QUEUED' and attempt = #{attempt}
+              and status_version = #{statusVersion} and deleted = 0
             """)
     int claimForExecution(@Param("workflowRunUuid") String workflowRunUuid, @Param("attempt") int attempt,
-                          @Param("now") LocalDateTime now);
+                          @Param("statusVersion") Long statusVersion, @Param("now") LocalDateTime now);
+
+    @Update("""
+            update workflow_run set status = 'QUEUED', status_version = status_version + 1,
+                last_activity_at = #{now}, updated_at = #{now}
+            where workflow_run_uuid = #{workflowRunUuid} and status = 'PENDING' and deleted = 0
+            """)
+    int markQueuedAfterOutboxConfirm(@Param("workflowRunUuid") String workflowRunUuid, @Param("now") LocalDateTime now);
+
+    @Update("""
+            update workflow_run set status = 'QUEUED', status_version = status_version + 1,
+                last_activity_at = #{now}, updated_at = #{now}
+            where workflow_run_uuid = #{workflowRunUuid} and status = 'RETRY_WAIT'
+              and status_version = #{statusVersion} and deleted = 0
+            """)
+    int queueRetryForDelivery(@Param("workflowRunUuid") String workflowRunUuid,
+                              @Param("statusVersion") Long statusVersion, @Param("now") LocalDateTime now);
 
     @Update("""
             update workflow_run
@@ -39,7 +56,7 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
                             @Param("errorMessage") String errorMessage, @Param("now") LocalDateTime now);
 
     @Update("""
-            update workflow_run set status = 'RETRY_WAIT', retry_count = retry_count + 1,
+            update workflow_run set status = 'RETRY_WAIT', status_version = status_version + 1, retry_count = retry_count + 1,
                 last_error_code = #{errorCode}, last_error_message = #{errorMessage}, next_retry_at = #{nextRetryAt},
                 heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
             where workflow_run_uuid = #{workflowRunUuid} and status = 'RUNNING'
@@ -49,7 +66,7 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
                                @Param("now") LocalDateTime now);
 
     @Update("""
-            update workflow_run set status = 'FAILED', last_error_code = #{errorCode}, last_error_message = #{errorMessage},
+            update workflow_run set status = 'FAILED', status_version = status_version + 1, last_error_code = #{errorCode}, last_error_message = #{errorMessage},
                 error_message = #{errorMessage}, failed_at = #{now}, heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
             where workflow_run_uuid = #{workflowRunUuid} and status = 'RUNNING'
             """)
