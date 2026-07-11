@@ -30,6 +30,7 @@ import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.service.AsyncWorkflowSubmissionService;
 import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
+import com.example.gameworkbench.service.WorkflowSubmissionGate;
 import com.example.gameworkbench.vo.workflow.WorkflowSubmitVO;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,6 +53,7 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
     private final WorkflowStepPlanParser workflowStepPlanParser;
     private final ObjectMapper objectMapper;
     private final AsyncWorkflowSubmitCommandService commandService;
+    private final WorkflowSubmissionGate workflowSubmissionGate;
 
     @Override
     public WorkflowSubmitVO submit(Long userId, String projectUuid, String idempotencyKey, AsyncWorkflowSubmitRequest request) {
@@ -73,6 +75,7 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
         if (conflictingKey != null) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT);
         }
+        workflowSubmissionGate.checkNewSubmission(userId);
 
         WorkflowDefinitionVersion definition = workflowDefinitionVersionService.findActiveDefinition(workflowKey);
         if (definition == null || definition.getId() == null || definition.getDefinitionJson() == null) {

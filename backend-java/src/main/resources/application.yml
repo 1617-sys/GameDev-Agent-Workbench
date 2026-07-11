@@ -46,6 +46,12 @@ app:
     expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
   python:
     base-url: ${PYTHON_AGENT_BASE_URL:http://127.0.0.1:8000}
+  workflow-rate-limit:
+    policy-version: ${WORKFLOW_RATE_LIMIT_POLICY_VERSION:v1}
+    max-submissions-per-window: ${WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS:5}
+    window-seconds: ${WORKFLOW_RATE_LIMIT_WINDOW_SECONDS:60}
+    retry-after-seconds: ${WORKFLOW_RATE_LIMIT_RETRY_AFTER_SECONDS:60}
+    max-pending-runs: ${WORKFLOW_BACKPRESSURE_MAX_PENDING_RUNS:100}
 
 game-build:
   base-url: ${GAME_BUILD_BASE_URL:http://localhost:5173}

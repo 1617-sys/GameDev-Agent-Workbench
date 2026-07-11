@@ -31,3 +31,9 @@ app:
       poll-delay-ms: ${OUTBOX_PUBLISHER_POLL_DELAY_MS:1000}
       claim-lease-ms: ${OUTBOX_PUBLISHER_CLAIM_LEASE_MS:30000}
       retry-delay-ms: ${OUTBOX_PUBLISHER_RETRY_DELAY_MS:5000}
+  workflow-rate-limit:
+    policy-version: ${WORKFLOW_RATE_LIMIT_POLICY_VERSION:v1}
+    max-submissions-per-window: ${WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS:5}
+    window-seconds: ${WORKFLOW_RATE_LIMIT_WINDOW_SECONDS:60}
+    retry-after-seconds: ${WORKFLOW_RATE_LIMIT_RETRY_AFTER_SECONDS:60}
+    max-pending-runs: ${WORKFLOW_BACKPRESSURE_MAX_PENDING_RUNS:100}

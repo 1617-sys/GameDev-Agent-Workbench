@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
+import com.example.gameworkbench.service.WorkflowSubmissionGate;
 import com.example.gameworkbench.vo.workflow.WorkflowSubmitVO;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +41,7 @@ class WorkflowSubmitIdempotencyTest {
     @Mock private WorkflowDefinitionVersionService definitions;
     @Mock private PromptVersionService prompts;
     @Mock private AsyncWorkflowSubmitCommandService commandService;
+    @Mock private WorkflowSubmissionGate submissionGate;
 
     private AsyncWorkflowSubmissionServiceImpl service;
 
@@ -46,7 +49,7 @@ class WorkflowSubmitIdempotencyTest {
     void setUp() {
         ObjectMapper objectMapper = new ObjectMapper();
         service = new AsyncWorkflowSubmissionServiceImpl(projects, runs, definitions, prompts,
-                new WorkflowStepPlanParser(objectMapper), objectMapper, commandService);
+                new WorkflowStepPlanParser(objectMapper), objectMapper, commandService, submissionGate);
         lenient().when(projects.selectOne(any())).thenReturn(project());
     }
 
@@ -130,6 +133,17 @@ class WorkflowSubmitIdempotencyTest {
         assertThatThrownBy(() -> service.submit(7L, "project", " ", request("idea")))
                 .isInstanceOf(BusinessException.class)
                 .hasMessage(ErrorCode.IDEMPOTENCY_KEY_INVALID.getMessage());
+        verify(commandService, never()).create(any(), any(), any(), any());
+    }
+
+    @Test
+    void rateLimitRejectionDoesNotCreateRunStepsOrOutbox() {
+        when(runs.selectOne(any())).thenReturn(null);
+        doThrow(new BusinessException(ErrorCode.WORKFLOW_RATE_LIMITED)).when(submissionGate).checkNewSubmission(7L);
+
+        assertThatThrownBy(() -> service.submit(7L, "project", "submit-1", request("idea")))
+                .isInstanceOf(BusinessException.class)
+                .hasMessage(ErrorCode.WORKFLOW_RATE_LIMITED.getMessage());
         verify(commandService, never()).create(any(), any(), any(), any());
     }
 

@@ -21,6 +21,9 @@ public enum ErrorCode {
     DEMO_WORKFLOW_ALREADY_RUNNING(40901, "Demo workflow is already running", "Demo stream duplicate submission"),
     IDEMPOTENCY_KEY_INVALID(40005, "Idempotency-Key is required and must use 1-128 URL-safe characters", "Async workflow submit"),
     IDEMPOTENCY_KEY_CONFLICT(40902, "Idempotency-Key was already used with a different request", "Async workflow submit"),
+    WORKFLOW_RATE_LIMITED(42901, "Workflow submission rate limit exceeded", "Async workflow submit"),
+    WORKFLOW_BACKPRESSURE(50301, "Workflow submission is temporarily unavailable due to backlog", "Async workflow submit"),
+    WORKFLOW_RATE_LIMIT_UNAVAILABLE(50302, "Workflow submission is temporarily unavailable", "Async workflow submit"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),

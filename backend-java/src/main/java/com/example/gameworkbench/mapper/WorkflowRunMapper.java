@@ -54,4 +54,10 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
             """)
     int recordTerminalFailure(@Param("workflowRunUuid") String workflowRunUuid, @Param("errorCode") String errorCode,
                               @Param("errorMessage") String errorMessage, @Param("now") LocalDateTime now);
+
+    @Select("""
+            select count(*) from workflow_run
+            where status not in ('SUCCESS', 'FAILED', 'CANCELED') and deleted = 0
+            """)
+    long countNonTerminalRuns();
 }
