@@ -24,7 +24,7 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
     @Update("""
             update workflow_run
             set status = 'RUNNING', status_version = status_version + 1, heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
-            where workflow_run_uuid = #{workflowRunUuid} and status in ('PENDING', 'QUEUED') and attempt = #{attempt}
+            where workflow_run_uuid = #{workflowRunUuid} and status in ('PENDING', 'QUEUED', 'RETRY_WAIT') and attempt = #{attempt}
             """)
     int claimForExecution(@Param("workflowRunUuid") String workflowRunUuid, @Param("attempt") int attempt,
                           @Param("now") LocalDateTime now);
@@ -36,4 +36,22 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
             """)
     int markConsumerFailure(@Param("workflowRunUuid") String workflowRunUuid,
                             @Param("errorMessage") String errorMessage, @Param("now") LocalDateTime now);
+
+    @Update("""
+            update workflow_run set status = 'RETRY_WAIT', retry_count = retry_count + 1,
+                last_error_code = #{errorCode}, last_error_message = #{errorMessage}, next_retry_at = #{nextRetryAt},
+                heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
+            where workflow_run_uuid = #{workflowRunUuid} and status = 'RUNNING'
+            """)
+    int recordRetryableFailure(@Param("workflowRunUuid") String workflowRunUuid, @Param("errorCode") String errorCode,
+                               @Param("errorMessage") String errorMessage, @Param("nextRetryAt") LocalDateTime nextRetryAt,
+                               @Param("now") LocalDateTime now);
+
+    @Update("""
+            update workflow_run set status = 'FAILED', last_error_code = #{errorCode}, last_error_message = #{errorMessage},
+                error_message = #{errorMessage}, failed_at = #{now}, heartbeat_at = #{now}, last_activity_at = #{now}, updated_at = #{now}
+            where workflow_run_uuid = #{workflowRunUuid} and status = 'RUNNING'
+            """)
+    int recordTerminalFailure(@Param("workflowRunUuid") String workflowRunUuid, @Param("errorCode") String errorCode,
+                              @Param("errorMessage") String errorMessage, @Param("now") LocalDateTime now);
 }

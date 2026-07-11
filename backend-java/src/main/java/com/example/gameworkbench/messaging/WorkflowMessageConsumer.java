@@ -5,6 +5,7 @@ import com.example.gameworkbench.application.workflow.WorkflowExecutionListener;
 import com.example.gameworkbench.application.workflow.WorkflowRunner;
 import com.example.gameworkbench.common.enums.WorkflowRunStatus;
 import com.example.gameworkbench.config.WorkflowConsumerProperties;
+import com.example.gameworkbench.config.WorkflowRetryProperties;
 import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.GameProjectMapper;
@@ -17,6 +18,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.AmqpHeaders;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.Header;
@@ -35,6 +37,9 @@ public class WorkflowMessageConsumer {
     private final RedisService redisService;
     private final WorkflowRunner workflowRunner;
     private final WorkflowConsumerProperties consumerProperties;
+    private final WorkflowErrorClassifier errorClassifier;
+    private final WorkflowRetryProperties retryProperties;
+    private final RabbitTemplate rabbitTemplate;
 
     @RabbitListener(queues = "${app.messaging.workflow-queue}", containerFactory = "workflowRabbitListenerContainerFactory")
     public void consume(WorkflowRunMessage message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
@@ -71,14 +76,14 @@ public class WorkflowMessageConsumer {
             }
             GameProject project = gameProjectMapper.selectById(run.getProjectId());
             if (project == null) {
-                workflowRunMapper.markConsumerFailure(run.getWorkflowRunUuid(), "Workflow project is unavailable", LocalDateTime.now());
-                ack(channel, deliveryTag);
+                routeFailure(run, message, new IllegalArgumentException("Workflow project is unavailable"), channel, deliveryTag);
                 return;
             }
             try {
                 workflowRunner.run(run.getWorkflowRunUuid(), project.getProjectUuid(), WorkflowExecutionListener.noop());
             } catch (RuntimeException exception) {
-                workflowRunMapper.markConsumerFailure(run.getWorkflowRunUuid(), "Workflow runner failed", LocalDateTime.now());
+                routeFailure(run, message, exception, channel, deliveryTag);
+                return;
             }
             WorkflowRun persisted = workflowRunMapper.selectOne(new LambdaQueryWrapper<WorkflowRun>()
                     .eq(WorkflowRun::getWorkflowRunUuid, run.getWorkflowRunUuid()));
@@ -107,6 +112,37 @@ public class WorkflowMessageConsumer {
     }
 
     private boolean text(String value) { return value != null && !value.isBlank(); }
+    private void routeFailure(WorkflowRun run, WorkflowRunMessage message, RuntimeException failure, Channel channel, long deliveryTag) throws IOException {
+        WorkflowErrorCode code = errorClassifier.classify(failure);
+        String error = sanitize(failure.getMessage());
+        LocalDateTime now = LocalDateTime.now();
+        int nextRetry = (run.getRetryCount() == null ? 0 : run.getRetryCount()) + 1;
+        try {
+            if (code.retryable() && nextRetry <= retryProperties.maxAttempts()) {
+                long delay = retryProperties.delayFor(nextRetry);
+                if (workflowRunMapper.recordRetryableFailure(run.getWorkflowRunUuid(), code.name(), error,
+                        now.plusNanos(delay * 1_000_000L), now) != 1) { nackForRedelivery(channel, deliveryTag); return; }
+                rabbitTemplate.convertAndSend("workflow.retry", retryKey(nextRetry), message, outbound -> {
+                    outbound.getMessageProperties().setHeader("retryCount", nextRetry);
+                    outbound.getMessageProperties().setHeader("lastErrorCode", code.name());
+                    return outbound;
+                });
+            } else {
+                if (workflowRunMapper.recordTerminalFailure(run.getWorkflowRunUuid(), code.name(), error, now) != 1) { nackForRedelivery(channel, deliveryTag); return; }
+                rabbitTemplate.convertAndSend("workflow.dlx", "workflow.run.failed", message, outbound -> {
+                    outbound.getMessageProperties().setHeader("retryCount", run.getRetryCount() == null ? 0 : run.getRetryCount());
+                    outbound.getMessageProperties().setHeader("lastErrorCode", code.name());
+                    outbound.getMessageProperties().setHeader("lastErrorMessage", error);
+                    return outbound;
+                });
+            }
+            ack(channel, deliveryTag);
+        } catch (RuntimeException handoffFailure) {
+            nackForRedelivery(channel, deliveryTag);
+        }
+    }
+    private String retryKey(int retryCount) { return retryCount <= 1 ? "retry.30s" : retryCount == 2 ? "retry.5m" : "retry.30m"; }
+    private String sanitize(String error) { return error == null ? "Workflow execution failed" : error.replaceAll("(?i)(authorization|token|password|secret)=?[^\\s,;]+", "$1=[redacted]"); }
     private void ack(Channel channel, long deliveryTag) throws IOException { channel.basicAck(deliveryTag, false); }
     private void nackForRedelivery(Channel channel, long deliveryTag) throws IOException { channel.basicNack(deliveryTag, false, true); }
 }

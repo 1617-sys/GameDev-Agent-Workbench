@@ -50,6 +50,16 @@ public class WorkflowRun {
 
     private LocalDateTime lastActivityAt;
 
+    private Integer retryCount;
+
+    private String lastErrorCode;
+
+    private String lastErrorMessage;
+
+    private LocalDateTime nextRetryAt;
+
+    private LocalDateTime failedAt;
+
     private String status;
 
     private String inputContent;

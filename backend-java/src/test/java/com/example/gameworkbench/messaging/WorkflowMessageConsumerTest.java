@@ -10,6 +10,7 @@ import static org.mockito.Mockito.when;
 
 import com.example.gameworkbench.application.workflow.WorkflowRunner;
 import com.example.gameworkbench.config.WorkflowConsumerProperties;
+import com.example.gameworkbench.config.WorkflowRetryProperties;
 import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.GameProjectMapper;
@@ -23,6 +24,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.core.MessagePostProcessor;
 
 @ExtendWith(MockitoExtension.class)
 class WorkflowMessageConsumerTest {
@@ -32,11 +35,14 @@ class WorkflowMessageConsumerTest {
     @Mock private RedisService redis;
     @Mock private WorkflowRunner runner;
     @Mock private Channel channel;
+    @Mock private WorkflowErrorClassifier classifier;
+    @Mock private RabbitTemplate rabbitTemplate;
     private WorkflowMessageConsumer consumer;
 
     @BeforeEach
     void setUp() {
-        consumer = new WorkflowMessageConsumer(runs, projects, redis, runner, new WorkflowConsumerProperties(900));
+        consumer = new WorkflowMessageConsumer(runs, projects, redis, runner, new WorkflowConsumerProperties(900),
+                classifier, new WorkflowRetryProperties(3, 30000, 300000, 1800000), rabbitTemplate);
     }
 
     @Test
@@ -103,17 +109,20 @@ class WorkflowMessageConsumerTest {
     }
 
     @Test
-    void runnerFailureIsNotAckedUntilFailureStateCanBeRead() throws Exception {
-        when(runs.selectOne(any())).thenReturn(run("PENDING")).thenReturn((WorkflowRun) null);
+    void retryableRunnerFailureIsPersistedThenHandedOffBeforeAck() throws Exception {
+        when(runs.selectOne(any())).thenReturn(run("PENDING"));
         when(redis.tryLock(any(), any(), any(Long.class))).thenReturn(true);
         when(runs.claimForExecution(eq("run"), eq(1), any())).thenReturn(1);
         when(projects.selectById(1L)).thenReturn(project());
         doThrow(new IllegalStateException("runner failed")).when(runner).run(any(), any(), any());
+        when(classifier.classify(any())).thenReturn(WorkflowErrorCode.NETWORK_TIMEOUT);
+        when(runs.recordRetryableFailure(eq("run"), eq("NETWORK_TIMEOUT"), any(), any(), any())).thenReturn(1);
 
         consumer.consume(message(), channel, 16L);
 
-        verify(runs).markConsumerFailure(eq("run"), eq("Workflow runner failed"), any());
-        verify(channel).basicNack(16L, false, true);
+        verify(runs).recordRetryableFailure(eq("run"), eq("NETWORK_TIMEOUT"), any(), any(), any());
+        verify(rabbitTemplate).convertAndSend(eq("workflow.retry"), eq("retry.30s"), any(WorkflowRunMessage.class), any(MessagePostProcessor.class));
+        verify(channel).basicAck(16L, false);
         verify(redis).releaseLock(eq("workflow:execute:run"), any());
     }
 

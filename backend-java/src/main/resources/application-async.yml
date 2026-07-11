@@ -20,6 +20,11 @@ app:
     workflow-routing-key: ${WORKFLOW_ROUTING_KEY:workflow.run.requested}
     consumer:
       execution-lock-ttl-seconds: ${WORKFLOW_EXECUTION_LOCK_TTL_SECONDS:900}
+    retry:
+      max-attempts: ${WORKFLOW_RETRY_MAX_ATTEMPTS:3}
+      first-delay-ms: ${WORKFLOW_RETRY_FIRST_DELAY_MS:30000}
+      second-delay-ms: ${WORKFLOW_RETRY_SECOND_DELAY_MS:300000}
+      third-delay-ms: ${WORKFLOW_RETRY_THIRD_DELAY_MS:1800000}
   outbox:
     publisher:
       batch-size: ${OUTBOX_PUBLISHER_BATCH_SIZE:20}
