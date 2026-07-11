@@ -104,16 +104,16 @@ switch ($Profile) {
     }
     "integration" {
         Invoke-VerificationStep `
-            -Name "RabbitMQ, MySQL and Redis Testcontainers smoke test" `
+            -Name "R3 async concurrency Testcontainers harness" `
             -WorkingDirectory (Join-Path $projectRoot "backend-java") `
-            -Action { Invoke-NativeCommand "mvn" @("-Dtest=*RabbitMqInfrastructureTest", "test") }
+            -Action { Invoke-NativeCommand "mvn" @("-Dtest=*AsyncWorkflow*IT,*WorkflowConcurrency*Test,*Outbox*IT,*DeadLetter*IT,*WorkflowRecovery*IT,*RabbitMqInfrastructureTest", "test") }
 
         Invoke-VerificationStep `
             -Name "Docker Compose config" `
             -WorkingDirectory $projectRoot `
             -Action { Invoke-NativeCommand "docker" @("compose", "config", "--quiet") }
 
-        Write-Host "Integration profile currently validates R3-01 infrastructure only; R3 delivery flow is implemented by later task cards."
+        Write-Host "Integration profile validates the R3 Testcontainers concurrency harness and dependency smoke coverage."
     }
 }
 
