@@ -14,6 +14,7 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
+import com.example.gameworkbench.entity.AgentArtifact;
 
 @Service
 public class SynchronousWorkflowRunner implements WorkflowRunner {
@@ -21,13 +22,15 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
     private final WorkflowStepRunMapper workflowStepRunMapper;
     private final WorkflowStepPlanParser planParser;
     private final List<WorkflowStepExecutor> executors;
+    private final ArtifactWriter artifactWriter;
 
     public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
-            WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors) {
+            WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter) {
         this.workflowRunMapper = workflowRunMapper;
         this.workflowStepRunMapper = workflowStepRunMapper;
         this.planParser = planParser;
         this.executors = executors;
+        this.artifactWriter = artifactWriter;
     }
 
     @Override
@@ -53,9 +56,10 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 WorkflowStepExecutor executor = executors.stream().filter(e -> e.supports(plan)).findFirst()
                         .orElseThrow(() -> new IllegalStateException("No executor for step: " + plan.stepKey()));
                 StepExecutionResult result = executor.execute(context, plan);
-                step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setOutputSnapshot(result.output().content());
+                StepOutput output = artifactWriter.write(context, plan, step, result);
+                step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setOutputSnapshot(output.content());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
-                context.recordCompletedOutput(plan.stepKey(), result.output()); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
+                context.recordCompletedOutput(plan.stepKey(), output); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
             } catch (Exception exception) {
                 step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage("Workflow step failed");
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step failure");

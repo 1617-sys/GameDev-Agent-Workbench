@@ -31,7 +31,9 @@ class SynchronousWorkflowRunnerTest {
         when(executor.supports(any())).thenReturn(true);
         when(executor.execute(any(), any())).thenReturn(new StepExecutionResult(new StepOutput("out", null, null, null), 1L));
 
-        new SynchronousWorkflowRunner(runs, steps, new WorkflowStepPlanParser(new ObjectMapper()), List.of(executor))
+        ArtifactWriter writer = mock(ArtifactWriter.class);
+        when(writer.write(any(), any(), any(), any())).thenAnswer(i -> i.<StepExecutionResult>getArgument(3).output());
+        new SynchronousWorkflowRunner(runs, steps, new WorkflowStepPlanParser(new ObjectMapper()), List.of(executor), writer)
                 .run("run", "project", WorkflowExecutionListener.noop());
 
         verify(executor).execute(any(), any());
@@ -47,7 +49,7 @@ class SynchronousWorkflowRunnerTest {
         when(runs.selectOne(any())).thenReturn(run); when(steps.selectByWorkflowRunUuid("run")).thenReturn(List.of());
         when(steps.updateById(any(WorkflowStepRun.class))).thenReturn(1); when(runs.updateById(any(WorkflowRun.class))).thenReturn(1);
         WorkflowStepExecutor executor = mock(WorkflowStepExecutor.class); when(executor.supports(any())).thenReturn(true); when(executor.execute(any(), any())).thenThrow(new IllegalStateException("agent failed"));
-        SynchronousWorkflowRunner runner = new SynchronousWorkflowRunner(runs, steps, new WorkflowStepPlanParser(new ObjectMapper()), List.of(executor));
+        SynchronousWorkflowRunner runner = new SynchronousWorkflowRunner(runs, steps, new WorkflowStepPlanParser(new ObjectMapper()), List.of(executor), mock(ArtifactWriter.class));
         assertThatThrownBy(() -> runner.run("run", "p", (type, key) -> { throw new RuntimeException("listener"); })).isInstanceOf(IllegalStateException.class);
         verify(executor, times(1)).execute(any(), any()); verify(runs).updateById(run);
         run.setStatus("SUCCESS"); assertThatThrownBy(() -> runner.run("run", "p", null)).isInstanceOf(IllegalStateException.class);
