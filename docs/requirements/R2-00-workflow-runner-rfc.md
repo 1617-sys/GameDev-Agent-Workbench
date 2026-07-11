@@ -1,6 +1,6 @@
 # R2-00: WorkflowRunner 设计冻结
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R1-验收`
 >

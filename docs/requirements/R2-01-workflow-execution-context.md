@@ -1,6 +1,6 @@
 # R2-01: WorkflowExecutionContext 与步骤计划解析
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R2-00`
 >
