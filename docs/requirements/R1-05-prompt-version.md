@@ -1,6 +1,6 @@
 # R1-05：PromptVersion 不可变版本与 V1 回填
 
-> 状态：`READY_AFTER_R1-01`
+> 状态：`DONE`
 >
 > 前置任务：`R1-01`
 >

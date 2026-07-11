@@ -23,6 +23,8 @@ public class AgentRun {
 
     private String projectUuid;
 
+    private Long promptVersionId;
+
     private String agentType;
 
     private String inputContent;

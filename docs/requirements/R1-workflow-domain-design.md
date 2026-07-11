@@ -542,12 +542,11 @@ R1 推荐迁移顺序：
 ```text
 V1__baseline_existing_schema.sql
 V2__add_workflow_definition_version.sql
-V3__extend_workflow_run_for_domain_snapshot.sql
-V4__add_workflow_step_run.sql
-V5__add_prompt_version.sql
-V6__extend_agent_run_for_workflow_domain.sql
-V7__extend_agent_artifact_for_schema_and_step.sql
-V8__seed_initial_workflow_definition_and_prompt_versions.sql
+V3__add_workflow_step_run.sql (包括 agent_artifact.step_run_id 关联)
+V4__add_prompt_version.sql (包括 agent_run.prompt_version_id 预留)
+V5__extend_workflow_run_for_domain_snapshot.sql
+V6__extend_agent_run_for_workflow_domain.sql（其余运行元数据）
+V7__extend_agent_artifact_for_schema.sql（其余 Schema 元数据）
 ```
 
 说明：
