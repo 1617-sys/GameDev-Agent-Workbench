@@ -1,0 +1,16 @@
+spring:
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/}
+    listener:
+      simple:
+        auto-startup: false
+
+app:
+  messaging:
+    workflow-exchange: ${WORKFLOW_EXCHANGE:workflow.events}
+    workflow-queue: ${WORKFLOW_QUEUE:workflow.run.execute}
+    workflow-routing-key: ${WORKFLOW_ROUTING_KEY:workflow.run.requested}

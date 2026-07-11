@@ -17,6 +17,23 @@ services:
       timeout: 3s
       retries: 20
 
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: gamedev-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
+      TZ: Asia/Shanghai
+    ports:
+      - "5672:5672"
+      - "127.0.0.1:15672:15672"
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
   python-agent:
     build:
       context: ./python-agent
@@ -38,6 +55,8 @@ services:
         condition: service_healthy
       python-agent:
         condition: service_started
+      rabbitmq:
+        condition: service_healthy
     environment:
       DB_URL: jdbc:mysql://mysql:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
       DB_USERNAME: ${DB_USERNAME}
@@ -46,6 +65,12 @@ services:
       JWT_EXPIRE_SECONDS: ${JWT_EXPIRE_SECONDS}
       PYTHON_AGENT_BASE_URL: http://python-agent:8000
       GAME_BUILD_BASE_URL: http://localhost:5173
+      SPRING_PROFILES_ACTIVE: async
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
     ports:
       - "8080:8080"
 

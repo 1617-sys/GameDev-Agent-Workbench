@@ -11,6 +11,13 @@ spring:
       host: localhost
       port: 6379
       database: 0
+  rabbitmq:
+    # Used only when the async profile is enabled.
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:REPLACE_WITH_LOCAL_RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD:REPLACE_WITH_LOCAL_RABBITMQ_PASSWORD}
+    virtual-host: ${RABBITMQ_VHOST:/}
 
 server:
   port: 8080

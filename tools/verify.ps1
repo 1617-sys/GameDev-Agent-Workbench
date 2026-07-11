@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("quick")]
+    [ValidateSet("quick", "integration")]
     [string]$Profile = "quick"
 )
 
@@ -101,6 +101,19 @@ switch ($Profile) {
             -Name "Docker Compose config" `
             -WorkingDirectory $projectRoot `
             -Action { Invoke-NativeCommand "docker" @("compose", "config", "--quiet") }
+    }
+    "integration" {
+        Invoke-VerificationStep `
+            -Name "RabbitMQ, MySQL and Redis Testcontainers smoke test" `
+            -WorkingDirectory (Join-Path $projectRoot "backend-java") `
+            -Action { Invoke-NativeCommand "mvn" @("-Dtest=*RabbitMqInfrastructureTest", "test") }
+
+        Invoke-VerificationStep `
+            -Name "Docker Compose config" `
+            -WorkingDirectory $projectRoot `
+            -Action { Invoke-NativeCommand "docker" @("compose", "config", "--quiet") }
+
+        Write-Host "Integration profile currently validates R3-01 infrastructure only; R3 delivery flow is implemented by later task cards."
     }
 }
 
