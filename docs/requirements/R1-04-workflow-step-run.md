@@ -1,6 +1,6 @@
 # R1-04：WorkflowStepRun 表与步骤运行快照
 
-> 状态：`READY_AFTER_R1-02_AND_R1-03`
+> 状态：`DONE`
 >
 > 前置任务：`R1-02`、`R1-03`
 >

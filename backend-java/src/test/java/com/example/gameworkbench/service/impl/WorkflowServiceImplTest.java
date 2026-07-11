@@ -33,16 +33,21 @@ import ch.qos.logback.core.read.ListAppender;
 import com.example.gameworkbench.common.enums.AgentRunStatus;
 import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.common.enums.ErrorCode;
+import com.example.gameworkbench.common.enums.WorkflowStepRunStatus;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
 import com.example.gameworkbench.dto.workflow.WorkflowRunRequest;
 import com.example.gameworkbench.entity.AgentArtifact;
 import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
+import com.example.gameworkbench.entity.WorkflowDefinitionVersion;
+import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.AgentRunService;
+import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
 
@@ -65,6 +70,12 @@ class WorkflowServiceImplTest {
     @Mock
     private AgentRunService agentRunService;
 
+    @Mock
+    private WorkflowStepRunMapper workflowStepRunMapper;
+
+    @Mock
+    private WorkflowDefinitionVersionService workflowDefinitionVersionService;
+
     @Captor
     private ArgumentCaptor<AgentRunRequest> agentRunRequestCaptor;
 
@@ -78,7 +89,9 @@ class WorkflowServiceImplTest {
                 gameProjectMapper,
                 workflowRunMapper,
                 agentArtifactMapper,
-                agentRunService
+                agentRunService,
+                workflowStepRunMapper,
+                workflowDefinitionVersionService
         );
         workflowLogger = (Logger) LoggerFactory.getLogger(WorkflowServiceImpl.class);
         logAppender = new ListAppender<>();
@@ -97,6 +110,8 @@ class WorkflowServiceImplTest {
     void shouldCompleteWorkflowWhenAllStepsSucceed() {
         WorkflowRunRequest request = workflowRequest();
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
+        when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
+                .thenReturn(defaultDefinition());
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenReturn(agentRun(101L, "run-game-concept", "concept output"))
                 .thenReturn(agentRun(102L, "run-core-loop", "core loop output"))
@@ -105,6 +120,8 @@ class WorkflowServiceImplTest {
         AtomicReference<WorkflowRun> insertedWorkflow = captureInsertedWorkflow();
         AtomicReference<WorkflowRun> updatedWorkflow = captureUpdatedWorkflow();
         List<AgentArtifact> insertedArtifacts = captureInsertedArtifacts();
+        List<WorkflowStepRun> insertedStepRuns = captureInsertedStepRuns();
+        List<WorkflowStepRun> updatedStepRuns = captureUpdatedStepRuns();
 
         WorkflowRunVO result = workflowService.run(USER_ID, request);
 
@@ -151,6 +168,33 @@ class WorkflowServiceImplTest {
         assertThat(insertedArtifacts)
                 .extracting(AgentArtifact::getProjectId)
                 .containsExactly(PROJECT_ID, PROJECT_ID, PROJECT_ID);
+        assertThat(insertedArtifacts)
+                .extracting(AgentArtifact::getStepRunId)
+                .containsExactly(100L, 101L, 102L);
+
+        assertThat(insertedStepRuns)
+                .extracting(
+                        WorkflowStepRun::getWorkflowRunId,
+                        WorkflowStepRun::getDefinitionVersionId,
+                        WorkflowStepRun::getStepKey,
+                        WorkflowStepRun::getStatus,
+                        WorkflowStepRun::getAttempt
+                )
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple(500L, 900L, "game_concept", "RUNNING", 1),
+                        org.assertj.core.groups.Tuple.tuple(500L, 900L, "core_loop_design", "RUNNING", 1),
+                        org.assertj.core.groups.Tuple.tuple(500L, 900L, "task_breakdown", "RUNNING", 1)
+                );
+        assertThat(updatedStepRuns)
+                .extracting(WorkflowStepRun::getStatus)
+                .containsExactly(
+                        WorkflowStepRunStatus.SUCCESS.name(),
+                        WorkflowStepRunStatus.SUCCESS.name(),
+                        WorkflowStepRunStatus.SUCCESS.name()
+                );
+        assertThat(updatedStepRuns)
+                .extracting(WorkflowStepRun::getOutputSnapshot)
+                .containsExactly("concept output", "core loop output", "task breakdown output");
 
         assertThat(updatedWorkflow.get().getStatus()).isEqualTo(AgentRunStatus.SUCCESS.name());
         assertThat(updatedWorkflow.get().getErrorMessage()).isNull();
@@ -171,6 +215,8 @@ class WorkflowServiceImplTest {
         WorkflowRunRequest request = workflowRequest();
         BusinessException originalException = new BusinessException(50001, "core loop rejected");
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
+        when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
+                .thenReturn(defaultDefinition());
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenReturn(agentRun(101L, "run-game-concept", "concept output"))
                 .thenThrow(originalException);
@@ -178,6 +224,8 @@ class WorkflowServiceImplTest {
         AtomicReference<WorkflowRun> insertedWorkflow = captureInsertedWorkflow();
         AtomicReference<WorkflowRun> updatedWorkflow = captureUpdatedWorkflow();
         List<AgentArtifact> insertedArtifacts = captureInsertedArtifacts();
+        List<WorkflowStepRun> insertedStepRuns = captureInsertedStepRuns();
+        List<WorkflowStepRun> updatedStepRuns = captureUpdatedStepRuns();
 
         Throwable thrown = catchThrowable(() -> workflowService.run(USER_ID, request));
 
@@ -195,17 +243,30 @@ class WorkflowServiceImplTest {
         assertThat(insertedArtifacts)
                 .extracting(AgentArtifact::getAgentRunId)
                 .containsExactly(101L);
+        assertThat(insertedStepRuns)
+                .extracting(WorkflowStepRun::getStepKey)
+                .containsExactly("game_concept", "core_loop_design");
+        assertThat(updatedStepRuns)
+                .extracting(WorkflowStepRun::getStatus, WorkflowStepRun::getErrorMessage)
+                .containsExactly(
+                        org.assertj.core.groups.Tuple.tuple("SUCCESS", null),
+                        org.assertj.core.groups.Tuple.tuple("FAILED", "core loop rejected")
+                );
     }
 
     @Test
     void shouldConvertUnexpectedExceptionToSystemError() {
         WorkflowRunRequest request = workflowRequest();
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
+        when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
+                .thenReturn(defaultDefinition());
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenThrow(new IllegalStateException("jdbc password leaked"));
 
         AtomicReference<WorkflowRun> insertedWorkflow = captureInsertedWorkflow();
         AtomicReference<WorkflowRun> updatedWorkflow = captureUpdatedWorkflow();
+        List<WorkflowStepRun> insertedStepRuns = captureInsertedStepRuns();
+        List<WorkflowStepRun> updatedStepRuns = captureUpdatedStepRuns();
 
         assertThatThrownBy(() -> workflowService.run(USER_ID, request))
                 .isInstanceOf(BusinessException.class)
@@ -219,6 +280,11 @@ class WorkflowServiceImplTest {
         assertThat(updatedWorkflow.get().getErrorMessage()).doesNotContain("jdbc password leaked");
         assertThat(updatedWorkflow.get().getTimeTakenMs()).isNotNegative();
         verifyNoInteractions(agentArtifactMapper);
+        assertThat(insertedStepRuns).hasSize(1);
+        assertThat(updatedStepRuns)
+                .extracting(WorkflowStepRun::getStatus, WorkflowStepRun::getErrorMessage)
+                .containsExactly(org.assertj.core.groups.Tuple.tuple(
+                        WorkflowStepRunStatus.FAILED.name(), ErrorCode.SYSTEM_ERROR.getMessage()));
         assertThat(logAppender.list)
                 .anySatisfy(event -> {
                     assertThat(event.getFormattedMessage())
@@ -238,7 +304,14 @@ class WorkflowServiceImplTest {
                 .extracting("code")
                 .isEqualTo(ErrorCode.UNAUTHORIZED.getCode());
 
-        verifyNoInteractions(gameProjectMapper, workflowRunMapper, agentArtifactMapper, agentRunService);
+        verifyNoInteractions(
+                gameProjectMapper,
+                workflowRunMapper,
+                agentArtifactMapper,
+                agentRunService,
+                workflowStepRunMapper,
+                workflowDefinitionVersionService
+        );
     }
 
     @Test
@@ -254,12 +327,18 @@ class WorkflowServiceImplTest {
 
         verify(workflowRunMapper, never()).insert(any(WorkflowRun.class));
         verify(workflowRunMapper, never()).updateById(any(WorkflowRun.class));
-        verifyNoInteractions(agentArtifactMapper, agentRunService);
+        verifyNoInteractions(
+                agentArtifactMapper,
+                agentRunService,
+                workflowStepRunMapper,
+                workflowDefinitionVersionService
+        );
     }
 
     private AtomicReference<WorkflowRun> captureInsertedWorkflow() {
         AtomicReference<WorkflowRun> insertedWorkflow = new AtomicReference<>();
         when(workflowRunMapper.insert(any(WorkflowRun.class))).thenAnswer(invocation -> {
+            invocation.<WorkflowRun>getArgument(0).setId(500L);
             insertedWorkflow.set(copyWorkflowRun(invocation.getArgument(0)));
             return 1;
         });
@@ -282,6 +361,26 @@ class WorkflowServiceImplTest {
             return 1;
         });
         return artifacts;
+    }
+
+    private List<WorkflowStepRun> captureInsertedStepRuns() {
+        List<WorkflowStepRun> stepRuns = new ArrayList<>();
+        when(workflowStepRunMapper.insert(any(WorkflowStepRun.class))).thenAnswer(invocation -> {
+            WorkflowStepRun stepRun = invocation.getArgument(0);
+            stepRun.setId(100L + stepRuns.size());
+            stepRuns.add(copyStepRun(stepRun));
+            return 1;
+        });
+        return stepRuns;
+    }
+
+    private List<WorkflowStepRun> captureUpdatedStepRuns() {
+        List<WorkflowStepRun> stepRuns = new ArrayList<>();
+        when(workflowStepRunMapper.updateById(any(WorkflowStepRun.class))).thenAnswer(invocation -> {
+            stepRuns.add(copyStepRun(invocation.getArgument(0)));
+            return 1;
+        });
+        return stepRuns;
     }
 
     private WorkflowRunRequest workflowRequest() {
@@ -317,6 +416,15 @@ class WorkflowServiceImplTest {
                 .build();
     }
 
+    private WorkflowDefinitionVersion defaultDefinition() {
+        return WorkflowDefinitionVersion.builder()
+                .id(900L)
+                .workflowKey("GAME_DESIGN")
+                .version(1)
+                .status("ACTIVE")
+                .build();
+    }
+
     private WorkflowRun copyWorkflowRun(WorkflowRun source) {
         return WorkflowRun.builder()
                 .id(source.getId())
@@ -341,12 +449,38 @@ class WorkflowServiceImplTest {
                 .artifactUuid(source.getArtifactUuid())
                 .projectId(source.getProjectId())
                 .agentRunId(source.getAgentRunId())
+                .stepRunId(source.getStepRunId())
                 .artifactType(source.getArtifactType())
                 .title(source.getTitle())
                 .content(source.getContent())
                 .createdAt(source.getCreatedAt())
                 .updatedAt(source.getUpdatedAt())
                 .deleted(source.getDeleted())
+                .build();
+    }
+
+    private WorkflowStepRun copyStepRun(WorkflowStepRun source) {
+        return WorkflowStepRun.builder()
+                .id(source.getId())
+                .stepRunUuid(source.getStepRunUuid())
+                .workflowRunId(source.getWorkflowRunId())
+                .workflowRunUuid(source.getWorkflowRunUuid())
+                .definitionVersionId(source.getDefinitionVersionId())
+                .stepKey(source.getStepKey())
+                .stepOrder(source.getStepOrder())
+                .agentType(source.getAgentType())
+                .artifactType(source.getArtifactType())
+                .status(source.getStatus())
+                .attempt(source.getAttempt())
+                .inputSnapshot(source.getInputSnapshot())
+                .contextSnapshot(source.getContextSnapshot())
+                .outputSnapshot(source.getOutputSnapshot())
+                .errorMessage(source.getErrorMessage())
+                .startedAt(source.getStartedAt())
+                .finishedAt(source.getFinishedAt())
+                .timeTakenMs(source.getTimeTakenMs())
+                .createdAt(source.getCreatedAt())
+                .updatedAt(source.getUpdatedAt())
                 .build();
     }
 }

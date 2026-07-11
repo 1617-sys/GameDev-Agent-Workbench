@@ -28,6 +28,8 @@ public class AgentArtifact {
 
     private Long agentRunId;
 
+    private Long stepRunId;
+
     private String artifactType;
 
     private String title;
