@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import lombok.AllArgsConstructor;
@@ -16,30 +15,23 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("agent_artifact")
-public class AgentArtifact {
+@TableName("workflow_definition_version")
+public class WorkflowDefinitionVersion {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String artifactUuid;
+    private String workflowKey;
 
-    private Long projectId;
+    private Integer version;
 
-    private Long agentRunId;
+    private String name;
 
-    private Long stepRunId;
+    private String status;
 
-    private String artifactType;
-
-    private String title;
-
-    private String content;
+    private String definitionJson;
 
     private LocalDateTime createdAt;
 
-    private LocalDateTime updatedAt;
-
-    @TableLogic
-    private Integer deleted;
+    private Long createdBy;
 }

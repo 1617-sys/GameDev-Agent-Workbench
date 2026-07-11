@@ -1,7 +1,9 @@
 package com.example.gameworkbench.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -10,16 +12,23 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.gameworkbench.common.enums.AgentRunStatus;
 import com.example.gameworkbench.common.enums.AgentType;
 import com.example.gameworkbench.common.enums.ErrorCode;
+import com.example.gameworkbench.common.enums.WorkflowStepRunStatus;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.dto.agent.AgentRunRequest;
 import com.example.gameworkbench.dto.workflow.WorkflowRunRequest;
 import com.example.gameworkbench.entity.AgentArtifact;
 import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
+import com.example.gameworkbench.entity.WorkflowDefinitionVersion;
+import com.example.gameworkbench.entity.WorkflowStepRun;
+import com.example.gameworkbench.entity.PromptVersion;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.AgentRunService;
+import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
+import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.service.WorkflowService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
@@ -27,17 +36,25 @@ import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkflowServiceImpl implements WorkflowService {
 
     private static final String GAME_DESIGN_WORKFLOW = "GAME_DESIGN";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
 
     private final GameProjectMapper gameProjectMapper;
     private final WorkflowRunMapper workflowRunMapper;
     private final AgentArtifactMapper agentArtifactMapper;
     private final AgentRunService agentRunService;
+    private final WorkflowStepRunMapper workflowStepRunMapper;
+    private final WorkflowDefinitionVersionService workflowDefinitionVersionService;
+    private final PromptVersionService promptVersionService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public WorkflowRunVO run(Long userId, WorkflowRunRequest request) {
@@ -93,8 +110,11 @@ public class WorkflowServiceImpl implements WorkflowService {
          */
         GameProject gameProject = getUserProject(userId, request.getProjectUuid());
         long startTime = System.currentTimeMillis();
+        WorkflowDefinitionVersion definitionVersion =
+                workflowDefinitionVersionService.findActiveDefinition(GAME_DESIGN_WORKFLOW);
+        WorkflowRunSnapshot snapshot = freezeWorkflowRunSnapshot(definitionVersion);
     
-        WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject);
+        WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject, snapshot);
         workflowRunMapper.insert(workflowRun);
     
         log.info("[Workflow] run started userId={} projectId={} workflowRunUuid={}",
@@ -104,11 +124,13 @@ public class WorkflowServiceImpl implements WorkflowService {
          * 按依赖顺序串联执行三个Agent阶段，后一步以前一步的输出作为上下文输入。
          */
         try {
-            WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(userId, request);
+            WorkflowRunVO.WorkflowStepVO gameConceptStep = runGameConceptStep(
+                    workflowRun, definitionVersion, userId, request);
             WorkflowRunVO.WorkflowStepVO coreLoopDesignStep =
-                    runCoreLoopDesignStep(userId, request, gameConceptStep);
+                    runCoreLoopDesignStep(workflowRun, definitionVersion, userId, request, gameConceptStep);
             WorkflowRunVO.WorkflowStepVO taskBreakdownStep =
-                    runTaskBreakdownStep(userId, request, gameConceptStep, coreLoopDesignStep);
+                    runTaskBreakdownStep(
+                            workflowRun, definitionVersion, userId, request, gameConceptStep, coreLoopDesignStep);
     
             List<WorkflowRunVO.WorkflowStepVO> steps =
                     List.of(gameConceptStep, coreLoopDesignStep, taskBreakdownStep);
@@ -146,7 +168,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private WorkflowRun createRunningWorkflowRun(
             Long userId,
             WorkflowRunRequest request,
-            GameProject gameProject
+            GameProject gameProject,
+            WorkflowRunSnapshot snapshot
     ) {
         LocalDateTime now = LocalDateTime.now();
         return WorkflowRun.builder()
@@ -155,6 +178,12 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .userId(userId)
                 .status(AgentRunStatus.RUNNING.name())
                 .workflowType(GAME_DESIGN_WORKFLOW)
+                .workflowDefinitionVersionId(snapshot.definitionVersionId())
+                .workflowDefinitionSnapshot(snapshot.definitionSnapshot())
+                .promptVersionSnapshot(snapshot.promptVersionSnapshot())
+                .schemaVersion(GAME_CONFIG_SCHEMA_VERSION)
+                .attempt(1)
+                .statusVersion(0L)
                 .inputContent(request.getIdea())
                 .timeTakenMs(0L)
                 .createdAt(now)
@@ -179,9 +208,17 @@ public class WorkflowServiceImpl implements WorkflowService {
         workflowRunMapper.updateById(workflowRun);
     }
 
-    private WorkflowRunVO.WorkflowStepVO runGameConceptStep(Long userId, WorkflowRunRequest request) {
+    private WorkflowRunVO.WorkflowStepVO runGameConceptStep(
+            WorkflowRun workflowRun,
+            WorkflowDefinitionVersion definitionVersion,
+            Long userId,
+            WorkflowRunRequest request
+    ) {
         return runWorkflowStep(
+                workflowRun,
+                definitionVersion,
                 1,
+                "game_concept",
                 userId,
                 request,
                 AgentType.GAME_CONCEPT,
@@ -191,12 +228,17 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private WorkflowRunVO.WorkflowStepVO runCoreLoopDesignStep(
+            WorkflowRun workflowRun,
+            WorkflowDefinitionVersion definitionVersion,
             Long userId,
             WorkflowRunRequest request,
             WorkflowRunVO.WorkflowStepVO gameConceptStep
     ) {
         return runWorkflowStep(
+                workflowRun,
+                definitionVersion,
                 2,
+                "core_loop_design",
                 userId,
                 request,
                 AgentType.CORE_LOOP_DESIGN,
@@ -206,13 +248,18 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private WorkflowRunVO.WorkflowStepVO runTaskBreakdownStep(
+            WorkflowRun workflowRun,
+            WorkflowDefinitionVersion definitionVersion,
             Long userId,
             WorkflowRunRequest request,
             WorkflowRunVO.WorkflowStepVO gameConceptStep,
             WorkflowRunVO.WorkflowStepVO coreLoopStep
     ) {
         return runWorkflowStep(
+                workflowRun,
+                definitionVersion,
                 3,
+                "task_breakdown",
                 userId,
                 request,
                 AgentType.TASK_BREAKDOWN,
@@ -222,44 +269,116 @@ public class WorkflowServiceImpl implements WorkflowService {
     }
 
     private WorkflowRunVO.WorkflowStepVO runWorkflowStep(
+            WorkflowRun workflowRun,
+            WorkflowDefinitionVersion definitionVersion,
             Integer stepOrder,
+            String stepKey,
             Long userId,
             WorkflowRunRequest workflowRequest,
             AgentType agentType,
             String content,
             String context
     ) {
-        AgentRunVO agentRun = agentRunService.run(userId, AgentRunRequest.builder()
-                .projectUuid(workflowRequest.getProjectUuid())
-                .agentType(agentType)
-                .title(workflowRequest.getTitle())
-                .content(content)
-                .context(context)
-                .build());
+        WorkflowStepRun stepRun = createRunningStepRun(
+                workflowRun, definitionVersion, stepOrder, stepKey, agentType, content, context);
+        workflowStepRunMapper.insert(stepRun);
 
-        AgentArtifact artifact = createArtifact(agentRun, workflowRequest.getTitle(), agentType);
+        try {
+            AgentRunVO agentRun = agentRunService.run(userId, AgentRunRequest.builder()
+                    .projectUuid(workflowRequest.getProjectUuid())
+                    .agentType(agentType)
+                    .title(workflowRequest.getTitle())
+                    .content(content)
+                    .context(context)
+                    .build());
 
-        log.info("[Workflow] step completed stepOrder={} agentType={} agentRunUuid={} artifactUuid={}",
-                stepOrder, agentType, agentRun.getRunUuid(), artifact.getArtifactUuid());
+            AgentArtifact artifact = createArtifact(agentRun, stepRun, workflowRequest.getTitle(), agentType);
+            markStepRunSuccess(stepRun, agentRun.getOutputContent());
 
-        return WorkflowRunVO.WorkflowStepVO.builder()
+            log.info("[Workflow] step completed stepOrder={} stepRunUuid={} agentType={} agentRunUuid={} artifactUuid={}",
+                    stepOrder, stepRun.getStepRunUuid(), agentType, agentRun.getRunUuid(), artifact.getArtifactUuid());
+
+            return WorkflowRunVO.WorkflowStepVO.builder()
+                    .stepOrder(stepOrder)
+                    .agentType(agentType.name())
+                    .artifactType(agentType.getArtifactType().name())
+                    .title(workflowRequest.getTitle())
+                    .content(agentRun.getOutputContent())
+                    .agentRunUuid(agentRun.getRunUuid())
+                    .artifactUuid(artifact.getArtifactUuid())
+                    .build();
+        } catch (BusinessException exception) {
+            markStepRunFailed(stepRun, exception.getMessage());
+            throw exception;
+        } catch (Exception exception) {
+            markStepRunFailed(stepRun, ErrorCode.SYSTEM_ERROR.getMessage());
+            throw exception;
+        }
+    }
+
+    private WorkflowStepRun createRunningStepRun(
+            WorkflowRun workflowRun,
+            WorkflowDefinitionVersion definitionVersion,
+            Integer stepOrder,
+            String stepKey,
+            AgentType agentType,
+            String inputSnapshot,
+            String contextSnapshot
+    ) {
+        LocalDateTime now = LocalDateTime.now();
+        return WorkflowStepRun.builder()
+                .stepRunUuid(UUID.randomUUID().toString())
+                .workflowRunId(workflowRun.getId())
+                .workflowRunUuid(workflowRun.getWorkflowRunUuid())
+                .definitionVersionId(definitionVersion == null ? null : definitionVersion.getId())
+                .stepKey(stepKey)
                 .stepOrder(stepOrder)
                 .agentType(agentType.name())
                 .artifactType(agentType.getArtifactType().name())
-                .title(workflowRequest.getTitle())
-                .content(agentRun.getOutputContent())
-                .agentRunUuid(agentRun.getRunUuid())
-                .artifactUuid(artifact.getArtifactUuid())
+                .status(WorkflowStepRunStatus.RUNNING.name())
+                .attempt(1)
+                .inputSnapshot(inputSnapshot)
+                .contextSnapshot(contextSnapshot)
+                .startedAt(now)
+                .createdAt(now)
+                .updatedAt(now)
                 .build();
     }
 
-    private AgentArtifact createArtifact(AgentRunVO agentRun, String title, AgentType agentType) {
+    private void markStepRunSuccess(WorkflowStepRun stepRun, String outputSnapshot) {
+        LocalDateTime now = LocalDateTime.now();
+        stepRun.setStatus(WorkflowStepRunStatus.SUCCESS.name());
+        stepRun.setOutputSnapshot(outputSnapshot);
+        stepRun.setErrorMessage(null);
+        stepRun.setFinishedAt(now);
+        stepRun.setTimeTakenMs(java.time.Duration.between(stepRun.getStartedAt(), now).toMillis());
+        stepRun.setUpdatedAt(now);
+        workflowStepRunMapper.updateById(stepRun);
+    }
+
+    private void markStepRunFailed(WorkflowStepRun stepRun, String errorMessage) {
+        LocalDateTime now = LocalDateTime.now();
+        stepRun.setStatus(WorkflowStepRunStatus.FAILED.name());
+        stepRun.setErrorMessage(errorMessage);
+        stepRun.setFinishedAt(now);
+        stepRun.setTimeTakenMs(java.time.Duration.between(stepRun.getStartedAt(), now).toMillis());
+        stepRun.setUpdatedAt(now);
+        workflowStepRunMapper.updateById(stepRun);
+    }
+
+    private AgentArtifact createArtifact(
+            AgentRunVO agentRun,
+            WorkflowStepRun stepRun,
+            String title,
+            AgentType agentType
+    ) {
         LocalDateTime now = LocalDateTime.now();
 
         AgentArtifact agentArtifact = AgentArtifact.builder()
                 .artifactUuid(UUID.randomUUID().toString())
                 .projectId(agentRun.getProjectId())
                 .agentRunId(agentRun.getId())
+                .stepRunId(stepRun.getId())
                 .artifactType(agentType.getArtifactType().name())
                 .title(title)
                 .content(agentRun.getOutputContent())
@@ -268,6 +387,51 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .build();
         agentArtifactMapper.insert(agentArtifact);
         return agentArtifact;
+    }
+
+    private WorkflowRunSnapshot freezeWorkflowRunSnapshot(WorkflowDefinitionVersion definitionVersion) {
+        if (definitionVersion == null || definitionVersion.getId() == null
+                || definitionVersion.getDefinitionJson() == null) {
+            log.error("[Workflow] active workflow definition is unavailable workflowKey={}", GAME_DESIGN_WORKFLOW);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        Map<String, Map<String, Object>> promptVersions = new LinkedHashMap<>();
+        addPromptVersionSnapshot(promptVersions, AgentType.GAME_CONCEPT);
+        addPromptVersionSnapshot(promptVersions, AgentType.CORE_LOOP_DESIGN);
+        addPromptVersionSnapshot(promptVersions, AgentType.TASK_BREAKDOWN);
+
+        try {
+            return new WorkflowRunSnapshot(
+                    definitionVersion.getId(),
+                    definitionVersion.getDefinitionJson(),
+                    objectMapper.writeValueAsString(promptVersions)
+            );
+        } catch (JsonProcessingException exception) {
+            log.error("[Workflow] prompt version snapshot serialization failed exceptionType={}",
+                    exception.getClass().getName());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+    }
+
+    private void addPromptVersionSnapshot(
+            Map<String, Map<String, Object>> promptVersions,
+            AgentType agentType
+    ) {
+        PromptVersion promptVersion = promptVersionService.findActiveByAgentType(agentType.name());
+        if (promptVersion == null || promptVersion.getId() == null || promptVersion.getVersionUuid() == null) {
+            log.error("[Workflow] active prompt version is unavailable agentType={}", agentType);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        Map<String, Object> versionSnapshot = new LinkedHashMap<>();
+        versionSnapshot.put("promptVersionId", promptVersion.getId());
+        versionSnapshot.put("versionUuid", promptVersion.getVersionUuid());
+        versionSnapshot.put("templateUuid", promptVersion.getTemplateUuid());
+        versionSnapshot.put("version", promptVersion.getVersion());
+        versionSnapshot.put("outputSchemaKey", promptVersion.getOutputSchemaKey());
+        versionSnapshot.put("outputSchemaVersion", promptVersion.getOutputSchemaVersion());
+        promptVersions.put(agentType.name(), versionSnapshot);
     }
 
     private String buildStepContext(String baseContext, WorkflowRunVO.WorkflowStepVO... previousSteps) {
@@ -301,6 +465,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .projectUuid(projectUuid)
                 .userId(workflowRun.getUserId())
                 .workflowType(workflowRun.getWorkflowType())
+                .workflowDefinitionVersionId(workflowRun.getWorkflowDefinitionVersionId())
+                .schemaVersion(workflowRun.getSchemaVersion())
+                .attempt(workflowRun.getAttempt())
+                .statusVersion(workflowRun.getStatusVersion())
                 .status(workflowRun.getStatus())
                 .inputContent(workflowRun.getInputContent())
                 .summary(workflowRun.getSummary())
@@ -310,6 +478,13 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .createdAt(workflowRun.getCreatedAt())
                 .updatedAt(workflowRun.getUpdatedAt())
                 .build();
+    }
+
+    private record WorkflowRunSnapshot(
+            Long definitionVersionId,
+            String definitionSnapshot,
+            String promptVersionSnapshot
+    ) {
     }
 
     private GameProject getUserProject(Long userId, String projectUuid) {

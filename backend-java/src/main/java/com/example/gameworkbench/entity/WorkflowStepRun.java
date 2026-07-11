@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import lombok.AllArgsConstructor;
@@ -16,46 +15,47 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("workflow_run")
-public class WorkflowRun {
+@TableName("workflow_step_run")
+public class WorkflowStepRun {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
+    private String stepRunUuid;
+
+    private Long workflowRunId;
+
     private String workflowRunUuid;
 
-    private Long projectId;
+    private Long definitionVersionId;
 
-    private Long userId;
+    private String stepKey;
 
-    private String workflowType;
+    private Integer stepOrder;
 
-    private Long workflowDefinitionVersionId;
+    private String agentType;
 
-    private String workflowDefinitionSnapshot;
-
-    private String promptVersionSnapshot;
-
-    private String schemaVersion;
-
-    private Integer attempt;
-
-    private Long statusVersion;
+    private String artifactType;
 
     private String status;
 
-    private String inputContent;
+    private Integer attempt;
 
-    private String summary;
+    private String inputSnapshot;
+
+    private String contextSnapshot;
+
+    private String outputSnapshot;
 
     private String errorMessage;
+
+    private LocalDateTime startedAt;
+
+    private LocalDateTime finishedAt;
 
     private Long timeTakenMs;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
-
-    @TableLogic
-    private Integer deleted;
 }

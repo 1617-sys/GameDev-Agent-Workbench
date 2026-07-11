@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.TableName;
 
 import lombok.AllArgsConstructor;
@@ -16,30 +15,41 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("agent_artifact")
-public class AgentArtifact {
+@TableName("prompt_version")
+public class PromptVersion {
 
     @TableId(type = IdType.AUTO)
     private Long id;
 
-    private String artifactUuid;
+    private String versionUuid;
 
-    private Long projectId;
+    private Long templateId;
 
-    private Long agentRunId;
+    private String templateUuid;
 
-    private Long stepRunId;
+    private String agentType;
 
-    private String artifactType;
+    private Integer version;
 
-    private String title;
+    private String name;
 
-    private String content;
+    private String systemPrompt;
+
+    private String userPromptTemplate;
+
+    private String outputSchemaKey;
+
+    private String outputSchemaVersion;
+
+    private String modelParametersJson;
+
+    private String status;
+
+    private Long createdBy;
 
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
 
-    @TableLogic
     private Integer deleted;
 }
