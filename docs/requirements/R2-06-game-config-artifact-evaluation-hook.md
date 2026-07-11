@@ -1,6 +1,6 @@
 # R2-06: GameConfig Artifact 校验与 Evaluation Hook 接入
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R2-02`、`R2-03`、`R2-05`
 >

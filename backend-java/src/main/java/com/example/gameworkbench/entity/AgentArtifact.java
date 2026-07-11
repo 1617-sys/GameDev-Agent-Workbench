@@ -36,6 +36,12 @@ public class AgentArtifact {
 
     private String content;
 
+    private String schemaKey;
+
+    private String schemaVersion;
+
+    private String validationSummary;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

@@ -49,6 +49,12 @@ public class WorkflowStepRun {
 
     private String outputSnapshot;
 
+    private String schemaKey;
+
+    private String schemaVersion;
+
+    private String validationSummary;
+
     private String errorMessage;
 
     private LocalDateTime startedAt;

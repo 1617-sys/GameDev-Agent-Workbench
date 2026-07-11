@@ -55,7 +55,7 @@ There is no transaction spanning Agent I/O. State is persisted before and after 
 
 ## GameConfig and evaluation
 
-`GAME_CONFIG_GENERATE` produces a `game-config` / `1.0` artifact candidate. The R2 hook validates required structure and supported aliases before the result is considered buildable. A failed hook fails the step and prevents GameBuild. The hook is not an R5 quality scorer or report writer.
+`GAME_CONFIG_GENERATE` produces a `game-config` / `1.0` artifact candidate. The R2 hook validates required structure and supported aliases before optional normalization, using the frozen `game-config/1.0` run schema. On success it persists canonical content plus `schemaKey`, `schemaVersion`, and validation summary on both Artifact and StepRun. A failed hook records the failure on StepRun, fails the WorkflowRun before Artifact write, and prevents GameBuild. The hook is not an R5 quality scorer or report writer.
 
 ## R2 / R3 boundary and rollback
 

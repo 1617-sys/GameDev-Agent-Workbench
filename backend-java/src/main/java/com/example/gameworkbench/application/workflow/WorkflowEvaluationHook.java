@@ -1,5 +1,8 @@
 package com.example.gameworkbench.application.workflow;
 
 public interface WorkflowEvaluationHook {
-    void evaluate(WorkflowExecutionContext context, WorkflowStepPlan stepPlan, StepExecutionResult result);
+    boolean supports(WorkflowStepPlan stepPlan);
+
+    WorkflowEvaluationResult evaluate(WorkflowExecutionContext context, WorkflowStepPlan stepPlan,
+            StepExecutionResult result);
 }

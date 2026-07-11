@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.example.gameworkbench.common.enums.WorkflowRunStatus;
@@ -14,7 +15,6 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
-import com.example.gameworkbench.entity.AgentArtifact;
 
 @Service
 public class SynchronousWorkflowRunner implements WorkflowRunner {
@@ -23,14 +23,23 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
     private final WorkflowStepPlanParser planParser;
     private final List<WorkflowStepExecutor> executors;
     private final ArtifactWriter artifactWriter;
+    private final List<WorkflowEvaluationHook> evaluationHooks;
 
     public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
             WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter) {
+        this(workflowRunMapper, workflowStepRunMapper, planParser, executors, artifactWriter, List.of());
+    }
+
+    @Autowired
+    public SynchronousWorkflowRunner(WorkflowRunMapper workflowRunMapper, WorkflowStepRunMapper workflowStepRunMapper,
+            WorkflowStepPlanParser planParser, List<WorkflowStepExecutor> executors, ArtifactWriter artifactWriter,
+            List<WorkflowEvaluationHook> evaluationHooks) {
         this.workflowRunMapper = workflowRunMapper;
         this.workflowStepRunMapper = workflowStepRunMapper;
         this.planParser = planParser;
         this.executors = executors;
         this.artifactWriter = artifactWriter;
+        this.evaluationHooks = evaluationHooks;
     }
 
     @Override
@@ -56,12 +65,17 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 WorkflowStepExecutor executor = executors.stream().filter(e -> e.supports(plan)).findFirst()
                         .orElseThrow(() -> new IllegalStateException("No executor for step: " + plan.stepKey()));
                 StepExecutionResult result = executor.execute(context, plan);
+                for (WorkflowEvaluationHook hook : evaluationHooks) {
+                    if (hook.supports(plan)) result = result.withEvaluation(hook.evaluate(context, plan, result));
+                }
                 StepOutput output = artifactWriter.write(context, plan, step, result);
                 step.setStatus(WorkflowStepRunStatus.SUCCESS.name()); step.setAgentRunId(result.agentRunId()); step.setOutputSnapshot(output.content());
+                step.setSchemaKey(output.schemaKey()); step.setSchemaVersion(output.schemaVersion()); step.setValidationSummary(result.evaluation().summary());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
                 context.recordCompletedOutput(plan.stepKey(), output); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
             } catch (Exception exception) {
-                step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage("Workflow step failed");
+                step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage(exception.getMessage() == null ? "Workflow step failed" : exception.getMessage());
+                if (exception instanceof WorkflowEvaluationException) step.setValidationSummary(exception.getMessage());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step failure");
                 run.setStatus(WorkflowRunStatus.FAILED.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow failure");
                 safe(safeListener, "STEP_FAILED", plan.stepKey()); safe(safeListener, "WORKFLOW_COMPLETED", null);

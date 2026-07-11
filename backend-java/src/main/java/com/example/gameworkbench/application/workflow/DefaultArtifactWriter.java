@@ -15,9 +15,12 @@ public class DefaultArtifactWriter implements ArtifactWriter {
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper) { this.artifactMapper = artifactMapper; }
     @Override public StepOutput write(WorkflowExecutionContext context, WorkflowStepPlan plan, WorkflowStepRun stepRun, StepExecutionResult result) {
         String uuid = UUID.randomUUID().toString(); LocalDateTime now = LocalDateTime.now();
+        WorkflowEvaluationResult evaluation = result.evaluation();
+        String content = evaluation.normalizedContent() == null ? result.output().content() : evaluation.normalizedContent();
         artifactMapper.insert(AgentArtifact.builder().artifactUuid(uuid).projectId(context.workflowRun().getProjectId())
                 .agentRunId(result.agentRunId()).stepRunId(stepRun.getId()).artifactType(plan.artifactType().name())
-                .title(plan.stepKey()).content(result.output().content()).createdAt(now).updatedAt(now).build());
-        return new StepOutput(result.output().content(), uuid, result.output().schemaKey(), result.output().schemaVersion());
+                .title(plan.stepKey()).content(content).schemaKey(evaluation.schemaKey()).schemaVersion(evaluation.schemaVersion())
+                .validationSummary(evaluation.summary()).createdAt(now).updatedAt(now).build());
+        return new StepOutput(content, uuid, evaluation.schemaKey(), evaluation.schemaVersion());
     }
 }
