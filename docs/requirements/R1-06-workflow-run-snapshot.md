@@ -1,6 +1,6 @@
 # R1-06：WorkflowRun 定义与 Prompt 快照字段
 
-> 状态：`READY_AFTER_R1-03_AND_R1-05`
+> 状态：`DONE`
 >
 > 前置任务：`R1-03`、`R1-05`
 >

@@ -1,7 +1,9 @@
 package com.example.gameworkbench.service.impl;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -19,12 +21,14 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowDefinitionVersion;
 import com.example.gameworkbench.entity.WorkflowStepRun;
+import com.example.gameworkbench.entity.PromptVersion;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
+import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.service.WorkflowService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
@@ -32,12 +36,16 @@ import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class WorkflowServiceImpl implements WorkflowService {
 
     private static final String GAME_DESIGN_WORKFLOW = "GAME_DESIGN";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
 
     private final GameProjectMapper gameProjectMapper;
     private final WorkflowRunMapper workflowRunMapper;
@@ -45,6 +53,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private final AgentRunService agentRunService;
     private final WorkflowStepRunMapper workflowStepRunMapper;
     private final WorkflowDefinitionVersionService workflowDefinitionVersionService;
+    private final PromptVersionService promptVersionService;
+    private final ObjectMapper objectMapper;
 
     @Override
     public WorkflowRunVO run(Long userId, WorkflowRunRequest request) {
@@ -102,8 +112,9 @@ public class WorkflowServiceImpl implements WorkflowService {
         long startTime = System.currentTimeMillis();
         WorkflowDefinitionVersion definitionVersion =
                 workflowDefinitionVersionService.findActiveDefinition(GAME_DESIGN_WORKFLOW);
+        WorkflowRunSnapshot snapshot = freezeWorkflowRunSnapshot(definitionVersion);
     
-        WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject);
+        WorkflowRun workflowRun = createRunningWorkflowRun(userId, request, gameProject, snapshot);
         workflowRunMapper.insert(workflowRun);
     
         log.info("[Workflow] run started userId={} projectId={} workflowRunUuid={}",
@@ -157,7 +168,8 @@ public class WorkflowServiceImpl implements WorkflowService {
     private WorkflowRun createRunningWorkflowRun(
             Long userId,
             WorkflowRunRequest request,
-            GameProject gameProject
+            GameProject gameProject,
+            WorkflowRunSnapshot snapshot
     ) {
         LocalDateTime now = LocalDateTime.now();
         return WorkflowRun.builder()
@@ -166,6 +178,12 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .userId(userId)
                 .status(AgentRunStatus.RUNNING.name())
                 .workflowType(GAME_DESIGN_WORKFLOW)
+                .workflowDefinitionVersionId(snapshot.definitionVersionId())
+                .workflowDefinitionSnapshot(snapshot.definitionSnapshot())
+                .promptVersionSnapshot(snapshot.promptVersionSnapshot())
+                .schemaVersion(GAME_CONFIG_SCHEMA_VERSION)
+                .attempt(1)
+                .statusVersion(0L)
                 .inputContent(request.getIdea())
                 .timeTakenMs(0L)
                 .createdAt(now)
@@ -371,6 +389,51 @@ public class WorkflowServiceImpl implements WorkflowService {
         return agentArtifact;
     }
 
+    private WorkflowRunSnapshot freezeWorkflowRunSnapshot(WorkflowDefinitionVersion definitionVersion) {
+        if (definitionVersion == null || definitionVersion.getId() == null
+                || definitionVersion.getDefinitionJson() == null) {
+            log.error("[Workflow] active workflow definition is unavailable workflowKey={}", GAME_DESIGN_WORKFLOW);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        Map<String, Map<String, Object>> promptVersions = new LinkedHashMap<>();
+        addPromptVersionSnapshot(promptVersions, AgentType.GAME_CONCEPT);
+        addPromptVersionSnapshot(promptVersions, AgentType.CORE_LOOP_DESIGN);
+        addPromptVersionSnapshot(promptVersions, AgentType.TASK_BREAKDOWN);
+
+        try {
+            return new WorkflowRunSnapshot(
+                    definitionVersion.getId(),
+                    definitionVersion.getDefinitionJson(),
+                    objectMapper.writeValueAsString(promptVersions)
+            );
+        } catch (JsonProcessingException exception) {
+            log.error("[Workflow] prompt version snapshot serialization failed exceptionType={}",
+                    exception.getClass().getName());
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+    }
+
+    private void addPromptVersionSnapshot(
+            Map<String, Map<String, Object>> promptVersions,
+            AgentType agentType
+    ) {
+        PromptVersion promptVersion = promptVersionService.findActiveByAgentType(agentType.name());
+        if (promptVersion == null || promptVersion.getId() == null || promptVersion.getVersionUuid() == null) {
+            log.error("[Workflow] active prompt version is unavailable agentType={}", agentType);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR);
+        }
+
+        Map<String, Object> versionSnapshot = new LinkedHashMap<>();
+        versionSnapshot.put("promptVersionId", promptVersion.getId());
+        versionSnapshot.put("versionUuid", promptVersion.getVersionUuid());
+        versionSnapshot.put("templateUuid", promptVersion.getTemplateUuid());
+        versionSnapshot.put("version", promptVersion.getVersion());
+        versionSnapshot.put("outputSchemaKey", promptVersion.getOutputSchemaKey());
+        versionSnapshot.put("outputSchemaVersion", promptVersion.getOutputSchemaVersion());
+        promptVersions.put(agentType.name(), versionSnapshot);
+    }
+
     private String buildStepContext(String baseContext, WorkflowRunVO.WorkflowStepVO... previousSteps) {
         StringBuilder builder = new StringBuilder();
         if (baseContext != null && !baseContext.isBlank()) {
@@ -402,6 +465,10 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .projectUuid(projectUuid)
                 .userId(workflowRun.getUserId())
                 .workflowType(workflowRun.getWorkflowType())
+                .workflowDefinitionVersionId(workflowRun.getWorkflowDefinitionVersionId())
+                .schemaVersion(workflowRun.getSchemaVersion())
+                .attempt(workflowRun.getAttempt())
+                .statusVersion(workflowRun.getStatusVersion())
                 .status(workflowRun.getStatus())
                 .inputContent(workflowRun.getInputContent())
                 .summary(workflowRun.getSummary())
@@ -411,6 +478,13 @@ public class WorkflowServiceImpl implements WorkflowService {
                 .createdAt(workflowRun.getCreatedAt())
                 .updatedAt(workflowRun.getUpdatedAt())
                 .build();
+    }
+
+    private record WorkflowRunSnapshot(
+            Long definitionVersionId,
+            String definitionSnapshot,
+            String promptVersionSnapshot
+    ) {
     }
 
     private GameProject getUserProject(Long userId, String projectUuid) {

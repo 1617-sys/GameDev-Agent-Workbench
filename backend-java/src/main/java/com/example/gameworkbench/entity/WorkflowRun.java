@@ -30,6 +30,18 @@ public class WorkflowRun {
 
     private String workflowType;
 
+    private Long workflowDefinitionVersionId;
+
+    private String workflowDefinitionSnapshot;
+
+    private String promptVersionSnapshot;
+
+    private String schemaVersion;
+
+    private Integer attempt;
+
+    private Long statusVersion;
+
     private String status;
 
     private String inputContent;

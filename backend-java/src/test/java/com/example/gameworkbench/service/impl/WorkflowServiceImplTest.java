@@ -26,6 +26,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -42,12 +45,14 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowDefinitionVersion;
 import com.example.gameworkbench.entity.WorkflowStepRun;
+import com.example.gameworkbench.entity.PromptVersion;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.AgentRunService;
 import com.example.gameworkbench.service.WorkflowDefinitionVersionService;
+import com.example.gameworkbench.service.PromptVersionService;
 import com.example.gameworkbench.vo.agent.AgentRunVO;
 import com.example.gameworkbench.vo.workflow.WorkflowRunVO;
 
@@ -76,6 +81,9 @@ class WorkflowServiceImplTest {
     @Mock
     private WorkflowDefinitionVersionService workflowDefinitionVersionService;
 
+    @Mock
+    private PromptVersionService promptVersionService;
+
     @Captor
     private ArgumentCaptor<AgentRunRequest> agentRunRequestCaptor;
 
@@ -91,7 +99,9 @@ class WorkflowServiceImplTest {
                 agentArtifactMapper,
                 agentRunService,
                 workflowStepRunMapper,
-                workflowDefinitionVersionService
+                workflowDefinitionVersionService,
+                promptVersionService,
+                new ObjectMapper()
         );
         workflowLogger = (Logger) LoggerFactory.getLogger(WorkflowServiceImpl.class);
         logAppender = new ListAppender<>();
@@ -112,6 +122,7 @@ class WorkflowServiceImplTest {
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
         when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
                 .thenReturn(defaultDefinition());
+        stubActivePromptVersions(11L, "prompt-v1");
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenReturn(agentRun(101L, "run-game-concept", "concept output"))
                 .thenReturn(agentRun(102L, "run-core-loop", "core loop output"))
@@ -145,6 +156,19 @@ class WorkflowServiceImplTest {
         assertThat(insertedWorkflow.get().getWorkflowRunUuid()).isNotBlank();
         assertThat(insertedWorkflow.get().getCreatedAt()).isNotNull();
         assertThat(insertedWorkflow.get().getUpdatedAt()).isNotNull();
+        assertThat(insertedWorkflow.get())
+                .extracting(
+                        WorkflowRun::getWorkflowDefinitionVersionId,
+                        WorkflowRun::getWorkflowDefinitionSnapshot,
+                        WorkflowRun::getSchemaVersion,
+                        WorkflowRun::getAttempt,
+                        WorkflowRun::getStatusVersion
+                )
+                .containsExactly(900L, "{\"workflowKey\":\"GAME_DESIGN\",\"version\":1}",
+                        "game-config/1.0", 1, 0L);
+        assertThat(insertedWorkflow.get().getPromptVersionSnapshot())
+                .contains("GAME_CONCEPT", "CORE_LOOP_DESIGN", "TASK_BREAKDOWN", "prompt-v1")
+                .doesNotContain("systemPrompt", "userPromptTemplate");
 
         verify(agentRunService, times(3)).run(eq(USER_ID), agentRunRequestCaptor.capture());
         assertThat(agentRunRequestCaptor.getAllValues())
@@ -205,6 +229,14 @@ class WorkflowServiceImplTest {
 
         assertThat(result.getStatus()).isEqualTo(AgentRunStatus.SUCCESS.name());
         assertThat(result.getSummary()).isEqualTo(updatedWorkflow.get().getSummary());
+        assertThat(result)
+                .extracting(
+                        WorkflowRunVO::getWorkflowDefinitionVersionId,
+                        WorkflowRunVO::getSchemaVersion,
+                        WorkflowRunVO::getAttempt,
+                        WorkflowRunVO::getStatusVersion
+                )
+                .containsExactly(900L, "game-config/1.0", 1, 0L);
         assertThat(result.getSteps())
                 .extracting(WorkflowRunVO.WorkflowStepVO::getAgentRunUuid)
                 .containsExactly("run-game-concept", "run-core-loop", "run-task-breakdown");
@@ -217,6 +249,7 @@ class WorkflowServiceImplTest {
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
         when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
                 .thenReturn(defaultDefinition());
+        stubActivePromptVersions(11L, "prompt-v1");
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenReturn(agentRun(101L, "run-game-concept", "concept output"))
                 .thenThrow(originalException);
@@ -260,6 +293,7 @@ class WorkflowServiceImplTest {
         when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
         when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
                 .thenReturn(defaultDefinition());
+        stubActivePromptVersions(11L, "prompt-v1");
         when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
                 .thenThrow(new IllegalStateException("jdbc password leaked"));
 
@@ -363,6 +397,75 @@ class WorkflowServiceImplTest {
         return artifacts;
     }
 
+    @Test
+    void shouldReadHistoricalWorkflowRunWhenSnapshotFieldsAreNull() {
+        WorkflowRun historicalRun = WorkflowRun.builder()
+                .id(500L)
+                .workflowRunUuid("historical-workflow")
+                .projectId(PROJECT_ID)
+                .userId(USER_ID)
+                .workflowType("GAME_DESIGN")
+                .status(AgentRunStatus.SUCCESS.name())
+                .inputContent("historical input")
+                .timeTakenMs(10L)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
+                .build();
+        when(workflowRunMapper.selectOne(any())).thenReturn(historicalRun);
+        when(gameProjectMapper.selectById(PROJECT_ID)).thenReturn(ownedProject());
+
+        WorkflowRunVO result = workflowService.getWorkflowRun(USER_ID, "historical-workflow");
+
+        assertThat(result)
+                .extracting(
+                        WorkflowRunVO::getWorkflowDefinitionVersionId,
+                        WorkflowRunVO::getSchemaVersion,
+                        WorkflowRunVO::getAttempt,
+                        WorkflowRunVO::getStatusVersion
+                )
+                .containsOnlyNulls();
+        assertThat(result.getStatus()).isEqualTo(AgentRunStatus.SUCCESS.name());
+    }
+
+    @Test
+    void shouldKeepEarlierPromptVersionSnapshotWhenActivePromptChanges() throws Exception {
+        WorkflowRunRequest request = workflowRequest();
+        when(gameProjectMapper.selectOne(any())).thenReturn(ownedProject());
+        when(workflowDefinitionVersionService.findActiveDefinition("GAME_DESIGN"))
+                .thenReturn(defaultDefinition());
+        when(promptVersionService.findActiveByAgentType(AgentType.GAME_CONCEPT.name()))
+                .thenReturn(promptVersion(11L, "prompt-v1", AgentType.GAME_CONCEPT))
+                .thenReturn(promptVersion(21L, "prompt-v2", AgentType.GAME_CONCEPT));
+        when(promptVersionService.findActiveByAgentType(AgentType.CORE_LOOP_DESIGN.name()))
+                .thenReturn(promptVersion(12L, "prompt-v1", AgentType.CORE_LOOP_DESIGN))
+                .thenReturn(promptVersion(22L, "prompt-v2", AgentType.CORE_LOOP_DESIGN));
+        when(promptVersionService.findActiveByAgentType(AgentType.TASK_BREAKDOWN.name()))
+                .thenReturn(promptVersion(13L, "prompt-v1", AgentType.TASK_BREAKDOWN))
+                .thenReturn(promptVersion(23L, "prompt-v2", AgentType.TASK_BREAKDOWN));
+        when(agentRunService.run(eq(USER_ID), any(AgentRunRequest.class)))
+                .thenReturn(agentRun(101L, "first-1", "first output"))
+                .thenReturn(agentRun(102L, "first-2", "first output"))
+                .thenReturn(agentRun(103L, "first-3", "first output"))
+                .thenReturn(agentRun(201L, "second-1", "second output"))
+                .thenReturn(agentRun(202L, "second-2", "second output"))
+                .thenReturn(agentRun(203L, "second-3", "second output"));
+
+        workflowService.run(USER_ID, request);
+        workflowService.run(USER_ID, request);
+
+        ArgumentCaptor<WorkflowRun> workflowCaptor = ArgumentCaptor.forClass(WorkflowRun.class);
+        verify(workflowRunMapper, times(2)).insert(workflowCaptor.capture());
+        List<WorkflowRun> createdRuns = workflowCaptor.getAllValues();
+        String firstSnapshot = createdRuns.get(0).getPromptVersionSnapshot();
+        String secondSnapshot = createdRuns.get(1).getPromptVersionSnapshot();
+
+        JsonNode first = new ObjectMapper().readTree(firstSnapshot);
+        JsonNode second = new ObjectMapper().readTree(secondSnapshot);
+        assertThat(first.get("GAME_CONCEPT").get("promptVersionId").asLong()).isEqualTo(11L);
+        assertThat(second.get("GAME_CONCEPT").get("promptVersionId").asLong()).isEqualTo(21L);
+        assertThat(firstSnapshot).isNotEqualTo(secondSnapshot);
+    }
+
     private List<WorkflowStepRun> captureInsertedStepRuns() {
         List<WorkflowStepRun> stepRuns = new ArrayList<>();
         when(workflowStepRunMapper.insert(any(WorkflowStepRun.class))).thenAnswer(invocation -> {
@@ -422,6 +525,27 @@ class WorkflowServiceImplTest {
                 .workflowKey("GAME_DESIGN")
                 .version(1)
                 .status("ACTIVE")
+                .definitionJson("{\"workflowKey\":\"GAME_DESIGN\",\"version\":1}")
+                .build();
+    }
+
+    private void stubActivePromptVersions(Long firstId, String versionPrefix) {
+        when(promptVersionService.findActiveByAgentType(AgentType.GAME_CONCEPT.name()))
+                .thenReturn(promptVersion(firstId, versionPrefix, AgentType.GAME_CONCEPT));
+        when(promptVersionService.findActiveByAgentType(AgentType.CORE_LOOP_DESIGN.name()))
+                .thenReturn(promptVersion(firstId + 1, versionPrefix, AgentType.CORE_LOOP_DESIGN));
+        when(promptVersionService.findActiveByAgentType(AgentType.TASK_BREAKDOWN.name()))
+                .thenReturn(promptVersion(firstId + 2, versionPrefix, AgentType.TASK_BREAKDOWN));
+    }
+
+    private PromptVersion promptVersion(Long id, String versionUuid, AgentType agentType) {
+        return PromptVersion.builder()
+                .id(id)
+                .versionUuid(versionUuid + "-" + agentType.name())
+                .templateUuid("template-" + agentType.name())
+                .agentType(agentType.name())
+                .version(1)
+                .status("ACTIVE")
                 .build();
     }
 
@@ -432,6 +556,12 @@ class WorkflowServiceImplTest {
                 .projectId(source.getProjectId())
                 .userId(source.getUserId())
                 .workflowType(source.getWorkflowType())
+                .workflowDefinitionVersionId(source.getWorkflowDefinitionVersionId())
+                .workflowDefinitionSnapshot(source.getWorkflowDefinitionSnapshot())
+                .promptVersionSnapshot(source.getPromptVersionSnapshot())
+                .schemaVersion(source.getSchemaVersion())
+                .attempt(source.getAttempt())
+                .statusVersion(source.getStatusVersion())
                 .status(source.getStatus())
                 .inputContent(source.getInputContent())
                 .summary(source.getSummary())

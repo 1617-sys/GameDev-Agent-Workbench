@@ -20,6 +20,10 @@ public class WorkflowRunVO {
     private String projectUuid;
     private Long userId;
     private String workflowType;
+    private Long workflowDefinitionVersionId;
+    private String schemaVersion;
+    private Integer attempt;
+    private Long statusVersion;
     private String status;
     private String inputContent;
     private String summary;
