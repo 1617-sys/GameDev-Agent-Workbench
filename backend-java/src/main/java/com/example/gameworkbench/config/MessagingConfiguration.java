@@ -23,7 +23,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @Configuration
 @Profile("async")
-@EnableConfigurationProperties({RabbitMqInfrastructureProperties.class, OutboxPublisherProperties.class, WorkflowConsumerProperties.class, WorkflowRetryProperties.class})
+@EnableConfigurationProperties({RabbitMqInfrastructureProperties.class, OutboxPublisherProperties.class, WorkflowConsumerProperties.class, WorkflowRetryProperties.class, WorkflowRecoveryProperties.class})
 @EnableScheduling
 public class MessagingConfiguration {
 

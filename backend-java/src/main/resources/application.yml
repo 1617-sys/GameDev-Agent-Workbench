@@ -52,6 +52,14 @@ app:
     window-seconds: ${WORKFLOW_RATE_LIMIT_WINDOW_SECONDS:60}
     retry-after-seconds: ${WORKFLOW_RATE_LIMIT_RETRY_AFTER_SECONDS:60}
     max-pending-runs: ${WORKFLOW_BACKPRESSURE_MAX_PENDING_RUNS:100}
+  workflow-recovery:
+    enabled: ${WORKFLOW_RECOVERY_ENABLED:true}
+    scan-delay-ms: ${WORKFLOW_RECOVERY_SCAN_DELAY_MS:30000}
+    batch-size: ${WORKFLOW_RECOVERY_BATCH_SIZE:50}
+    pending-stale-ms: ${WORKFLOW_RECOVERY_PENDING_STALE_MS:300000}
+    queued-stale-ms: ${WORKFLOW_RECOVERY_QUEUED_STALE_MS:300000}
+    running-heartbeat-stale-ms: ${WORKFLOW_RECOVERY_RUNNING_HEARTBEAT_STALE_MS:120000}
+    max-recovery-attempts: ${WORKFLOW_RECOVERY_MAX_ATTEMPTS:3}
 
 game-build:
   base-url: ${GAME_BUILD_BASE_URL:http://localhost:5173}

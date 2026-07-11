@@ -52,6 +52,8 @@ public class WorkflowRun {
 
     private Integer retryCount;
 
+    private Integer recoveryAttempt;
+
     private String lastErrorCode;
 
     private String lastErrorMessage;

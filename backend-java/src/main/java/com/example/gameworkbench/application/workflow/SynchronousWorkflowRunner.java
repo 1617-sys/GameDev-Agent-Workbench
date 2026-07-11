@@ -50,6 +50,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
         if (run == null || isTerminal(run.getStatus())) throw new IllegalStateException("Workflow run is not executable");
         List<WorkflowStepPlan> plans = planParser.parse(run.getWorkflowDefinitionSnapshot());
         WorkflowExecutionContext context = new WorkflowExecutionContext(run, projectUuid, run.getInputContent(), plans);
+        heartbeat(workflowRunUuid);
         safe(safeListener, "WORKFLOW_STARTED", null);
         for (WorkflowStepPlan plan : plans) {
             WorkflowStepRun step = findOrCreate(run, plan);
@@ -58,6 +59,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 continue;
             }
             try {
+                heartbeat(workflowRunUuid);
                 WorkflowStatusPolicy.requireTransition(WorkflowStepRunStatus.PENDING, WorkflowStepRunStatus.RUNNING,
                         context.dependenciesSatisfied(plan));
                 step.setStatus(WorkflowStepRunStatus.RUNNING.name()); step.setStartedAt(LocalDateTime.now());
@@ -73,6 +75,7 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 step.setSchemaKey(output.schemaKey()); step.setSchemaVersion(output.schemaVersion()); step.setValidationSummary(result.evaluation().summary());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step success");
                 context.recordCompletedOutput(plan.stepKey(), output); safe(safeListener, "STEP_SUCCEEDED", plan.stepKey());
+                heartbeat(workflowRunUuid);
             } catch (Exception exception) {
                 step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage(exception.getMessage() == null ? "Workflow step failed" : exception.getMessage());
                 if (exception instanceof WorkflowEvaluationException) step.setValidationSummary(exception.getMessage());
@@ -85,6 +88,8 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
         run.setStatus(WorkflowRunStatus.SUCCESS.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow success");
         safe(safeListener, "WORKFLOW_COMPLETED", null);
     }
+
+    private void heartbeat(String workflowRunUuid) { workflowRunMapper.touchHeartbeat(workflowRunUuid, LocalDateTime.now()); }
 
     private WorkflowStepRun findOrCreate(WorkflowRun run, WorkflowStepPlan plan) {
         return workflowStepRunMapper.selectByWorkflowRunUuid(run.getWorkflowRunUuid()).stream()
