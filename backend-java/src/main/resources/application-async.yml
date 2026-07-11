@@ -11,13 +11,15 @@ spring:
       mandatory: true
     listener:
       simple:
-        auto-startup: false
+        auto-startup: ${WORKFLOW_CONSUMER_ENABLED:true}
 
 app:
   messaging:
     workflow-exchange: ${WORKFLOW_EXCHANGE:workflow.events}
     workflow-queue: ${WORKFLOW_QUEUE:workflow.run.execute}
     workflow-routing-key: ${WORKFLOW_ROUTING_KEY:workflow.run.requested}
+    consumer:
+      execution-lock-ttl-seconds: ${WORKFLOW_EXECUTION_LOCK_TTL_SECONDS:900}
   outbox:
     publisher:
       batch-size: ${OUTBOX_PUBLISHER_BATCH_SIZE:20}

@@ -7,6 +7,9 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
+import org.springframework.amqp.core.AcknowledgeMode;
+import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +22,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  */
 @Configuration
 @Profile("async")
-@EnableConfigurationProperties({RabbitMqInfrastructureProperties.class, OutboxPublisherProperties.class})
+@EnableConfigurationProperties({RabbitMqInfrastructureProperties.class, OutboxPublisherProperties.class, WorkflowConsumerProperties.class})
 @EnableScheduling
 public class MessagingConfiguration {
 
@@ -36,5 +39,17 @@ public class MessagingConfiguration {
                 .to(exchange)
                 .with(properties.workflowRoutingKey());
         return new Declarables(exchange, queue, binding);
+    }
+
+    @Bean
+    public SimpleRabbitListenerContainerFactory workflowRabbitListenerContainerFactory(
+            ConnectionFactory connectionFactory, MessageConverter rabbitMqMessageConverter
+    ) {
+        SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
+        factory.setConnectionFactory(connectionFactory);
+        factory.setAcknowledgeMode(AcknowledgeMode.MANUAL);
+        factory.setDefaultRequeueRejected(false);
+        factory.setMessageConverter(rabbitMqMessageConverter);
+        return factory;
     }
 }

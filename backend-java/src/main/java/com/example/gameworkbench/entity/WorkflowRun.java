@@ -46,6 +46,10 @@ public class WorkflowRun {
 
     private String requestFingerprint;
 
+    private LocalDateTime heartbeatAt;
+
+    private LocalDateTime lastActivityAt;
+
     private String status;
 
     private String inputContent;
