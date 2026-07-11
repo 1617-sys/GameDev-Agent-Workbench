@@ -32,6 +32,13 @@ public class OutboxEvent {
     private String status;
     private Integer publishAttempt;
     private LocalDateTime nextAttemptAt;
+    private String claimOwner;
+    private LocalDateTime claimUntil;
+    private String messageId;
+    private LocalDateTime publishedAt;
+    private LocalDateTime confirmedAt;
+    private String lastErrorCode;
+    private String lastErrorMessage;
     private String traceId;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

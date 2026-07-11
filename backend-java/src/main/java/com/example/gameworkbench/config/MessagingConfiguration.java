@@ -11,14 +11,16 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
- * R3 infrastructure only: declares the workflow transport and JSON converter.
- * No listener, publisher, or workflow business behavior is registered here.
+ * R3 transport infrastructure: declares the workflow topology and JSON converter.
+ * Consumer and workflow business behavior remain outside this configuration.
  */
 @Configuration
 @Profile("async")
-@EnableConfigurationProperties(RabbitMqInfrastructureProperties.class)
+@EnableConfigurationProperties({RabbitMqInfrastructureProperties.class, OutboxPublisherProperties.class})
+@EnableScheduling
 public class MessagingConfiguration {
 
     @Bean

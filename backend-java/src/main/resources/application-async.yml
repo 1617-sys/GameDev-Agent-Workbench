@@ -5,6 +5,10 @@ spring:
     username: ${RABBITMQ_USERNAME}
     password: ${RABBITMQ_PASSWORD}
     virtual-host: ${RABBITMQ_VHOST:/}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
     listener:
       simple:
         auto-startup: false
@@ -14,3 +18,9 @@ app:
     workflow-exchange: ${WORKFLOW_EXCHANGE:workflow.events}
     workflow-queue: ${WORKFLOW_QUEUE:workflow.run.execute}
     workflow-routing-key: ${WORKFLOW_ROUTING_KEY:workflow.run.requested}
+  outbox:
+    publisher:
+      batch-size: ${OUTBOX_PUBLISHER_BATCH_SIZE:20}
+      poll-delay-ms: ${OUTBOX_PUBLISHER_POLL_DELAY_MS:1000}
+      claim-lease-ms: ${OUTBOX_PUBLISHER_CLAIM_LEASE_MS:30000}
+      retry-delay-ms: ${OUTBOX_PUBLISHER_RETRY_DELAY_MS:5000}
