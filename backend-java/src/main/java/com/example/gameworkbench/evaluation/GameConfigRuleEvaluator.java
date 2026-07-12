@@ -1,0 +1,13 @@
+package com.example.gameworkbench.evaluation;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Component;
+import java.util.*;
+@Component public class GameConfigRuleEvaluator {
+ private final ObjectMapper mapper; private final RuntimeCapabilityRegistry capabilities;
+ public GameConfigRuleEvaluator(ObjectMapper mapper, RuntimeCapabilityRegistry capabilities){this.mapper=mapper;this.capabilities=capabilities;}
+ public RuleEvaluationResult evaluate(String content){ List<RuleViolation> out=new ArrayList<>(); try { JsonNode n=mapper.readTree(content); while(n!=null&&n.isObject()&&(n.has("output")||n.has("gameConfig")||n.has("game_config"))) n=n.has("game_config")?n.get("game_config"):n.has("gameConfig")?n.get("gameConfig"):n.get("output"); if(n==null||!n.isObject()) return new RuleEvaluationResult("SKIPPED",capabilities.version(),List.of(new RuleViolation("SCHEMA_NOT_PASSED","$","BLOCKING","schema object","missing"))); String type=n.path("gameType").asText(); if(!capabilities.supportsGameType(type)) out.add(v("UNSUPPORTED_GAME_TYPE","gameType","BLOCKING","top_down_collect",type)); int w=n.path("world").path("width").asInt(-1),h=n.path("world").path("height").asInt(-1); if(w<=0||h<=0) out.add(v("WORLD_DIMENSIONS","world","BLOCKING","positive width/height",w+"x"+h)); point(n.path("player"),"player",w,h,out); point(n.path("exit"),"exit",w,h,out); ids(n.path("items").isArray()?n.path("items"):n.path("collectibles"),"items",out); ids(n.path("enemies"),"enemies",out); if(n.path("player").path("speed").asDouble(0)<=0) out.add(v("PLAYER_SPEED","player.speed","BLOCKING","positive",n.path("player").path("speed").asText())); } catch(Exception e){out.add(v("SCHEMA_NOT_PASSED","$","BLOCKING","valid schema input","invalid"));} return new RuleEvaluationResult(out.stream().anyMatch(x->"BLOCKING".equals(x.severity()))?"FAILED":"PASSED",capabilities.version(),List.copyOf(out)); }
+ private void point(JsonNode p,String path,int w,int h,List<RuleViolation> out){ double x=p.path("x").asDouble(Double.NaN),y=p.path("y").asDouble(Double.NaN); if(!Double.isFinite(x)||!Double.isFinite(y)||x<0||y<0||x>w||y>h)out.add(v("WORLD_BOUNDS",path,"BLOCKING","0..world bounds",x+","+y)); }
+ private void ids(JsonNode a,String path,List<RuleViolation> out){ if(!a.isArray())return; Set<String>s=new HashSet<>(); for(int i=0;i<a.size();i++){String id=a.get(i).path("id").asText();if(id.isBlank()||!s.add(id))out.add(v("DUPLICATE_OR_MISSING_ID",path+"["+i+"].id","BLOCKING","unique non-empty id",id));}}
+ private RuleViolation v(String c,String p,String s,String e,String a){return new RuleViolation(c,p,s,e,a);}
+}

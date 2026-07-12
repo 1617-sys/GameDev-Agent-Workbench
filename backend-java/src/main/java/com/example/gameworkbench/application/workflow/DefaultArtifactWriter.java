@@ -18,7 +18,6 @@ public class DefaultArtifactWriter implements ArtifactWriter {
     private final WorkflowRunEventRecorder workflowRunEventRecorder;
     private final SchemaEvaluationService schemaEvaluationService;
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper) { this(artifactMapper, (a, b, c, d, e, f, g, h) -> null, null); }
-    @Autowired
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder) {
         this(artifactMapper, workflowRunEventRecorder, null);
     }

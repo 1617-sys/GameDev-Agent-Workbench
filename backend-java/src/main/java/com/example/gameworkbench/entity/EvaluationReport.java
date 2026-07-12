@@ -9,4 +9,5 @@ public class EvaluationReport {
  @TableId(type=IdType.AUTO) private Long id;
  private Long artifactId; private String evaluatorType; private String status; private String schemaKey; private String schemaVersion;
  private String inputHash; private String violationsJson; private Integer evaluationAttempt; private LocalDateTime evaluatedAt;
+ private String ruleVersion;
 }
