@@ -12,7 +12,7 @@
 
 body {
   margin: 0;
-  min-width: 1180px;
+  min-width: 0;
   min-height: 100vh;
 }
 
@@ -589,9 +589,64 @@ label {
   padding: 34px 40px 48px;
 }
 
+.run-center-shell {
+  display: block;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.workflow-form,
+.workflow-run-view {
+  display: grid;
+  gap: 20px;
+}
+
+.workflow-form {
+  max-width: 760px;
+}
+
+.run-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.run-summary h2,
+.content-section h3 {
+  margin: 4px 0;
+}
+
+.run-steps {
+  display: grid;
+  gap: 12px;
+  padding-left: 22px;
+}
+
+.run-steps li {
+  padding: 12px;
+  border-left: 4px solid #2563eb;
+  background: #f8fafc;
+}
+
+.run-steps strong,
+.run-steps span {
+  display: block;
+}
+
+.run-steps span,
+.run-steps p {
+  margin: 6px 0 0;
+  color: #475569;
+}
+
+.artifact-card h4 {
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 1280px) {
   body {
-    min-width: 960px;
+    min-width: 0;
   }
 
   .workspace-grid {
@@ -607,5 +662,39 @@ label {
   .document-grid,
   .debug-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .main-shell,
+  .demo-page {
+    padding: 20px 16px 32px;
+  }
+
+  .topbar,
+  .run-summary {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .topbar h1 {
+    font-size: 28px;
+  }
+
+  .run-summary .button-row,
+  .workflow-form .button-row {
+    display: grid;
+  }
+
+  .run-summary .button-row > *,
+  .workflow-form .button-row > * {
+    width: 100%;
+    text-align: center;
+  }
+
+  .content-section,
+  .login-card {
+    padding: 16px;
   }
 }
