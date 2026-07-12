@@ -20,6 +20,7 @@
     </section>
 
     <WorkflowRunView v-else-if="workflowRunUuid" :store="store" :workflow-run-uuid="workflowRunUuid" @back="navigate('/')" />
+    <PromptMetricsView v-else-if="routePath === '/analytics/prompt-versions'" :api="analyticsApi.promptVersions" @back="navigate('/')" />
     <WorkbenchView v-else :api="workflowApi" @submitted="navigateToRun" />
   </main>
 </template>
@@ -33,6 +34,8 @@ import { workflowRunUuidFromPath, navigateToWorkflowRun } from "./router/workflo
 import { createWorkflowRunStore } from "./stores/workflowRunStore";
 import WorkbenchView from "./views/WorkbenchView.vue";
 import WorkflowRunView from "./views/WorkflowRunView.vue";
+import PromptMetricsView from "./views/PromptMetricsView.vue";
+import { createAnalyticsApi } from "./api/analyticsApi";
 
 const session = reactive({ token: "" });
 const credentials = reactive({ username: "", password: "" });
@@ -43,6 +46,7 @@ const workflowRunUuid = computed(() => workflowRunUuidFromPath(routePath.value))
 const http = createHttpClient({ getToken: () => session.token });
 const workflowApi = createWorkflowApi(http);
 const authApi = createAuthApi(http);
+const analyticsApi = createAnalyticsApi(http);
 const store = createWorkflowRunStore({ api: workflowApi });
 
 function syncRoute() { routePath.value = window.location.pathname; }
