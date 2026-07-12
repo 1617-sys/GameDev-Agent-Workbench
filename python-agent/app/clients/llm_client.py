@@ -78,13 +78,8 @@ class LLMClient:
             if isinstance(exception, httpx.HTTPStatusError) and exception.response.text:
                 error_message = exception.response.text
 
-            logger.exception(
-                "LLM request failed model=%s timeTakenMs=%s errorType=%s errorMessage=%s",
-                self.model,
-                time_taken_ms,
-                error_type,
-                error_message,
-            )
+            logger.warning("LLM request failed model=%s timeTakenMs=%s errorType=%s",
+                           self.model, time_taken_ms, error_type)
 
             if self.enable_mock_fallback:
                 return self._mock_result(start_time, user_prompt, error_type, error_message)
@@ -99,7 +94,7 @@ class LLMClient:
         error_message: str | None = None,
     ) -> LLMResult:
         return LLMResult(
-            content=f"Mock fallback result. User prompt: {user_prompt}",
+            content="Mock fallback result.",
             model="mock",
             time_taken_ms=int((time.perf_counter() - start_time) * 1000),
             success=False,

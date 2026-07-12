@@ -19,7 +19,23 @@ router = APIRouter(prefix="/agent", tags=["agent"])
 
 def _build_response(request: Request, agent_result):
     trace_id = getattr(request.state, "trace_id", None)
-    return ApiResponse(code=0, message="success", data=agent_result, trace_id=trace_id)
+    output = agent_result.model_dump(exclude={"raw_result", "prompt", "template"})
+    is_mock = agent_result.model == "mock" or agent_result.raw_result.get("mode") in {"mock", "mock_fallback"}
+    return ApiResponse(
+        code=0,
+        message="success",
+        data={
+            "status": "SUCCESS",
+            "output": output,
+            "raw_output_ref": None,
+            "model": agent_result.model,
+            "provider": "mock" if is_mock else "openai-compatible",
+            "usage": None,
+            "latency_ms": agent_result.time_taken_ms,
+            "mock": is_mock,
+        },
+        trace_id=trace_id,
+    )
 
 
 @router.post("/requirement-breakdown", response_model=ApiResponse)

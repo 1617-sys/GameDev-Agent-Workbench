@@ -8,6 +8,11 @@ import java.util.stream.Collectors;
 
 import com.example.gameworkbench.entity.PromptTemplate;
 import com.example.gameworkbench.mapper.PromptTemplateMapper;
+import com.example.gameworkbench.entity.ModelCallMetric;
+import com.example.gameworkbench.entity.PromptVersion;
+import com.example.gameworkbench.mapper.PromptVersionMapper;
+import com.example.gameworkbench.service.ModelCallMetricService;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -42,6 +47,8 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final PythonAgentClient pythonAgentClient;
     private final ObjectMapper objectMapper;
     private final PromptTemplateMapper promptTemplateMapper;
+    private final PromptVersionMapper promptVersionMapper;
+    private final ModelCallMetricService modelCallMetricService;
 
     /**
      * 执行一次 Agent 运行任务。
@@ -89,6 +96,7 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setAgentType(request.getAgentType().name());
         agentRun.setInputContent(writeJsonSafely(request));
         agentRun.setStatus(AgentRunStatus.RUNNING.name());
+        agentRun.setMockState("UNKNOWN");
         agentRun.setCreatedAt(now);
         agentRun.setUpdatedAt(now);
         agentRunMapper.insert(agentRun);
@@ -115,6 +123,13 @@ public class AgentRunServiceImpl implements AgentRunService {
                 throw new BusinessException(ErrorCode.ACTIVE_PROMPT_TEMPLATE_NOT_FOUND);
             }
 
+            PromptVersion promptVersion = promptVersionMapper.selectActiveByAgentType(request.getAgentType().name());
+            if (promptVersion == null) {
+                throw new BusinessException(ErrorCode.ACTIVE_PROMPT_TEMPLATE_NOT_FOUND);
+            }
+            agentRun.setPromptVersionId(promptVersion.getId());
+            agentRunMapper.updateById(agentRun);
+
             log.info("[Agent] prompt template selected userId={} runUuid={} agentType={} templateUuid={} version={}",
                     userId, agentRun.getRunUuid(), request.getAgentType(),
                     promptTemplate.getTemplateUuid(), promptTemplate.getVersion());
@@ -127,10 +142,10 @@ public class AgentRunServiceImpl implements AgentRunService {
                     .title(request.getTitle())
                     .content(request.getContent())
                     .context(request.getContext())
-                    .systemPrompt(promptTemplate.getSystemPrompt())
-                    .userPromptTemplate(promptTemplate.getUserPromptTemplate())
-                    .templateUuid(promptTemplate.getTemplateUuid())
-                    .templateVersion(promptTemplate.getVersion())
+                    .systemPrompt(promptVersion.getSystemPrompt())
+                    .userPromptTemplate(promptVersion.getUserPromptTemplate())
+                    .templateUuid(promptVersion.getTemplateUuid())
+                    .templateVersion(promptVersion.getVersion())
                     .userId(userId)
                     .build();
 
@@ -138,16 +153,28 @@ public class AgentRunServiceImpl implements AgentRunService {
             /*
              * 将 Python 服务返回结果序列化为 JSON 字符串，写入运行记录并标记成功。
              */
-            String outputContent = pythonResponse.getData() == null
+            JsonNode execution = pythonResponse.getData();
+            if (execution == null || !"SUCCESS".equals(execution.path("status").asText())
+                    || !execution.has("mock")) {
+                throw new BusinessException(ErrorCode.PYTHON_INVALID_RESPONSE);
+            }
+            String outputContent = execution.path("output").isMissingNode() || execution.path("output").isNull()
                     ? null
-                    : objectMapper.writeValueAsString(pythonResponse.getData());
+                    : objectMapper.writeValueAsString(execution.path("output"));
 
             agentRun.setOutputContent(outputContent);
             agentRun.setErrorMessage(null);
             agentRun.setStatus(AgentRunStatus.SUCCESS.name());
-            agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
+            agentRun.setTimeTakenMs(execution.path("latency_ms").canConvertToLong()
+                    ? execution.path("latency_ms").longValue() : System.currentTimeMillis() - startTime);
+            agentRun.setProvider(textOrNull(execution, "provider"));
+            agentRun.setModelName(textOrNull(execution, "model"));
+            agentRun.setMockState(execution.path("mock").asBoolean() ? "TRUE" : "FALSE");
+            agentRun.setTraceId(pythonResponse.getTraceId());
+            agentRun.setRawOutputRef(textOrNull(execution, "raw_output_ref"));
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            recordMetric(agentRun, execution, "AVAILABLE");
 
             log.info("[Agent] run succeeded userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
@@ -158,10 +185,12 @@ public class AgentRunServiceImpl implements AgentRunService {
              * 业务异常处理：记录失败信息并重新抛出，由上层统一处理。
              */
             agentRun.setStatus(AgentRunStatus.FAILED.name());
-            agentRun.setErrorMessage(exception.getMessage());
+            agentRun.setErrorMessage(ErrorCode.PYTHON_RESPONSE_FAILED.getMessage());
+            agentRun.setErrorCategory(errorCategory(exception));
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            recordMetric(agentRun, null, "UNAVAILABLE");
 
             log.warn("[Agent] run failed userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={} message={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
@@ -173,9 +202,11 @@ public class AgentRunServiceImpl implements AgentRunService {
              */
             agentRun.setStatus(AgentRunStatus.FAILED.name());
             agentRun.setErrorMessage(ErrorCode.AGENT_RUN_ERROR.getMessage());
+            agentRun.setErrorCategory("INTERNAL");
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            recordMetric(agentRun, null, "UNAVAILABLE");
 
             log.error("[Agent] run exception userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
@@ -309,6 +340,11 @@ public class AgentRunServiceImpl implements AgentRunService {
                 .status(agentRun.getStatus())
                 .errorMessage(agentRun.getErrorMessage())
                 .timeTakenMs(agentRun.getTimeTakenMs())
+                .provider(agentRun.getProvider())
+                .modelName(agentRun.getModelName())
+                .mockState(agentRun.getMockState())
+                .traceId(agentRun.getTraceId())
+                .errorCategory(agentRun.getErrorCategory())
                 .createdAt(agentRun.getCreatedAt())
                 .updatedAt(agentRun.getUpdatedAt())
                 .build();
@@ -335,5 +371,47 @@ public class AgentRunServiceImpl implements AgentRunService {
             return 10L;
         }
         return Math.min(pageSize, 100);
+    }
+
+    private void recordMetric(AgentRun agentRun, JsonNode execution, String usageState) {
+        ModelCallMetric metric = new ModelCallMetric();
+        metric.setAgentRunId(agentRun.getId());
+        metric.setWorkflowRunId(agentRun.getWorkflowRunId());
+        metric.setStepRunId(agentRun.getStepRunId());
+        metric.setPromptVersionId(agentRun.getPromptVersionId());
+        metric.setProvider(agentRun.getProvider());
+        metric.setModelName(agentRun.getModelName());
+        metric.setLatencyMs(agentRun.getTimeTakenMs());
+        metric.setMockState(agentRun.getMockState() == null ? "UNKNOWN" : agentRun.getMockState());
+        metric.setStatus(agentRun.getStatus());
+        metric.setUsageState(usageState);
+        metric.setErrorCategory(agentRun.getErrorCategory());
+        metric.setTraceId(agentRun.getTraceId());
+        metric.setCreatedAt(LocalDateTime.now());
+        if (execution != null && execution.path("usage").isObject()) {
+            JsonNode usage = execution.path("usage");
+            metric.setInputTokens(usage.path("input_tokens").canConvertToInt() ? usage.path("input_tokens").intValue() : null);
+            metric.setOutputTokens(usage.path("output_tokens").canConvertToInt() ? usage.path("output_tokens").intValue() : null);
+            if (usage.path("estimated_cost").isNumber()) {
+                metric.setEstimatedCost(usage.path("estimated_cost").decimalValue());
+            }
+            metric.setUsageState(metric.getInputTokens() == null && metric.getOutputTokens() == null && metric.getEstimatedCost() == null
+                    ? "UNAVAILABLE" : "PARTIAL");
+        }
+        modelCallMetricService.record(metric);
+    }
+
+    private String textOrNull(JsonNode node, String field) {
+        return node.path(field).isTextual() && !node.path(field).asText().isBlank() ? node.path(field).asText() : null;
+    }
+
+    private String errorCategory(BusinessException exception) {
+        return switch (exception.getCode()) {
+            case 50002 -> "PROVIDER_CONFIG";
+            case 50201 -> "PROVIDER_TRANSIENT";
+            case 50202 -> "PROTOCOL_INVALID";
+            case 50203 -> "PROVIDER_REJECTED";
+            default -> "INTERNAL";
+        };
     }
 }

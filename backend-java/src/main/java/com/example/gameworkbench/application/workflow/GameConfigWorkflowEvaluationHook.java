@@ -46,6 +46,7 @@ public class GameConfigWorkflowEvaluationHook implements WorkflowEvaluationHook 
             for (int depth = 0; depth < 4 && node != null && node.isObject(); depth++) {
                 if (node.has("game_config")) node = node.get("game_config");
                 else if (node.has("gameConfig")) node = node.get("gameConfig");
+                else if (node.has("output")) node = node.get("output");
                 else if (node.has("data")) node = node.get("data");
                 else if (node.path("raw_result").has("game_config")) node = node.path("raw_result").get("game_config");
                 else if (node.path("rawResult").has("gameConfig")) node = node.path("rawResult").get("gameConfig");

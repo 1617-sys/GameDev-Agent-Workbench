@@ -31,8 +31,8 @@ def build_requirement_breakdown_result(payload: AgentMockRequest) -> AgentMockRe
         raw_result={
             "mode": "mock",
             "source": "fastapi",
-            "input": payload.model_dump(),
         },
+        model="mock",
     )
 
 
@@ -54,8 +54,8 @@ def build_api_design_result(payload: AgentMockRequest) -> AgentMockResult:
         raw_result={
             "mode": "mock",
             "source": "fastapi",
-            "input": payload.model_dump(),
         },
+        model="mock",
     )
 
 
@@ -77,8 +77,8 @@ def build_bug_analysis_result(payload: AgentMockRequest) -> AgentMockResult:
         raw_result={
             "mode": "mock",
             "source": "fastapi",
-            "input": payload.model_dump(),
         },
+        model="mock",
     )
 
 
@@ -108,9 +108,8 @@ def build_prompt_generate_result(payload: AgentMockRequest) -> AgentMockResult:
         raw_result={
             "mode": "mock",
             "source": "fastapi",
-            "input": payload.model_dump(),
-            "generated_prompt": generated_prompt,
         },
+        model="mock",
     )
 
 
@@ -233,11 +232,6 @@ def _build_llm_agent_result(
             "source": "llm_client",
             "model": llm_result.model,
             "time_taken_ms": llm_result.time_taken_ms,
-            "input": payload.model_dump(),
-            "prompt": {
-                "system": system_prompt,
-                "user": user_prompt,
-            },
         },
         model=llm_result.model,
         time_taken_ms=llm_result.time_taken_ms,

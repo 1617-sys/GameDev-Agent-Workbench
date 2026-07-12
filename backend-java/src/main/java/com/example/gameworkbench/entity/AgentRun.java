@@ -25,6 +25,10 @@ public class AgentRun {
 
     private Long promptVersionId;
 
+    private Long workflowRunId;
+
+    private Long stepRunId;
+
     private String agentType;
 
     private String inputContent;
@@ -36,6 +40,18 @@ public class AgentRun {
     private String errorMessage;
 
     private Long timeTakenMs;
+
+    private String provider;
+
+    private String modelName;
+
+    private String mockState;
+
+    private String traceId;
+
+    private String errorCategory;
+
+    private String rawOutputRef;
 
     private LocalDateTime createdAt;
 
