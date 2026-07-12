@@ -27,6 +27,8 @@ public class KnowledgeDocument {
     private Integer version;
     private String status;
     private String storageRef;
+    private String extractedTextRef;
+    private String extractionMetadata;
     private LocalDateTime parsedAt;
     private LocalDateTime indexedAt;
     private LocalDateTime deletedAt;
