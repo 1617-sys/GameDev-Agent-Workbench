@@ -10,6 +10,7 @@ class GeneratedGameScene extends Phaser.Scene {
     this.gameConfig = normalizeGameConfig(data.config);
     this.onHud = data.onHud || (() => {});
     this.onMessage = data.onMessage || (() => {});
+    this.onReady = data.onReady || (() => {});
     this.collected = 0;
     this.finished = false;
   }
@@ -87,6 +88,7 @@ class GeneratedGameScene extends Phaser.Scene {
     this.physics.add.overlap(this.player, this.enemies, () => this.failGame());
     this.physics.add.overlap(this.player, this.exit, () => this.tryWin());
 
+    this.onReady({ scene: "GeneratedGameScene", itemCount: this.items.getLength(), enemyCount: this.enemies.getLength() });
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys("W,A,S,D,R");
     this.input.keyboard.on("keydown-R", () => this.scene.restart({ config: this.gameConfig, onHud: this.onHud, onMessage: this.onMessage }));
@@ -189,7 +191,8 @@ export function mountGeneratedGame(container, rawConfig, callbacks = {}) {
   game.scene.start("GeneratedGameScene", {
     config,
     onHud: callbacks.onHud,
-    onMessage: callbacks.onMessage
+    onMessage: callbacks.onMessage,
+    onReady: callbacks.onReady || (() => {})
   });
 
   return () => {

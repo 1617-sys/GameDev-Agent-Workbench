@@ -18,7 +18,7 @@
     </div>
 
     <div v-else class="game-layout">
-      <div ref="gameContainer" class="game-canvas"></div>
+      <div ref="gameContainer" class="game-canvas" :data-runtime-ready="runtimeReady ? 'true' : 'false'"></div>
       <aside class="game-hud">
         <span :class="['status-pill', hud.status.toLowerCase()]">{{ hud.status }}</span>
         <h3>{{ hud.objective }}</h3>
@@ -52,6 +52,7 @@ const props = defineProps({
 defineEmits(["open-demo", "regenerate-config"]);
 
 const gameContainer = ref(null);
+const runtimeReady = ref(false);
 let destroyGame = null;
 
 const normalized = computed(() => normalizeGameConfig(props.gameConfig || defaultGameConfig));
@@ -91,11 +92,13 @@ function cleanup() {
 
 async function restart() {
   cleanup();
+  runtimeReady.value = false;
   if (!gameContainer.value || !validation.value.valid) return;
   await nextTick();
   gameContainer.value.innerHTML = "";
   destroyGame = mountGeneratedGame(gameContainer.value, normalized.value, {
-    onHud: (payload) => Object.assign(hud, payload)
+    onHud: (payload) => Object.assign(hud, payload),
+    onReady: () => { runtimeReady.value = true; }
   });
 }
 </script>

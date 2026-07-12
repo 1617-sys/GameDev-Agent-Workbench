@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
     "test:game-config": "node --test tests/gameConfig.test.js",
+    "test:runtime-smoke": "playwright test tests/runtimeSmoke.browser.e2e.js",
     "test:unit": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
     "build": "vite build",
