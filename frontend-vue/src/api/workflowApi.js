@@ -7,6 +7,7 @@ export function createWorkflowApi(http) {
     getArtifacts: (uuid) => http(`${base(uuid)}/artifacts`),
     cancel: (uuid) => http(`${base(uuid)}/cancel`, { method: "POST" }),
     retry: (uuid) => http(`${base(uuid)}/retry`, { method: "POST" }),
-    eventsUrl: (uuid) => base(uuid) + "/events"
+    eventsUrl: (uuid) => base(uuid) + "/events",
+    openEvents: (uuid, lastEventId) => http.openSse(base(uuid) + "/events", { lastEventId })
   };
 }

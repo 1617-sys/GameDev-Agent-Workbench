@@ -22,6 +22,6 @@ const orderedSteps = computed(() => [...run.value.steps].sort((a, b) => (a.stepO
 const duration = computed(() => run.value.snapshot?.startedAt && run.value.snapshot?.finishedAt ? `${Math.max(0, new Date(run.value.snapshot.finishedAt) - new Date(run.value.snapshot.startedAt))} ms` : "等待完成");
 const allowed = (action) => run.value.snapshot?.allowedActions?.includes(action);
 async function command(action) { try { await props.store[action](props.workflowRunUuid); } catch {} }
-onMounted(() => props.store.loadRun(props.workflowRunUuid));
+onMounted(() => props.store.open(props.workflowRunUuid));
 onBeforeUnmount(() => props.store.disconnect(props.workflowRunUuid));
 </script>
