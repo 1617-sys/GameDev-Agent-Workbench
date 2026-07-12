@@ -12,8 +12,8 @@ public interface KnowledgeDocumentMapper extends BaseMapper<KnowledgeDocument> {
     @Select("select * from knowledge_document where document_uuid = #{documentUuid} and project_id = #{projectId} and deleted = 0")
     KnowledgeDocument selectActiveByUuidAndProject(@Param("projectId") Long projectId, @Param("documentUuid") String documentUuid);
 
-    @Select("select * from knowledge_document where project_id = #{projectId} and content_hash = #{contentHash} and deleted = 0")
-    KnowledgeDocument selectActiveByHashAndProject(@Param("projectId") Long projectId, @Param("contentHash") String contentHash);
+    @Select("select * from knowledge_document where project_id = #{projectId} and content_hash = #{contentHash}")
+    KnowledgeDocument selectByHashAndProject(@Param("projectId") Long projectId, @Param("contentHash") String contentHash);
 
     @Select("select * from knowledge_document where project_id = #{projectId} and deleted = 0 order by version desc")
     List<KnowledgeDocument> selectActiveByProject(@Param("projectId") Long projectId);

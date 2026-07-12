@@ -2,6 +2,7 @@ package com.example.gameworkbench.service.impl;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -33,15 +34,18 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
             String contentHash, String storageRef) {
         requireProject(userId, projectId);
         validateCreate(name, sourceType, contentHash);
-        KnowledgeDocument existing = knowledgeDocumentMapper.selectActiveByHashAndProject(projectId, contentHash);
+        String normalizedHash = contentHash.toLowerCase(Locale.ROOT);
+        KnowledgeDocument existing = knowledgeDocumentMapper.selectByHashAndProject(projectId, normalizedHash);
         if (existing != null) {
-            return existing;
+            if (existing.getDeleted() != null && existing.getDeleted() == 0) return existing;
+            // R6-01 fixes duplicate semantics: a deleted evidence record remains immutable.
+            throw new BusinessException(ErrorCode.INVALID_PARAM);
         }
         int version = knowledgeDocumentMapper.selectLatestVersionForUpdate(projectId) + 1;
         LocalDateTime now = LocalDateTime.now();
         KnowledgeDocument document = KnowledgeDocument.builder()
                 .documentUuid(UUID.randomUUID().toString()).projectId(projectId).name(name.trim())
-                .sourceType(sourceType.name()).contentHash(contentHash.toLowerCase()).version(version)
+                .sourceType(sourceType.name()).contentHash(normalizedHash).version(version)
                 .status(KnowledgeDocumentStatus.UPLOADED.name()).storageRef(storageRef)
                 .createdAt(now).updatedAt(now).deleted(0).build();
         knowledgeDocumentMapper.insert(document);

@@ -36,9 +36,20 @@ class KnowledgeDocumentServiceImplTest {
 
     @Test void reusesTheExistingDocumentForTheSameProjectAndHash() {
         KnowledgeDocument existing = document("existing", "READY");
-        when(knowledgeDocumentMapper.selectActiveByHashAndProject(7L, hash())).thenReturn(existing);
+        existing.setDeleted(0);
+        when(knowledgeDocumentMapper.selectByHashAndProject(7L, hash())).thenReturn(existing);
 
         assertThat(service.create(3L, 7L, "rules.md", KnowledgeSourceType.UPLOAD, hash(), "safe/key")).isSameAs(existing);
+        verify(knowledgeDocumentMapper, never()).insert(any(KnowledgeDocument.class));
+    }
+
+    @Test void rejectsADeletedHistoricalDocumentInsteadOfChangingDuplicateSemantics() {
+        KnowledgeDocument deleted = document("deleted", "DELETED");
+        deleted.setDeleted(1);
+        when(knowledgeDocumentMapper.selectByHashAndProject(7L, hash())).thenReturn(deleted);
+
+        assertThatThrownBy(() -> service.create(3L, 7L, "rules.md", KnowledgeSourceType.UPLOAD, hash(), "safe/key"))
+                .isInstanceOf(BusinessException.class);
         verify(knowledgeDocumentMapper, never()).insert(any(KnowledgeDocument.class));
     }
 
