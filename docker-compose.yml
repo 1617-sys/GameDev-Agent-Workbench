@@ -7,7 +7,7 @@ services:
       MYSQL_DATABASE: gamedev_agent_workbench
       TZ: Asia/Shanghai
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3307:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
@@ -26,7 +26,7 @@ services:
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
       TZ: Asia/Shanghai
     ports:
-      - "5672:5672"
+      - "127.0.0.1:5672:5672"
       - "127.0.0.1:15672:15672"
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
@@ -44,7 +44,7 @@ services:
       LLM_MODEL: ${LLM_MODEL}
       LLM_ENABLE_MOCK_FALLBACK: ${LLM_ENABLE_MOCK_FALLBACK}
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
 
   backend-java:
     build:
@@ -72,7 +72,7 @@ services:
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
 
   frontend-vue:
     build:
@@ -81,7 +81,7 @@ services:
     depends_on:
       - backend-java
     ports:
-      - "5173:5173"
+      - "127.0.0.1:5173:5173"
 
 volumes:
   mysql-data:
