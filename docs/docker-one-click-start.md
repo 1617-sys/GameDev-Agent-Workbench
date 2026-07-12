@@ -13,10 +13,10 @@
 第一次生成 `.env` 后，先修改这些值：
 
 ```env
-MYSQL_ROOT_PASSWORD=<set-a-unique-local-mysql-root-password>
-DB_PASSWORD=<set-a-unique-local-database-password>
-JWT_SECRET=<generate-a-random-jwt-secret-of-at-least-32-bytes>
-LLM_API_KEY=<set-your-llm-api-key>
+MYSQL_ROOT_PASSWORD=change_me
+DB_PASSWORD=change_me
+JWT_SECRET=gamedev-agent-workbench-docker-secret-change-me
+LLM_API_KEY=your_deepseek_api_key
 ```
 
 改完后再次执行：
