@@ -9,21 +9,21 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.example.gameworkbench.entity.AgentArtifact;
 import com.example.gameworkbench.entity.WorkflowStepRun;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
-import com.example.gameworkbench.evaluation.SchemaEvaluationService;
+import com.example.gameworkbench.evaluation.EvaluationOrchestrator;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 
 @Component
 public class DefaultArtifactWriter implements ArtifactWriter {
     private final AgentArtifactMapper artifactMapper;
     private final WorkflowRunEventRecorder workflowRunEventRecorder;
-    private final SchemaEvaluationService schemaEvaluationService;
+    private final EvaluationOrchestrator evaluationOrchestrator;
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper) { this(artifactMapper, (a, b, c, d, e, f, g, h) -> null, null); }
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder) {
         this(artifactMapper, workflowRunEventRecorder, null);
     }
     @Autowired
-    public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder, SchemaEvaluationService schemaEvaluationService) {
-        this.artifactMapper = artifactMapper; this.workflowRunEventRecorder = workflowRunEventRecorder; this.schemaEvaluationService = schemaEvaluationService;
+    public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder, EvaluationOrchestrator evaluationOrchestrator) {
+        this.artifactMapper = artifactMapper; this.workflowRunEventRecorder = workflowRunEventRecorder; this.evaluationOrchestrator = evaluationOrchestrator;
     }
     @Override public StepOutput write(WorkflowExecutionContext context, WorkflowStepPlan plan, WorkflowStepRun stepRun, StepExecutionResult result) {
         String uuid = UUID.randomUUID().toString(); LocalDateTime now = LocalDateTime.now();
@@ -34,7 +34,7 @@ public class DefaultArtifactWriter implements ArtifactWriter {
                 .title(plan.stepKey()).content(content).schemaKey(evaluation.schemaKey()).schemaVersion(evaluation.schemaVersion())
                 .validationSummary(evaluation.summary()).createdAt(now).updatedAt(now).build();
         artifactMapper.insert(artifact);
-        if (schemaEvaluationService != null && evaluation.schemaKey() != null) schemaEvaluationService.evaluateAndPersist(artifact);
+        if (evaluationOrchestrator != null && evaluation.schemaKey() != null) evaluationOrchestrator.evaluate(artifact);
         workflowRunEventRecorder.record(context.workflowRun().getWorkflowRunUuid(), "artifact.available",
                 "artifact." + uuid + ".available", plan.stepKey(), "AVAILABLE", stepRun.getAttempt(), uuid,
                 context.workflowRun().getTraceId());

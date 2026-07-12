@@ -41,6 +41,8 @@ public class AgentArtifact {
     private String schemaVersion;
 
     private String validationSummary;
+    private Boolean runtimeEligible;
+    private Long lastEvaluationReportId;
 
     private LocalDateTime createdAt;
 
