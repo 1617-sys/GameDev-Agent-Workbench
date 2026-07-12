@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("quick", "integration")]
+    [ValidateSet("quick", "integration", "e2e")]
     [string]$Profile = "quick"
 )
 
@@ -114,6 +114,12 @@ switch ($Profile) {
             -Action { Invoke-NativeCommand "docker" @("compose", "config", "--quiet") }
 
         Write-Host "Integration profile validates the R3 Testcontainers concurrency harness and dependency smoke coverage."
+    }
+    "e2e" {
+        Invoke-VerificationStep `
+            -Name "R4 browser E2E harness" `
+            -WorkingDirectory (Join-Path $projectRoot "frontend-vue") `
+            -Action { Invoke-NativeCommand "npm" @("run", "test:e2e") }
     }
 }
 
