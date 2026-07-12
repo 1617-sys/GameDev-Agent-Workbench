@@ -1,0 +1,5 @@
+package com.example.gameworkbench.controller;
+import com.example.gameworkbench.common.ApiResponse; import com.example.gameworkbench.service.PromptVersionAnalyticsService; import com.example.gameworkbench.vo.analytics.PromptVersionMetricVO; import lombok.RequiredArgsConstructor; import org.springframework.security.core.annotation.AuthenticationPrincipal; import org.springframework.web.bind.annotation.*; import java.time.*; import java.util.*;
+@RestController @RequestMapping("/api/v1/analytics/prompt-versions") @RequiredArgsConstructor public class PromptVersionAnalyticsController { private final PromptVersionAnalyticsService service;
+ @GetMapping public ApiResponse<List<PromptVersionMetricVO>> list(@AuthenticationPrincipal Long userId,@RequestParam(required=false) Long projectId,@RequestParam(required=false) String agentType,@RequestParam String from,@RequestParam String to,@RequestParam(defaultValue="false") boolean includeMock){return ApiResponse.success(service.metrics(userId,projectId,agentType,LocalDateTime.parse(from),LocalDateTime.parse(to),includeMock));}
+}

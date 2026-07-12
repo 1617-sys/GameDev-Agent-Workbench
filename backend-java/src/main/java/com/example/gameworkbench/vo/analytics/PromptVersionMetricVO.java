@@ -1,0 +1,3 @@
+package com.example.gameworkbench.vo.analytics;
+import lombok.Builder; import lombok.Data; import java.math.BigDecimal;
+@Data @Builder public class PromptVersionMetricVO { private Long promptVersionId; private long callCount; private long realSampleCount; private long mockSampleCount; private long unknownMockCount; private Double successRate; private Double meanLatencyMs; private Long p50LatencyMs; private Long p95LatencyMs; private long latencyMissingCount; private Long inputTokens; private Long outputTokens; private BigDecimal estimatedCost; private long costMissingCount; private boolean insufficientSample; }
