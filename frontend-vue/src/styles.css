@@ -644,6 +644,116 @@ label {
   overflow-wrap: anywhere;
 }
 
+.knowledge-library-view,
+.retrieval-section,
+.evidence-list {
+  display: grid;
+  gap: 20px;
+}
+
+.knowledge-upload {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.knowledge-grid,
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.knowledge-card,
+.evidence-card,
+.comparison-grid article {
+  min-width: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 18px;
+  background: #f8fafc;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.card-title-row h4,
+.evidence-card h4,
+.comparison-block h5 {
+  margin: 0;
+}
+
+.safe-wrap,
+.evidence-meta dd,
+.reference-list span,
+.comparison-grid span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.evidence-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.evidence-meta div {
+  min-width: 0;
+  border-left: 3px solid #93c5fd;
+  padding-left: 10px;
+}
+
+.evidence-meta dt {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.evidence-meta dd {
+  margin: 4px 0 0;
+  font-weight: 800;
+}
+
+.reference-list {
+  display: grid;
+  gap: 10px;
+  padding-left: 22px;
+}
+
+.reference-list strong,
+.reference-list span,
+.comparison-grid strong,
+.comparison-grid span {
+  display: block;
+}
+
+.reference-list span,
+.comparison-grid span {
+  margin-top: 5px;
+  color: #475569;
+}
+
+.comparison-block {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #d8e1ee;
+}
+
+.comparison-grid {
+  margin: 14px 0;
+}
+
+.success-message {
+  color: #166534;
+  font-weight: 800;
+}
+
 @media (max-width: 1280px) {
   body {
     min-width: 0;
@@ -696,5 +806,24 @@ label {
   .content-section,
   .login-card {
     padding: 16px;
+  }
+
+  .knowledge-upload,
+  .knowledge-grid,
+  .comparison-grid,
+  .evidence-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .knowledge-upload .primary-button,
+  .knowledge-card .secondary-button,
+  .retrieval-section .secondary-button {
+    width: 100%;
+  }
+
+  .card-title-row,
+  .retrieval-section .section-heading {
+    align-items: stretch;
+    flex-direction: column;
   }
 }

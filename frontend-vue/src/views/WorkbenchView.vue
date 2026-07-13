@@ -6,7 +6,7 @@
       <label>工作流类型<input v-model.trim="form.workflowKey" required maxlength="80" /></label>
       <label>游戏想法<textarea v-model.trim="form.idea" required maxlength="5000" rows="6" /></label>
       <label>补充上下文（可选）<textarea v-model.trim="form.context" maxlength="5000" rows="3" /></label>
-      <div class="button-row"><button class="primary-button" :disabled="submitting">{{ submitting ? "正在提交…" : "创建工作流" }}</button><a class="ghost-button" href="/demo/play">打开 Legacy Demo</a></div>
+      <div class="button-row"><button class="primary-button" :disabled="submitting">{{ submitting ? "正在提交…" : "创建工作流" }}</button><button type="button" class="secondary-button" :disabled="!form.projectUuid" @click="$emit('open-knowledge', form.projectUuid)">管理项目知识库</button><a class="ghost-button" href="/demo/play">打开 Legacy Demo</a></div>
       <p v-if="error" class="error" role="alert">{{ error }}</p>
     </form>
   </section>
@@ -16,7 +16,7 @@
 import { reactive, ref } from "vue";
 
 const props = defineProps({ api: { type: Object, required: true } });
-const emit = defineEmits(["submitted"]);
+const emit = defineEmits(["submitted", "open-knowledge"]);
 const form = reactive({ projectUuid: "", workflowKey: "GAME_GENERATE", idea: "", context: "" });
 const submitting = ref(false);
 const error = ref("");

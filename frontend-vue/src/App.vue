@@ -19,9 +19,10 @@
       <p v-if="authError" class="error" role="alert">{{ authError }}</p>
     </section>
 
-    <WorkflowRunView v-else-if="workflowRunUuid" :store="store" :workflow-run-uuid="workflowRunUuid" @back="navigate('/')" />
+    <WorkflowRunView v-else-if="workflowRunUuid" :store="store" :evidence-api="workflowApi.getRagEvidence" :workflow-run-uuid="workflowRunUuid" @back="navigate('/')" />
+    <KnowledgeLibraryView v-else-if="knowledgeProjectUuid" :api="knowledgeApi" :project-uuid="knowledgeProjectUuid" @back="navigate('/')" />
     <PromptMetricsView v-else-if="routePath === '/analytics/prompt-versions'" :api="analyticsApi.promptVersions" @back="navigate('/')" />
-    <WorkbenchView v-else :api="workflowApi" @submitted="navigateToRun" />
+    <WorkbenchView v-else :api="workflowApi" @submitted="navigateToRun" @open-knowledge="navigateToKnowledge" />
   </main>
 </template>
 
@@ -30,11 +31,13 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { createAuthApi } from "./api/authApi";
 import { createHttpClient } from "./api/httpClient";
 import { createWorkflowApi } from "./api/workflowApi";
+import { createKnowledgeApi } from "./api/knowledgeApi";
 import { workflowRunUuidFromPath, navigateToWorkflowRun } from "./router/workflowRoute";
 import { createWorkflowRunStore } from "./stores/workflowRunStore";
 import WorkbenchView from "./views/WorkbenchView.vue";
 import WorkflowRunView from "./views/WorkflowRunView.vue";
 import PromptMetricsView from "./views/PromptMetricsView.vue";
+import KnowledgeLibraryView from "./views/KnowledgeLibraryView.vue";
 import { createAnalyticsApi } from "./api/analyticsApi";
 
 const session = reactive({ token: "" });
@@ -43,15 +46,21 @@ const authLoading = ref(false);
 const authError = ref("");
 const routePath = ref(window.location.pathname);
 const workflowRunUuid = computed(() => workflowRunUuidFromPath(routePath.value));
+const knowledgeProjectUuid = computed(() => {
+  const match = routePath.value.match(/^\/projects\/([^/]+)\/knowledge\/?$/);
+  return match ? decodeURIComponent(match[1]) : null;
+});
 const http = createHttpClient({ getToken: () => session.token });
 const workflowApi = createWorkflowApi(http);
 const authApi = createAuthApi(http);
 const analyticsApi = createAnalyticsApi(http);
+const knowledgeApi = createKnowledgeApi(http);
 const store = createWorkflowRunStore({ api: workflowApi });
 
 function syncRoute() { routePath.value = window.location.pathname; }
 function navigate(path) { window.history.pushState({}, "", path); syncRoute(); }
 function navigateToRun(uuid) { navigateToWorkflowRun(uuid); syncRoute(); }
+function navigateToKnowledge(projectUuid) { navigate(`/projects/${encodeURIComponent(projectUuid)}/knowledge`); }
 
 async function login() {
   authLoading.value = true;

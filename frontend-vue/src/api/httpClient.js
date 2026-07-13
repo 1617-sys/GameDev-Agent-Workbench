@@ -10,8 +10,11 @@ export function createHttpClient({ baseUrl = "http://localhost:8080", getToken =
       const headers = { Accept: "application/json", ...(options.headers || {}) };
       const token = options.auth === false ? "" : getToken();
       if (token) headers.Authorization = `Bearer ${token}`;
-      const body = options.body && typeof options.body !== "string" ? JSON.stringify(options.body) : options.body;
-      if (body) headers["Content-Type"] = "application/json";
+      const multipart = typeof FormData !== "undefined" && options.body instanceof FormData;
+      const body = options.body && typeof options.body !== "string" && !multipart
+        ? JSON.stringify(options.body)
+        : options.body;
+      if (body && !multipart) headers["Content-Type"] = "application/json";
       const response = await fetchImpl(`${baseUrl}${path}`, { ...options, body, headers, signal: controller.signal });
       const payload = response.status === 204 ? null : await response.json().catch(() => null);
       if (!response.ok || (payload && payload.code !== 0)) throw new ApiError(payload?.message || `HTTP ${response.status}`, { status: response.status, code: payload?.code || String(response.status) });
