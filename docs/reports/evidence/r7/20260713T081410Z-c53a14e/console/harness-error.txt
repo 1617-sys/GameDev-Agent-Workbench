@@ -1,0 +1,9 @@
+Required loopback port 15672 is already in use. Stop the conflicting process before running the isolated R7 performance
+ stack.
+At F:\coe\java\GameDev Agent Workbench\tools\run-performance-baseline.ps1:145 char:9
++         throw "Required loopback port $Port is already in use. Stop t ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Required loopba...formance stack.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Required loopback port 15672 is already in use. Stop the conflicting process before runn 
+   ing the isolated R7 performance stack.
+ 

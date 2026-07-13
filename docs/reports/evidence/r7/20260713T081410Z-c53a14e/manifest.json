@@ -1,0 +1,47 @@
+{
+    "runId":  "20260713T081410Z-c53a14e",
+    "rcSha":  "c53a14ec21906e9b7c4abad1ea029541cddf2917",
+    "branch":  "r7",
+    "dirtyStateAtStart":  [
+
+                          ],
+    "operator":  "codex-local",
+    "startedAtUtc":  "2026-07-13T08:14:11.7294884Z",
+    "completedAtUtc":  "2026-07-13T08:14:12.5953493Z",
+    "os":  "Microsoft Windows 11 家庭版 中文版 10.0.26200",
+    "powershell":  "5.1.26100.8655",
+    "git":  "git version 2.48.1.windows.1",
+    "docker":  "Docker version 29.1.5, build 0e6fee6",
+    "compose":  "5.0.1",
+    "java":  "java version \"21.0.8\" 2025-07-15 LTS Java(TM) SE Runtime Environment (build 21.0.8+12-LTS-250) Java HotSpot(TM) 64-Bit Server VM (build 21.0.8+12-LTS-250, mixed mode, sharing)",
+    "python":  "Python 3.13.3",
+    "node":  "v24.14.1",
+    "host":  {
+                 "logicalCpu":  16,
+                 "memoryBytes":  16295424000,
+                 "freeDiskBytes":  97259646976
+             },
+    "dockerResources":  {
+                            "logicalCpu":  16,
+                            "memoryBytes":  7889682432,
+                            "memoryGiB":  7.35,
+                            "operatingSystem":  "Docker Desktop"
+                        },
+    "referenceQualification":  {
+                                   "hostMinimumMet":  false,
+                                   "dockerFixed6Cpu8GiBMet":  false,
+                                   "standardDurationMet":  true,
+                                   "acPowerAndBackgroundLoadConfirmed":  false,
+                                   "eligible":  false
+                               },
+    "providerMode":  "fake",
+    "fixtureVersion":  "r7-performance-fixed-agent-v1",
+    "fixedAgentLatencyMs":  300,
+    "composeProject":  "r7perf-2c69b1f3",
+    "fixtureNamespace":  "r7perf-2c69b1f3",
+    "profile":  "R7-03 performance",
+    "images":  [
+
+               ],
+    "secretsStoredIn":  "temporary local env file and process environment; excluded from evidence"
+}

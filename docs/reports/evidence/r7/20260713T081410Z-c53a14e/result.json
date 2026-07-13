@@ -1,0 +1,9 @@
+{
+    "conclusion":  "BLOCKED_OR_FAIL",
+    "loadExitCode":  1,
+    "cleanupExitCode":  0,
+    "rcSha":  "c53a14ec21906e9b7c4abad1ea029541cddf2917",
+    "fixtureNamespace":  "r7perf-2c69b1f3",
+    "nextDiagnostic":  "rg -n \u0027WorkflowRateLimit|redis unavailable|50302\u0027 docs/reports/evidence/r7/20260713T081410Z-c53a14e/compose/backend-java-*.log",
+    "completedAtUtc":  "2026-07-13T08:14:12.6193425Z"
+}

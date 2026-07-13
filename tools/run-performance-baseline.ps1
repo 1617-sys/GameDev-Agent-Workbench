@@ -11,6 +11,9 @@ param(
     [ValidateRange(30, 600)]
     [int]$ReadyTimeoutSeconds = 240,
 
+    [ValidateRange(0, 65535)]
+    [int]$RabbitManagementPort = 0,
+
     [switch]$ReferenceEnvironmentConfirmed
 )
 
@@ -149,6 +152,17 @@ function Assert-PortAvailable {
     }
 }
 
+function Get-FreeTcpPort {
+    $listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+    try {
+        $listener.Start()
+        return ([System.Net.IPEndPoint]$listener.LocalEndpoint).Port
+    }
+    finally {
+        $listener.Stop()
+    }
+}
+
 function Wait-HttpReady {
     param(
         [Parameter(Mandatory = $true)][string]$Url,
@@ -199,6 +213,7 @@ function Wait-QueueConsumers {
     param(
         [Parameter(Mandatory = $true)][string]$Username,
         [Parameter(Mandatory = $true)][string]$Password,
+        [Parameter(Mandatory = $true)][int]$ManagementPort,
         [Parameter(Mandatory = $true)][int]$TimeoutSeconds
     )
 
@@ -207,7 +222,7 @@ function Wait-QueueConsumers {
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
     while ((Get-Date) -lt $deadline) {
         try {
-            $queue = Invoke-RestMethod -UseBasicParsing -TimeoutSec 3 -Headers $headers -Uri 'http://127.0.0.1:15672/api/queues/%2F/workflow.run.execute'
+            $queue = Invoke-RestMethod -UseBasicParsing -TimeoutSec 3 -Headers $headers -Uri "http://127.0.0.1:$ManagementPort/api/queues/%2F/workflow.run.execute"
             if ([int]$queue.consumers -ge 2) {
                 return [int]$queue.consumers
             }
@@ -291,6 +306,7 @@ $hostQualified = $logicalCpu -ge 8 -and $hostMemoryBytes -ge 16GB -and $freeDisk
 $dockerQualified = $dockerCpu -eq 6 -and $dockerMemoryBytes -ge 7.5GB -and $dockerMemoryBytes -le 8.5GB
 $durationQualified = $WarmupSeconds -eq 60 -and $MeasurementSeconds -eq 300
 $referenceEligible = $hostQualified -and $dockerQualified -and $durationQualified -and $ReferenceEnvironmentConfirmed.IsPresent
+$effectiveRabbitManagementPort = if ($RabbitManagementPort -eq 0) { Get-FreeTcpPort } else { $RabbitManagementPort }
 
 $manifest = [ordered]@{
     runId = $runId
@@ -354,13 +370,14 @@ Write-JsonFile -Path (Join-Path $performanceDir 'config.json') -Value ([ordered]
         rateLimitMaxPerUserPerMinute = 120
         backpressureMaxPendingRuns = 1000
         percentileMethod = 'nearest-rank'
+        rabbitManagementPort = $effectiveRabbitManagementPort
     })
 
 try {
     if ($initialStatus.Count -gt 0) {
         throw "Performance execution must start from a clean candidate commit. Current git status: $($initialStatus -join ', ')"
     }
-    foreach ($port in @(3307, 8000, 8080, 15672)) {
+    foreach ($port in @(3307, 8000, 8080, $effectiveRabbitManagementPort)) {
         Assert-PortAvailable -Port $port
     }
 
@@ -382,7 +399,7 @@ try {
         "RABBITMQ_USERNAME=$rabbitUsername",
         "RABBITMQ_PASSWORD=$rabbitPassword",
         'RABBITMQ_VHOST=/',
-        'RABBITMQ_MANAGEMENT_HOST_PORT=15672'
+        "RABBITMQ_MANAGEMENT_HOST_PORT=$effectiveRabbitManagementPort"
     )
     [System.IO.File]::WriteAllLines($envFile, $envLines, [System.Text.UTF8Encoding]::new($false))
 
@@ -404,7 +421,7 @@ try {
 
     $secondConsumerId = (Invoke-Docker -Arguments ($composeArgs + @('run', '-d', '--no-deps', '--name', $secondConsumerName, 'backend-java')) | Select-Object -Last 1).Trim()
     Write-TextFile -Path (Join-Path $composeDir 'second-consumer.txt') -Text "Started a second stateless backend consumer container: $secondConsumerId$([Environment]::NewLine)"
-    $consumerCount = Wait-QueueConsumers -Username $rabbitUsername -Password $rabbitPassword -TimeoutSeconds (Get-BoundedTimeoutSeconds -RequestedSeconds $ReadyTimeoutSeconds)
+    $consumerCount = Wait-QueueConsumers -Username $rabbitUsername -Password $rabbitPassword -ManagementPort $effectiveRabbitManagementPort -TimeoutSeconds (Get-BoundedTimeoutSeconds -RequestedSeconds $ReadyTimeoutSeconds)
     Write-TextFile -Path (Join-Path $composeDir 'consumer-count.txt') -Text "workflow.run.execute consumers=$consumerCount$([Environment]::NewLine)"
 
     Invoke-Docker -Arguments ($composeArgs + @('ps', '--format', 'json')) |
@@ -415,7 +432,7 @@ try {
     $mysqlContainer = Get-ComposeContainer -Service 'mysql'
     $env:PERF_API_BASE_URL = 'http://127.0.0.1:8080'
     $env:PERF_AGENT_BASE_URL = 'http://127.0.0.1:8000'
-    $env:PERF_RABBITMQ_API_BASE_URL = 'http://127.0.0.1:15672'
+    $env:PERF_RABBITMQ_API_BASE_URL = "http://127.0.0.1:$effectiveRabbitManagementPort"
     $env:PERF_RABBITMQ_USERNAME = $rabbitUsername
     $env:PERF_RABBITMQ_PASSWORD = $rabbitPassword
     $env:PERF_COMPOSE_PROJECT = $composeProject
