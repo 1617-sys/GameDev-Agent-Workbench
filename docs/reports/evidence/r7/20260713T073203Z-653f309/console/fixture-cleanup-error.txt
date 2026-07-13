@@ -1,0 +1,6 @@
+docker.exe : mysql: [Warning] Using a password on the command line interface can be insecure.
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Remove-R7E2EFixture.ps1:17 char:15
++     $output = & docker @Arguments 2>&1
++               ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (mysql: [Warning...an be insecure.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError

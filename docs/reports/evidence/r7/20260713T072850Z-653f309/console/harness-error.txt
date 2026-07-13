@@ -1,0 +1,6 @@
+docker.exe :  Image r7e2e-4a592b47-python-agent Building
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Invoke-R7MainWorkflowE2E.ps1:63 char:15
++     $output = & docker @Arguments 2>&1
++               ~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ( Image r7e2e-4a...agent Building :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError

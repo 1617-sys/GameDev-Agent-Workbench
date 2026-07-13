@@ -1,0 +1,6 @@
+Get-ComposeContainer : The property 'Count' cannot be found on this object. Verify that the property exists.
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Invoke-R7MainWorkflowE2E.ps1:190 char:32
++     $env:E2E_MYSQL_CONTAINER = Get-ComposeContainer -Service 'mysql'
++                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Get-ComposeContainer], PropertyNotFoundException
+    + FullyQualifiedErrorId : PropertyNotFoundStrict,Get-ComposeContainer

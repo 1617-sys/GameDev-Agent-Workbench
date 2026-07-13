@@ -1,0 +1,6 @@
+Get-ComposeContainer : The property 'Count' cannot be found on this object. Verify that the property exists.
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Remove-R7E2EFixture.ps1:38 char:10
++ $mysql = Get-ComposeContainer -Service 'mysql'
++          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:) [Get-ComposeContainer], PropertyNotFoundException
+    + FullyQualifiedErrorId : PropertyNotFoundStrict,Get-ComposeContainer

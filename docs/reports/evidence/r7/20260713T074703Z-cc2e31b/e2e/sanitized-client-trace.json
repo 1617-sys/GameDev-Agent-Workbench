@@ -1,0 +1,21 @@
+{
+  "providerMode": "fake",
+  "fixtureVersion": "r7-e2e-fixed-agent-v1",
+  "apiBaseUrl": "http://127.0.0.1:8080",
+  "frontendBaseUrl": "http://127.0.0.1:5173",
+  "fixtureUsername": "r7e2e-bcb3d37a",
+  "scenarios": [
+    {
+      "name": "legal-workflow-1-submit",
+      "httpStatus": 200,
+      "responseCode": 50302,
+      "responseMessage": "Workflow submission is temporarily unavailable",
+      "workflowRunUuid": null
+    }
+  ],
+  "contractFailures": [
+    "UI submit 1 did not return HTTP 202.",
+    "UI submit 1 did not return workflowRunUuid."
+  ],
+  "completedAtUtc": "2026-07-13T07:48:00.019Z"
+}
