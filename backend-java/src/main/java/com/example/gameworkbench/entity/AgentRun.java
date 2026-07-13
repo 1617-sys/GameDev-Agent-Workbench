@@ -60,6 +60,7 @@ public class AgentRun {
     private String chunkingVersion;
     private String embeddingModel;
     private String ragContextSnapshot;
+    private String ragExperimentKey;
 
     private LocalDateTime createdAt;
 

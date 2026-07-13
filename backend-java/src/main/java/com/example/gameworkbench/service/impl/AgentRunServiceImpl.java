@@ -144,6 +144,7 @@ public class AgentRunServiceImpl implements AgentRunService {
                 throw new BusinessException(ErrorCode.ACTIVE_PROMPT_TEMPLATE_NOT_FOUND);
             }
             agentRun.setPromptVersionId(promptVersion.getId());
+            agentRun.setRagExperimentKey(sha256(gameProject.getId() + "|" + request.getAgentType() + "|" + request.getTitle() + "|" + request.getContent() + "|" + (request.getContext() == null ? "" : request.getContext()) + "|" + promptVersion.getId()));
             agentRunMapper.updateById(agentRun);
 
             log.info("[Agent] prompt template selected userId={} runUuid={} agentType={} templateUuid={} version={}",
@@ -191,6 +192,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setTraceId(pythonResponse.getTraceId());
             agentRun.setRawOutputRef(textOrNull(execution, "raw_output_ref"));
             agentRun.setRagStatus(execution.path("rag_status").asText(agentRun.getRagStatus()));
+            recordActualRagSnapshot(agentRun, execution.path("used_references"));
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
             retrievalRecordService.recordSelected(agentRun, execution.path("used_references"), sha256(request.getContent()));
@@ -425,6 +427,36 @@ public class AgentRunServiceImpl implements AgentRunService {
         return node.path(field).isTextual() && !node.path(field).asText().isBlank() ? node.path(field).asText() : null;
     }
 
+    private void recordActualRagSnapshot(AgentRun run, JsonNode usedReferences) {
+        if (!Boolean.TRUE.equals(run.getRagEnabled())) {
+            return;
+        }
+        var snapshot = objectMapper.createObjectNode();
+        try {
+            JsonNode pendingSnapshot = objectMapper.readTree(run.getRagContextSnapshot());
+            if (pendingSnapshot.isObject()) {
+                snapshot.setAll((com.fasterxml.jackson.databind.node.ObjectNode) pendingSnapshot);
+            }
+        } catch (Exception ignored) {
+            snapshot.put("candidate_count", 0);
+        }
+        snapshot.remove("sources");
+        var injected = snapshot.putArray("injected_references");
+        if (usedReferences.isArray()) {
+            for (JsonNode reference : usedReferences) {
+                var safeReference = injected.addObject();
+                safeReference.put("chunk_uuid", reference.path("chunk_uuid").asText());
+                safeReference.put("document_uuid", reference.path("document_uuid").asText());
+                safeReference.put("document_version", reference.path("document_version").asText());
+                safeReference.put("rank", reference.path("rank").asInt());
+                if (reference.path("score").isNumber()) {
+                    safeReference.put("score", reference.path("score").doubleValue());
+                }
+            }
+        }
+        run.setRagContextSnapshot(writeJsonSafely(snapshot));
+    }
+
     private Object buildRagPayload(AgentRun run, AgentRunRequest request) {
         if (!Boolean.TRUE.equals(run.getRagEnabled())) return Map.of("rag_enabled", false, "retrieved_chunks", List.of(), "budget_chars", run.getContextBudget());
         try {
@@ -438,7 +470,8 @@ public class AgentRunServiceImpl implements AgentRunService {
                 } catch (Exception failure) { throw new IllegalStateException(failure); }
             }).toList();
             run.setRagStatus(chunks.isEmpty() ? "EMPTY" : "AVAILABLE");
-            run.setRagContextSnapshot(writeJsonSafely(Map.of("candidate_count", chunks.size(), "top_k", topK, "budget", run.getContextBudget())));
+            var sources = candidates.stream().map(candidate -> Map.of("document_uuid", candidate.documentUuid(), "document_version", candidate.documentVersion(), "chunk_uuid", candidate.chunkUuid())).toList();
+            run.setRagContextSnapshot(writeJsonSafely(Map.of("candidate_count", chunks.size(), "top_k", topK, "budget", run.getContextBudget(), "sources", sources)));
             return Map.of("rag_enabled", true, "retrieved_chunks", chunks, "retrieval_version", run.getRetrievalVersion(), "budget_chars", run.getContextBudget());
         } catch (Exception failure) {
             run.setRagStatus("UNAVAILABLE"); run.setRagContextSnapshot("{\"candidate_count\":0,\"failure\":true}");
