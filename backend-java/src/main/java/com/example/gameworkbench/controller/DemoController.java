@@ -3,6 +3,7 @@ package com.example.gameworkbench.controller;
 import jakarta.validation.Valid;
 
 import org.springframework.http.MediaType;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,6 +17,7 @@ import com.example.gameworkbench.service.DemoStreamService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
+@Profile("!prod")
 @RequestMapping("/api/demo")
 @RequiredArgsConstructor
 public class DemoController {

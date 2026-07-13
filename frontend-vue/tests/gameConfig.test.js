@@ -125,3 +125,12 @@ test("normalizes confirmed historical aliases", () => {
   assert.equal(normalized.gameType, "top_down_collect");
   assert.equal(normalized.items[0].id, "gem-alias");
 });
+
+test("treats model output as data and rejects executable text", () => {
+  const executable = '<script>globalThis.compromised = true</script>';
+  const result = validateGameConfig(executable);
+
+  assert.equal(result.valid, false);
+  assert.equal(result.config, null);
+  assert.equal(globalThis.compromised, undefined);
+});

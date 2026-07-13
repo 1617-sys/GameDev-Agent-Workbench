@@ -53,6 +53,7 @@ if (-not (Test-Path -LiteralPath (Join-Path $projectRoot '.env'))) {
         'JWT_EXPIRE_SECONDS=3600',
         "REDIS_PASSWORD=$(New-RandomSecret -Length 40)",
         'PYTHON_AGENT_BASE_URL=http://python-agent:8000',
+        "PYTHON_AGENT_INTERNAL_TOKEN=$(New-RandomSecret -Length 48)",
         'GAME_BUILD_BASE_URL=http://localhost:5173',
         'LLM_API_KEY=',
         'LLM_BASE_URL=https://api.deepseek.com',
@@ -72,6 +73,7 @@ Assert-StrongSecret -Name 'DB_PASSWORD' -MinimumLength 24
 Assert-StrongSecret -Name 'JWT_SECRET' -MinimumLength 32
 Assert-StrongSecret -Name 'REDIS_PASSWORD' -MinimumLength 24
 Assert-StrongSecret -Name 'RABBITMQ_PASSWORD' -MinimumLength 24
+Assert-StrongSecret -Name 'PYTHON_AGENT_INTERNAL_TOKEN' -MinimumLength 32
 
 $databaseUser = Get-DotEnvValue -Name 'DB_USERNAME'
 if ([string]::IsNullOrWhiteSpace($databaseUser) -or $databaseUser -eq 'root' -or $databaseUser -notmatch '^[A-Za-z0-9_]+$') {

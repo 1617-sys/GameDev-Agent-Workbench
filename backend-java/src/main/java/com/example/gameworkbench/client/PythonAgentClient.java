@@ -34,6 +34,9 @@ public class PythonAgentClient {
     @Value("${app.python.base-url:http://127.0.0.1:8000}")
     private String baseUrl;
 
+    @Value("${app.python.internal-token}")
+    private String internalToken;
+
     /**
      * 调用远程 Python Agent 服务并返回响应结果。
      *
@@ -57,6 +60,10 @@ public class PythonAgentClient {
             log.error("[Python] call rejected: base URL is not configured agentType={}", agentType);
             throw new BusinessException(ErrorCode.PYTHON_BASE_URL_NOT_CONFIGURED);
         }
+        if (!StringUtils.hasText(internalToken) || internalToken.length() < 32) {
+            log.error("[Python] call rejected: internal authentication is not configured agentType={}", agentType);
+            throw new BusinessException(ErrorCode.PYTHON_CALL_FAILED);
+        }
 
         String url = baseUrl + agentType.getPythonPath();
         String responseBody;
@@ -66,6 +73,7 @@ public class PythonAgentClient {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-Internal-Token", internalToken);
             String traceId = MDC.get(TRACE_ID);
             headers.set(TRACE_HEADER, StringUtils.hasText(traceId) ? traceId : UUID.randomUUID().toString());
 

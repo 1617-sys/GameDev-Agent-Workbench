@@ -1,5 +1,7 @@
 import logging
+import os
 import re
+import secrets
 import time
 from contextvars import ContextVar
 from uuid import uuid4
@@ -36,6 +38,16 @@ for handler in logging.getLogger().handlers:
 
 app = FastAPI(title="GameDev Agent Mock API", version="0.1.0")
 app.include_router(agent_router)
+
+
+@app.middleware("http")
+async def authenticate_internal_requests(request: Request, call_next):
+    if request.url.path.startswith("/agent/"):
+        expected = os.getenv("PYTHON_AGENT_INTERNAL_TOKEN", "")
+        supplied = request.headers.get("X-Internal-Token", "")
+        if len(expected) < 32 or not secrets.compare_digest(supplied, expected):
+            return JSONResponse(status_code=401, content={"code": 401, "message": "unauthorized", "data": None})
+    return await call_next(request)
 
 
 @app.middleware("http")

@@ -37,10 +37,12 @@ class CorrelationTraceTest {
     void propagatesMdcTraceToPythonWithoutSendingCorrelationAsMetricLabel() {
         PythonAgentClient client = new PythonAgentClient(new ObjectMapper());
         ReflectionTestUtils.setField(client, "baseUrl", "http://python.test");
+        ReflectionTestUtils.setField(client, "internalToken", "test-only-python-agent-token-at-least-32-bytes");
         RestTemplate restTemplate = (RestTemplate) ReflectionTestUtils.getField(client, "restTemplate");
         MockRestServiceServer server = MockRestServiceServer.bindTo(restTemplate).build();
         server.expect(requestTo("http://python.test/agent/requirement-breakdown"))
                 .andExpect(header(CorrelationIdFilter.TRACE_HEADER, "trace-java-python"))
+                .andExpect(header("X-Internal-Token", "test-only-python-agent-token-at-least-32-bytes"))
                 .andRespond(withSuccess("{\"code\":0,\"message\":\"ok\",\"data\":{},\"trace_id\":\"trace-java-python\"}", MediaType.APPLICATION_JSON));
 
         MDC.put(DiagnosticContext.TRACE_ID, "trace-java-python");

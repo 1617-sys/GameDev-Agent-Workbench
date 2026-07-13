@@ -2,7 +2,8 @@ package com.example.gameworkbench.config;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.jsontype.impl.LaissezFaireSubTypeValidator;
+import com.fasterxml.jackson.databind.jsontype.BasicPolymorphicTypeValidator;
+import com.example.gameworkbench.entity.SysUser;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -21,9 +22,12 @@ public class RedisConfig {
 
         StringRedisSerializer stringRedisSerializer = new StringRedisSerializer();
 
-        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+        BasicPolymorphicTypeValidator typeValidator = BasicPolymorphicTypeValidator.builder()
+                .allowIfSubType(SysUser.class)
+                .build();
         objectMapper.activateDefaultTyping(
-                LaissezFaireSubTypeValidator.instance,
+                typeValidator,
                 ObjectMapper.DefaultTyping.NON_FINAL,
                 JsonTypeInfo.As.PROPERTY
         );

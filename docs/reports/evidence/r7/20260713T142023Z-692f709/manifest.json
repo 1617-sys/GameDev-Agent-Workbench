@@ -1,0 +1,13 @@
+{
+  "runId": "20260713T142023Z-692f709",
+  "rcSha": "692f709f5c7effc3902f5278afcbeb2efe096072",
+  "branch": "r7",
+  "startedAtUtc": "2026-07-13T14:20:23Z",
+  "timezone": "Asia/Shanghai",
+  "operator": "Codex",
+  "environment": "Windows / Java 21 / Python 3.13.3 / Node 22-compatible lockfile",
+  "providerMode": "mock/fake",
+  "dockerDaemon": "unavailable",
+  "dirtyAtStart": false,
+  "secretsIncluded": false
+}

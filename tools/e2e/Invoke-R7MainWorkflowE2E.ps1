@@ -190,6 +190,7 @@ try {
         "JWT_SECRET=$(New-RandomSecret -Length 48)",
         'JWT_EXPIRE_SECONDS=3600',
         "REDIS_PASSWORD=$(New-RandomSecret -Length 40)",
+        "PYTHON_AGENT_INTERNAL_TOKEN=$(New-RandomSecret -Length 48)",
         'LLM_API_KEY=',
         'LLM_BASE_URL=http://fixture.invalid',
         'LLM_MODEL=r7-e2e-fixed-agent-v1',

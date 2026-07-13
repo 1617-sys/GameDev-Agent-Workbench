@@ -26,6 +26,7 @@ app:
     expire-seconds: 86400
   python:
     base-url: http://127.0.0.1:8000
+    internal-token: test-only-python-agent-token-at-least-32-bytes
 
 game-build:
   base-url: http://localhost:5173

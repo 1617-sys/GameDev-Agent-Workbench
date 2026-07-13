@@ -5,6 +5,7 @@ from app.main import app
 
 
 client = TestClient(app)
+INTERNAL_HEADERS = {"X-Internal-Token": "test-only-python-agent-token-at-least-32-bytes"}
 
 
 def test_health_probes_propagate_safe_trace_without_configuration_details():
@@ -31,7 +32,7 @@ def test_agent_logs_record_shape_but_not_payload(caplog):
     private_text = "PRIVATE-PROMPT-CONTENT-DO-NOT-LOG"
     response = client.post(
         "/agent/requirement-breakdown",
-        headers={"X-Trace-Id": "trace-redaction-1234"},
+        headers={**INTERNAL_HEADERS, "X-Trace-Id": "trace-redaction-1234"},
         json={"title": private_text, "content": private_text},
     )
 
@@ -39,3 +40,19 @@ def test_agent_logs_record_shape_but_not_payload(caplog):
     rendered = "\n".join(record.getMessage() for record in caplog.records)
     assert private_text not in rendered
     assert f"content_len={len(private_text)}" in rendered
+
+
+def test_agent_endpoints_require_internal_authentication():
+    payload = {"title": "controlled fixture", "content": "controlled fixture"}
+
+    assert client.post("/agent/requirement-breakdown", json=payload).status_code == 401
+    assert client.post(
+        "/agent/requirement-breakdown",
+        headers={"X-Internal-Token": "wrong-token"},
+        json=payload,
+    ).status_code == 401
+    assert client.post(
+        "/agent/requirement-breakdown",
+        headers=INTERNAL_HEADERS,
+        json=payload,
+    ).status_code == 200

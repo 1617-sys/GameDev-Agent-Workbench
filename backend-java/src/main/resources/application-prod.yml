@@ -1,0 +1,13 @@
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+app:
+  observability:
+    prometheus-anonymous-access: false
+  security:
+    cors:
+      # Production must explicitly supply trusted browser origins.
+      allowed-origins: ${CORS_ALLOWED_ORIGINS:}
