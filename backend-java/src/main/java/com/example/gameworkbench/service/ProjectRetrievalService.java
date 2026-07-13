@@ -1,2 +1,33 @@
-package com.example.gameworkbench.service; import java.util.*; import org.springframework.stereotype.Service; import com.example.gameworkbench.common.enums.ErrorCode; import com.example.gameworkbench.common.exception.BusinessException;
-@Service public class ProjectRetrievalService implements RetrievalService { private final EmbeddingProvider p; private final InMemoryVectorStore s; public ProjectRetrievalService(EmbeddingProvider p,InMemoryVectorStore s){this.p=p;this.s=s;} public List<RetrievalCandidate> retrieve(RetrievalRequest r){if(r.projectId()==null||r.query()==null||r.query().isBlank()||r.query().length()>2000||r.topK()<1||r.topK()>20||r.maxChars()<1)throw new BusinessException(ErrorCode.INVALID_PARAM);List<RetrievalCandidate> o=new ArrayList<>();for(var h:s.search(p.embed(List.of(r.query())).get(0),r.projectId())){var m=h.metadata();if(!String.valueOf(r.projectId()).equals(m.get("projectId"))||!"ACTIVE".equals(m.get("status"))||h.score()<r.minScore())continue;String ref=m.get("vectorRef");if(o.stream().anyMatch(x->x.chunkUuid().equals(m.get("chunkUuid")))||o.stream().mapToInt(x->x.textReference().length()).sum()+ref.length()>r.maxChars())continue;o.add(new RetrievalCandidate(m.get("chunkUuid"),m.get("documentUuid"),m.get("documentVersion"),h.score(),o.size()+1,ref,m.get("embeddingModel")));if(o.size()==r.topK())break;}return o;} }
+package com.example.gameworkbench.service;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import org.springframework.stereotype.Service;
+import com.example.gameworkbench.common.enums.ErrorCode;
+import com.example.gameworkbench.common.exception.BusinessException;
+
+@Service
+public class ProjectRetrievalService implements RetrievalService {
+    private final EmbeddingProvider provider;
+    private final InMemoryVectorStore store;
+    public ProjectRetrievalService(EmbeddingProvider provider, InMemoryVectorStore store) { this.provider = provider; this.store = store; }
+    public List<RetrievalCandidate> retrieve(RetrievalRequest request) {
+        if (request.projectId() == null || request.query() == null || request.query().isBlank()
+                || request.query().length() > 2000 || request.topK() < 1 || request.topK() > 20 || request.maxChars() < 1) {
+            throw new BusinessException(ErrorCode.INVALID_PARAM);
+        }
+        List<RetrievalCandidate> out = new ArrayList<>(); Set<String> seen = new HashSet<>(); int used = 0;
+        for (var hit : store.search(provider.embed(List.of(request.query())).getFirst(), request.projectId())) {
+            var meta = hit.metadata();
+            if (!String.valueOf(request.projectId()).equals(meta.get("projectId")) || !"ACTIVE".equals(meta.get("status"))
+                    || hit.score() < request.minScore() || !seen.add(meta.get("chunkUuid"))) continue;
+            String textRef = meta.get("textRef"); if (textRef == null || used + textRef.length() > request.maxChars()) continue;
+            used += textRef.length(); out.add(new RetrievalCandidate(meta.get("chunkUuid"), meta.get("documentUuid"),
+                    meta.get("documentVersion"), hit.score(), out.size() + 1, textRef, meta.get("embeddingModel")));
+            if (out.size() == request.topK()) break;
+        }
+        return out;
+    }
+}
