@@ -1,0 +1,8 @@
+{
+    "rcSha":  "aa48cf8408594f70c61c878071b8663532fe66ec",
+    "completedAtUtc":  "2026-07-13T08:49:49.3177743Z",
+    "matrixExitCode":  1,
+    "cleanupExitCode":  1,
+    "safeStop":  "all paused services restored; fake mode normal; docker compose down without -v",
+    "result":  "FAIL"
+}

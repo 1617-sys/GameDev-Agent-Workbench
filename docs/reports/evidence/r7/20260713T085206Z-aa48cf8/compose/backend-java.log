@@ -1,0 +1,82 @@
+backend-java-1  | Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+backend-java-1  |
+backend-java-1  |   .   ____          _            __ _ _
+backend-java-1  |  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+backend-java-1  | ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+backend-java-1  |  \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+backend-java-1  |   '  |____| .__|_| |_|_| |_\__, | / / / /
+backend-java-1  |  =========|_|==============|___/=/_/_/_/
+backend-java-1  |
+backend-java-1  |  :: Spring Boot ::                (v3.3.5)
+backend-java-1  |
+backend-java-1  | 2026-07-13T16:52:35.925+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] c.e.g.GameDevAgentWorkbenchApplication   : Starting GameDevAgentWorkbenchApplication v0.0.1-SNAPSHOT using Java 21.0.11 with PID 8 (/app/app.jar started by app in /app)
+backend-java-1  | 2026-07-13T16:52:35.928+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] c.e.g.GameDevAgentWorkbenchApplication   : The following 1 profile is active: "async"
+backend-java-1  | 2026-07-13T16:52:37.463+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+backend-java-1  | 2026-07-13T16:52:37.466+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+backend-java-1  | 2026-07-13T16:52:37.499+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 21 ms. Found 0 Redis repository interfaces.
+backend-java-1  | 2026-07-13T16:52:38.309+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+backend-java-1  | 2026-07-13T16:52:38.324+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+backend-java-1  | 2026-07-13T16:52:38.324+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.31]
+backend-java-1  | 2026-07-13T16:52:38.357+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+backend-java-1  | 2026-07-13T16:52:38.359+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2348 ms
+backend-java-1  | Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+backend-java-1  |  _ _   |_  _ _|_. ___ _ |    _
+backend-java-1  | | | |\/|_)(_| | |_\  |_)||_|_\
+backend-java-1  |      /               |
+backend-java-1  |                         3.5.7
+backend-java-1  | 2026-07-13T16:52:39.066+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+backend-java-1  | 2026-07-13T16:52:39.429+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@29394966
+backend-java-1  | 2026-07-13T16:52:39.432+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+backend-java-1  | 2026-07-13T16:52:39.495+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:mysql://mysql:3306/gamedev_agent_workbench (MySQL 8.4)
+backend-java-1  | 2026-07-13T16:52:39.527+08:00  WARN 8 --- [gamedev-agent-workbench] [           main] o.f.c.internal.database.base.Database    : Flyway upgrade recommended: MySQL 8.4 is newer than this version of Flyway and support has not been tested. The latest supported version of MySQL is 8.1.
+backend-java-1  | 2026-07-13T16:52:39.561+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table `gamedev_agent_workbench`.`flyway_schema_history` does not exist yet
+backend-java-1  | 2026-07-13T16:52:39.565+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 26 migrations (execution time 00:00.024s)
+backend-java-1  | 2026-07-13T16:52:39.585+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table `gamedev_agent_workbench`.`flyway_schema_history` with baseline ...
+backend-java-1  | 2026-07-13T16:52:39.764+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbBaseline     : Successfully baselined schema with version: 1
+backend-java-1  | 2026-07-13T16:52:39.781+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema `gamedev_agent_workbench`: 1
+backend-java-1  | 2026-07-13T16:52:39.795+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "2 - add workflow definition version"
+backend-java-1  | 2026-07-13T16:52:40.076+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "3 - add workflow step run"
+backend-java-1  | 2026-07-13T16:52:40.560+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "4 - add prompt version"
+backend-java-1  | 2026-07-13T16:52:41.124+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "5 - extend workflow run for domain snapshot"
+backend-java-1  | 2026-07-13T16:52:41.425+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "6 - add step run agent run link"
+backend-java-1  | 2026-07-13T16:52:41.663+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "7 - add demo workflow runner definition"
+backend-java-1  | 2026-07-13T16:52:41.689+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "8 - add game config validation metadata"
+backend-java-1  | 2026-07-13T16:52:42.070+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "9 - add async submit idempotency and outbox"
+backend-java-1  | 2026-07-13T16:52:42.494+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "10 - extend outbox for publisher confirm"
+backend-java-1  | 2026-07-13T16:52:42.747+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "11 - add workflow execution heartbeat"
+backend-java-1  | 2026-07-13T16:52:43.022+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "12 - add workflow retry failure evidence"
+backend-java-1  | 2026-07-13T16:52:43.488+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "13 - add workflow recovery audit"
+backend-java-1  | 2026-07-13T16:52:43.836+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "14 - add workflow run trace id"
+backend-java-1  | 2026-07-13T16:52:44.128+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "15 - add workflow run event"
+backend-java-1  | 2026-07-13T16:52:44.492+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "16 - add workflow command idempotency"
+backend-java-1  | 2026-07-13T16:52:44.734+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "17 - add model call metrics"
+backend-java-1  | 2026-07-13T16:52:45.338+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "18 - add schema evaluation report"
+backend-java-1  | 2026-07-13T16:52:45.531+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "19 - add rule version to evaluation report"
+backend-java-1  | 2026-07-13T16:52:45.684+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "20 - add artifact evaluation gate"
+backend-java-1  | 2026-07-13T16:52:45.968+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "21 - add knowledge document lifecycle"
+backend-java-1  | 2026-07-13T16:52:46.393+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "22 - add knowledge document extraction"
+backend-java-1  | 2026-07-13T16:52:46.635+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "23 - add knowledge chunk vector reference"
+backend-java-1  | 2026-07-13T16:52:47.035+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "24 - add retrieval record"
+backend-java-1  | 2026-07-13T16:52:47.177+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "25 - add agent run rag snapshot"
+backend-java-1  | 2026-07-13T16:52:47.588+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema `gamedev_agent_workbench` to version "26 - add rag experiment key"
+backend-java-1  | 2026-07-13T16:52:47.945+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 25 migrations to schema `gamedev_agent_workbench`, now at version v26 (execution time 00:07.512s)
+backend-java-1  | 2026-07-13T16:52:49.494+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name userDetailsService
+backend-java-1  | 2026-07-13T16:52:49.771+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+backend-java-1  | 2026-07-13T16:52:50.271+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/'
+backend-java-1  | 2026-07-13T16:52:50.275+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.s.a.r.c.CachingConnectionFactory       : Attempting to connect to: [rabbitmq:5672]
+backend-java-1  | 2026-07-13T16:52:50.315+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] o.s.a.r.c.CachingConnectionFactory       : Created new connection: rabbitConnectionFactory#60658389:0/SimpleConnection@52e2e426 [delegate=amqp://gamedev_app@172.24.0.3:5672/, localPort=59192]
+backend-java-1  | 2026-07-13T16:52:50.484+08:00  INFO 8 --- [gamedev-agent-workbench] [           main] c.e.g.GameDevAgentWorkbenchApplication   : Started GameDevAgentWorkbenchApplication in 15.073 seconds (process running for 15.671)
+backend-java-1  | 2026-07-13T16:52:55.167+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+backend-java-1  | 2026-07-13T16:52:55.167+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+backend-java-1  | 2026-07-13T16:52:55.169+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+backend-java-1  | 2026-07-13T16:52:57.566+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-3] c.e.g.service.impl.AuthServiceImpl       : [Auth] register started username=r7fault-aed1b277
+backend-java-1  | 2026-07-13T16:52:57.689+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-3] c.e.g.service.impl.AuthServiceImpl       : [Auth] register succeeded userId=1 username=r7fault-aed1b277
+backend-java-1  | 2026-07-13T16:52:57.712+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-4] c.e.g.service.impl.AuthServiceImpl       : [Auth] login started username=r7fault-aed1b277
+backend-java-1  | 2026-07-13T16:52:57.869+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-4] c.e.g.service.impl.AuthServiceImpl       : [Auth] login succeeded userId=1 username=r7fault-aed1b277
+backend-java-1  | 2026-07-13T16:52:57.942+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-5] c.e.g.s.impl.GameProjectServiceImpl      : [Project] create project started userId=1 projectUuid=0a1a9da6-af24-445f-9515-92cb127b697f name=R7 fault fixture
+backend-java-1  | 2026-07-13T16:52:57.954+08:00  INFO 8 --- [gamedev-agent-workbench] [nio-8080-exec-5] c.e.g.s.impl.GameProjectServiceImpl      : [Project] create project succeeded userId=1 projectUuid=0a1a9da6-af24-445f-9515-92cb127b697f projectId=1
+backend-java-1  | 2026-07-13T16:53:10.257+08:00  WARN 8 --- [gamedev-agent-workbench] [nio-8080-exec-6] c.e.g.s.impl.WorkflowSubmissionGateImpl  : [WorkflowRateLimit] redis unavailable userId=1 policy=v1
+backend-java-1  | 2026-07-13T16:53:15.038+08:00  WARN 8 --- [gamedev-agent-workbench] [nio-8080-exec-9] c.e.g.s.impl.WorkflowSubmissionGateImpl  : [WorkflowRateLimit] redis unavailable userId=1 policy=v1
+backend-java-1  | 2026-07-13T16:53:15.324+08:00  WARN 8 --- [gamedev-agent-workbench] [nio-8080-exec-1] c.e.g.s.impl.WorkflowSubmissionGateImpl  : [WorkflowRateLimit] redis unavailable userId=1 policy=v1
+backend-java-1  | 2026-07-13T16:53:15.701+08:00  WARN 8 --- [gamedev-agent-workbench] [nio-8080-exec-2] c.e.g.s.impl.WorkflowSubmissionGateImpl  : [WorkflowRateLimit] redis unavailable userId=1 policy=v1
+backend-java-1  | 2026-07-13T16:53:16.040+08:00  WARN 8 --- [gamedev-agent-workbench] [nio-8080-exec-3] c.e.g.s.impl.WorkflowSubmissionGateImpl  : [WorkflowRateLimit] redis unavailable userId=1 policy=v1

@@ -1,0 +1,12 @@
+{
+    "runId":  "20260713T085017Z-aa48cf8",
+    "rcSha":  "aa48cf8408594f70c61c878071b8663532fe66ec",
+    "branch":  "r7",
+    "startedAtUtc":  "2026-07-13T08:50:17.6015913Z",
+    "providerMode":  "fake",
+    "fixtureVersion":  "r7-fault-fixed-agent-v1",
+    "composeProject":  "r7fault-efb8a380",
+    "fixtureNamespace":  "r7fault-efb8a380",
+    "isolation":  "unique Compose project labels and per-run fixture namespace",
+    "secretsStoredIn":  "temporary local env file; excluded from evidence and deleted during cleanup"
+}

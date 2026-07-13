@@ -1,0 +1,233 @@
+ Image r7fault-aed1b277-python-agent Building
+ Image r7fault-aed1b277-backend-java Building
+ Image r7fault-aed1b277-frontend-vue Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.65kB 0.0s done
+#1 DONE 0.0s
+
+#2 [frontend-vue internal] load build definition from Dockerfile
+#2 transferring dockerfile: 388B done
+#2 DONE 0.0s
+
+#3 [backend-java internal] load build definition from Dockerfile
+#3 transferring dockerfile: 668B done
+#3 DONE 0.1s
+
+#4 [python-agent internal] load build definition from Dockerfile
+#4 transferring dockerfile: 200B done
+#4 DONE 0.1s
+
+#5 [python-agent internal] load metadata for docker.io/library/python:3.13-alpine
+#5 ...
+
+#6 [frontend-vue internal] load metadata for docker.io/library/node:22-alpine
+#6 DONE 1.5s
+
+#7 [frontend-vue internal] load .dockerignore
+#7 transferring context: 125B done
+#7 DONE 0.0s
+
+#8 [frontend-vue build 1/6] FROM docker.io/library/node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2
+#8 resolve docker.io/library/node:22-alpine@sha256:16e22a550f3863206a3f701448c45f7912c6896a62de43add43bb9c86130c3e2 0.1s done
+#8 DONE 0.1s
+
+#9 [frontend-vue internal] load build context
+#9 transferring context: 2.50kB done
+#9 DONE 0.0s
+
+#10 [backend-java internal] load metadata for docker.io/library/maven:3.9.9-eclipse-temurin-21
+#10 DONE 1.6s
+
+#11 [frontend-vue build 6/6] RUN npm run build
+#11 CACHED
+
+#12 [frontend-vue build 4/6] RUN npm ci
+#12 CACHED
+
+#13 [frontend-vue build 5/6] COPY . .
+#13 CACHED
+
+#14 [frontend-vue build 2/6] WORKDIR /app
+#14 CACHED
+
+#15 [frontend-vue stage-1 3/4] RUN npm install -g serve@14.2.4     && addgroup -S app     && adduser -S -G app app
+#15 CACHED
+
+#16 [frontend-vue build 3/6] COPY package*.json ./
+#16 CACHED
+
+#17 [frontend-vue stage-1 4/4] COPY --from=build --chown=app:app /app/dist ./dist
+#17 CACHED
+
+#18 [frontend-vue] exporting to image
+#18 exporting layers done
+#18 exporting manifest sha256:4c289835f1573b97b457ee26c186e59babdac18d6fb7c6b980f2f4cdb06eb240 0.0s done
+#18 exporting config sha256:c603fd88ffdd7777f069d8294509aa6058795bce652523a29e48f61a3ba760b1 0.0s done
+#18 exporting attestation manifest sha256:af9c6b821697326f3376d5b4e545fab3e6f5fde5b781363a25a25e628b0a485e 0.1s done
+#18 exporting manifest list sha256:96eb98a809aa1009a618f3128ceb4b1957c34ce811d6d1937854e992c998cdd5 0.0s done
+#18 naming to docker.io/library/r7fault-aed1b277-frontend-vue:latest
+#18 naming to docker.io/library/r7fault-aed1b277-frontend-vue:latest done
+#18 unpacking to docker.io/library/r7fault-aed1b277-frontend-vue:latest 0.0s done
+#18 DONE 0.3s
+
+#5 [python-agent internal] load metadata for docker.io/library/python:3.13-alpine
+#5 DONE 1.9s
+
+#19 [python-agent internal] load .dockerignore
+#19 transferring context: 2B done
+#19 DONE 0.0s
+
+#20 [python-agent internal] load build context
+#20 DONE 0.0s
+
+#21 [python-agent 1/4] FROM docker.io/library/python:3.13-alpine@sha256:399babc8b49529dabfd9c922f2b5eea81d611e4512e3ed250d75bd2e7683f4b0
+#21 resolve docker.io/library/python:3.13-alpine@sha256:399babc8b49529dabfd9c922f2b5eea81d611e4512e3ed250d75bd2e7683f4b0 0.1s done
+#21 DONE 0.1s
+
+#22 [backend-java internal] load metadata for docker.io/library/eclipse-temurin:21-jre
+#22 DONE 2.1s
+
+#20 [python-agent internal] load build context
+#20 transferring context: 35B done
+#20 DONE 0.0s
+
+#23 [python-agent 2/4] WORKDIR /app
+#23 CACHED
+
+#24 [python-agent 3/4] COPY fake_agent.py ./
+#24 CACHED
+
+#25 [python-agent 4/4] RUN addgroup -S app && adduser -S -G app app
+#25 CACHED
+
+#26 [python-agent] exporting to image
+#26 exporting layers done
+#26 exporting manifest sha256:81b0030883aefb707b2f742c28b207ea8e91ac626c93b0fdd759180fb8d3d9c5
+#26 ...
+
+#27 [backend-java internal] load .dockerignore
+#27 transferring context: 86B done
+#27 DONE 0.0s
+
+#28 [backend-java internal] load build context
+#28 DONE 0.0s
+
+#26 [python-agent] exporting to image
+#26 exporting manifest sha256:81b0030883aefb707b2f742c28b207ea8e91ac626c93b0fdd759180fb8d3d9c5 0.1s done
+#26 exporting config sha256:90f4e0a2807b8291bda433efe29e4f9cddd4b06a131d4bf47e9e52f8fae65473 0.1s done
+#26 exporting attestation manifest sha256:cd985d4b095a27ee3b44a693b7176260beb0342027f7c662e3b226289a3dc384
+#26 ...
+
+#29 [backend-java build 1/5] FROM docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e
+#29 resolve docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e 0.2s done
+#29 DONE 0.2s
+
+#30 [backend-java stage-1 1/4] FROM docker.io/library/eclipse-temurin:21-jre@sha256:d2b9f8f12212cadcfdf889461531784e8fd097feade954d65b31ee7a71c473ec
+#30 resolve docker.io/library/eclipse-temurin:21-jre@sha256:d2b9f8f12212cadcfdf889461531784e8fd097feade954d65b31ee7a71c473ec 0.2s done
+#30 DONE 0.2s
+
+#31 [frontend-vue] resolving provenance for metadata file
+#31 DONE 0.0s
+
+#28 [backend-java internal] load build context
+#28 transferring context: 32.67kB 0.0s done
+#28 DONE 0.1s
+
+#32 [backend-java build 3/5] COPY pom.xml .
+#32 CACHED
+
+#33 [backend-java build 4/5] COPY src ./src
+#33 CACHED
+
+#34 [backend-java build 2/5] WORKDIR /app
+#34 CACHED
+
+#35 [backend-java build 5/5] RUN mvn -B -ntp -Dmaven.test.skip=true package
+#35 CACHED
+
+#36 [backend-java stage-1 3/4] RUN apt-get update     && apt-get install -y --no-install-recommends curl     && rm -rf /var/lib/apt/lists/*     && groupadd --system app     && useradd --system --gid app --create-home app
+#36 CACHED
+
+#37 [backend-java stage-1 2/4] WORKDIR /app
+#37 CACHED
+
+#38 [backend-java stage-1 4/4] COPY --from=build --chown=app:app /app/target/*.jar app.jar
+#38 CACHED
+
+#39 [backend-java] exporting to image
+#39 exporting layers done
+#39 ...
+
+#26 [python-agent] exporting to image
+#26 exporting attestation manifest sha256:cd985d4b095a27ee3b44a693b7176260beb0342027f7c662e3b226289a3dc384 0.1s done
+#26 exporting manifest list sha256:2c82f73b9bed0b2e13746a44f761b68f35a13e638a57911687da3dfcb969778a 0.1s done
+#26 naming to docker.io/library/r7fault-aed1b277-python-agent:latest done
+#26 unpacking to docker.io/library/r7fault-aed1b277-python-agent:latest 0.0s done
+#26 DONE 0.4s
+
+#39 [backend-java] exporting to image
+#39 exporting manifest sha256:7fa8e6903283a9c11445745b73584eea64920dbaf645c115272f8af8b23c4076 0.1s done
+#39 exporting config sha256:2b2ca99f7e8a2f3b5af02acd88ce5f066518502e1726bb4c02cc1e2d9a8c0e0f 0.1s done
+#39 exporting attestation manifest sha256:f1b6a377cf60af00b500ffcf8b18c5e0a70458a75e7cddacbdcdd55d9ef014d3 0.1s done
+#39 exporting manifest list sha256:af2e3c45fa78e1933d609af602519c1e7536f69e4ce800495ae6e364c9cb161a
+#39 exporting manifest list sha256:af2e3c45fa78e1933d609af602519c1e7536f69e4ce800495ae6e364c9cb161a 0.1s done
+#39 naming to docker.io/library/r7fault-aed1b277-backend-java:latest 0.0s done
+#39 unpacking to docker.io/library/r7fault-aed1b277-backend-java:latest 0.0s done
+#39 DONE 0.4s
+
+#40 [python-agent] resolving provenance for metadata file
+#40 DONE 0.0s
+
+#41 [backend-java] resolving provenance for metadata file
+#41 DONE 0.0s
+ Image r7fault-aed1b277-backend-java Built
+ Image r7fault-aed1b277-frontend-vue Built
+ Image r7fault-aed1b277-python-agent Built
+ Network r7fault-aed1b277_default Creating
+ Network r7fault-aed1b277_default Created
+ Volume r7fault-aed1b277_redis-data Creating
+ Volume r7fault-aed1b277_redis-data Created
+ Volume r7fault-aed1b277_mysql-data Creating
+ Volume r7fault-aed1b277_mysql-data Created
+ Container r7fault-aed1b277-redis-1 Creating
+ Container r7fault-aed1b277-rabbitmq-1 Creating
+ Container r7fault-aed1b277-mysql-1 Creating
+ Container r7fault-aed1b277-python-agent-1 Creating
+ Container r7fault-aed1b277-python-agent-1 Created
+ Container r7fault-aed1b277-mysql-1 Created
+ Container r7fault-aed1b277-mysql-bootstrap-1 Creating
+ Container r7fault-aed1b277-redis-1 Created
+ Container r7fault-aed1b277-rabbitmq-1 Created
+ Container r7fault-aed1b277-mysql-bootstrap-1 Created
+ Container r7fault-aed1b277-backend-java-1 Creating
+ Container r7fault-aed1b277-backend-java-1 Created
+ Container r7fault-aed1b277-frontend-vue-1 Creating
+ Container r7fault-aed1b277-frontend-vue-1 Created
+ Container r7fault-aed1b277-mysql-1 Starting
+ Container r7fault-aed1b277-python-agent-1 Starting
+ Container r7fault-aed1b277-rabbitmq-1 Starting
+ Container r7fault-aed1b277-redis-1 Starting
+ Container r7fault-aed1b277-redis-1 Started
+ Container r7fault-aed1b277-rabbitmq-1 Started
+ Container r7fault-aed1b277-python-agent-1 Started
+ Container r7fault-aed1b277-mysql-1 Started
+ Container r7fault-aed1b277-mysql-1 Waiting
+ Container r7fault-aed1b277-mysql-1 Healthy
+ Container r7fault-aed1b277-mysql-bootstrap-1 Starting
+ Container r7fault-aed1b277-mysql-bootstrap-1 Started
+ Container r7fault-aed1b277-rabbitmq-1 Waiting
+ Container r7fault-aed1b277-mysql-1 Waiting
+ Container r7fault-aed1b277-mysql-bootstrap-1 Waiting
+ Container r7fault-aed1b277-redis-1 Waiting
+ Container r7fault-aed1b277-python-agent-1 Waiting
+ Container r7fault-aed1b277-python-agent-1 Healthy
+ Container r7fault-aed1b277-redis-1 Healthy
+ Container r7fault-aed1b277-mysql-1 Healthy
+ Container r7fault-aed1b277-rabbitmq-1 Healthy
+ Container r7fault-aed1b277-mysql-bootstrap-1 Exited
+ Container r7fault-aed1b277-backend-java-1 Starting
+ Container r7fault-aed1b277-backend-java-1 Started
+ Container r7fault-aed1b277-backend-java-1 Waiting
+ Container r7fault-aed1b277-backend-java-1 Healthy
+ Container r7fault-aed1b277-frontend-vue-1 Starting
+ Container r7fault-aed1b277-frontend-vue-1 Started

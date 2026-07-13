@@ -1,0 +1,2 @@
+Compose configuration validated; expanded secret-bearing output was not persisted.
+exitCode=0

@@ -1,0 +1,7 @@
+Required loopback port 5173 is already in use. Stop the conflicting process before running the isolated R7 E2E stack.
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Invoke-R7MainWorkflowE2E.ps1:52 char:9
++         throw "Required loopback port $Port is already in use. Stop t ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Required loopba...d R7 E2E stack.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Required loopback port 5173 is already in use. Stop the conflicting process before runni
+   ng the isolated R7 E2E stack.

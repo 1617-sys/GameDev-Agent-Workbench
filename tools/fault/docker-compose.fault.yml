@@ -1,0 +1,16 @@
+services:
+  python-agent:
+    build:
+      context: ./tools/fault/fake-agent
+    environment: {}
+
+  backend-java:
+    environment:
+      APP_WORKFLOW_RECOVERY_ENABLED: "true"
+      APP_WORKFLOW_RECOVERY_SCAN_DELAY_MS: "1000"
+      APP_WORKFLOW_RECOVERY_PENDING_STALE_MS: "3000"
+      APP_WORKFLOW_RECOVERY_QUEUED_STALE_MS: "3000"
+      APP_WORKFLOW_RECOVERY_RUNNING_HEARTBEAT_STALE_MS: "3000"
+      APP_WORKFLOW_RECOVERY_MAX_RECOVERY_ATTEMPTS: "3"
+      OUTBOX_PUBLISHER_POLL_DELAY_MS: "250"
+      OUTBOX_PUBLISHER_RETRY_DELAY_MS: "1000"

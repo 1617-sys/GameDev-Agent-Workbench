@@ -1,0 +1,92 @@
+{
+  "providerMode": "fake",
+  "fixtureVersion": "r7-fault-fixed-agent-v1",
+  "fixtureNamespace": "r7fault-aed1b277",
+  "completedAtUtc": "2026-07-13T08:53:16.385Z",
+  "scenarios": [
+    {
+      "name": "redis-unavailable-fail-closed",
+      "startedAtUtc": "2026-07-13T08:52:57.961Z",
+      "status": "PASS",
+      "evidence": {
+        "response": {
+          "clientTimeout": true,
+          "message": "TimeoutError"
+        },
+        "persistedRunCount": 0
+      },
+      "completedAtUtc": "2026-07-13T08:53:11.926Z"
+    },
+    {
+      "name": "redis-lock-expiry-and-wrong-owner",
+      "startedAtUtc": "2026-07-13T08:53:11.926Z",
+      "status": "PASS",
+      "evidence": {
+        "wrongOwnerDeleteCount": 0,
+        "retainedOwnerHash": "owner-a",
+        "existsAfterTtl": 0
+      },
+      "completedAtUtc": "2026-07-13T08:53:14.908Z"
+    },
+    {
+      "name": "rabbitmq-outbox-recovery",
+      "startedAtUtc": "2026-07-13T08:53:14.908Z",
+      "status": "FAIL",
+      "error": "Submission was not durably accepted during broker outage: {\"httpStatus\":200,\"code\":50302,\"message\":\"Workflow submission is temporarily unavailable\",\"data\":{\"code\":50302,\"message\":\"Workflow submission is temporarily unavailable\",\"data\":null,\"traceId\":null}}",
+      "completedAtUtc": "2026-07-13T08:53:15.144Z"
+    },
+    {
+      "name": "python-429-limited-retry",
+      "startedAtUtc": "2026-07-13T08:53:15.144Z",
+      "status": "FAIL",
+      "error": "Python 429 fixture was not accepted for asynchronous execution.",
+      "completedAtUtc": "2026-07-13T08:53:15.327Z"
+    },
+    {
+      "name": "python-invalid-limited-retry",
+      "startedAtUtc": "2026-07-13T08:53:15.513Z",
+      "status": "FAIL",
+      "error": "Python invalid fixture was not accepted for asynchronous execution.",
+      "completedAtUtc": "2026-07-13T08:53:15.704Z"
+    },
+    {
+      "name": "consumer-restart-recovery",
+      "startedAtUtc": "2026-07-13T08:53:15.881Z",
+      "status": "FAIL",
+      "error": "Consumer-restart fixture was not accepted.",
+      "completedAtUtc": "2026-07-13T08:53:16.043Z"
+    }
+  ],
+  "recoveryActions": [
+    {
+      "atUtc": "2026-07-13T08:53:10.225Z",
+      "action": "redis unpaused"
+    },
+    {
+      "atUtc": "2026-07-13T08:53:15.144Z",
+      "action": "rabbitmq unpaused"
+    },
+    {
+      "atUtc": "2026-07-13T08:53:15.513Z",
+      "action": "fake Agent mode restored to normal"
+    },
+    {
+      "atUtc": "2026-07-13T08:53:15.881Z",
+      "action": "fake Agent mode restored to normal"
+    },
+    {
+      "atUtc": "2026-07-13T08:53:16.221Z",
+      "action": "fake Agent mode restored to normal"
+    }
+  ],
+  "mysqlTransientFailure": {
+    "status": "NOT RUN",
+    "reason": "No bounded connection proxy exists; pausing MySQL can strand pooled calls beyond the five-minute scenario contract."
+  },
+  "contractFailures": [
+    "rabbitmq-outbox-recovery: Submission was not durably accepted during broker outage: {\"httpStatus\":200,\"code\":50302,\"message\":\"Workflow submission is temporarily unavailable\",\"data\":{\"code\":50302,\"message\":\"Workflow submission is temporarily unavailable\",\"data\":null,\"traceId\":null}}",
+    "python-429-limited-retry: Python 429 fixture was not accepted for asynchronous execution.",
+    "python-invalid-limited-retry: Python invalid fixture was not accepted for asynchronous execution.",
+    "consumer-restart-recovery: Consumer-restart fixture was not accepted."
+  ]
+}
