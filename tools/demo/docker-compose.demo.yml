@@ -1,0 +1,6 @@
+services:
+  python-agent:
+    build:
+      context: ./tools/demo/fake-agent
+    environment:
+      DEMO_PROVIDER_MODE: offline

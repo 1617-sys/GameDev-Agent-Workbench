@@ -1,0 +1,5 @@
+command=.\tools\reset-demo.ps1
+elapsedSeconds=7.6
+exitCode=0
+result=removed exact r7-demo-v1 user/project graph; Compose stopped without deleting volumes
+secretFieldsRecorded=none

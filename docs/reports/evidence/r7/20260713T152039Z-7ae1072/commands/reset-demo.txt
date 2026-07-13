@@ -1,0 +1,8 @@
+command=.\tools\reset-demo.ps1
+firstFinalCycleElapsedSeconds=7.0
+repeatCycleElapsedSeconds=6.7
+exitCode=0
+result=two consecutive cycles removed the exact demo graph and stopped Compose without deleting volumes
+composeEnvironmentRetained=true
+demoCredentialsAndStateRemoved=true
+secretFieldsRecorded=none

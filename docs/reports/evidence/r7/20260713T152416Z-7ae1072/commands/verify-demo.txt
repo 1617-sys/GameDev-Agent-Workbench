@@ -1,0 +1,6 @@
+command=.\tools\verify-demo.ps1
+elapsedSeconds=4.2
+exitCode=1
+preflightResult=PASS (service health, loopback ports, browser, provider mode, fallback documents)
+result=prepare did not complete an asynchronous workflow; R3 prerequisite is blocked
+secretFieldsRecorded=none

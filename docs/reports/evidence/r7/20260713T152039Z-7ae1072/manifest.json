@@ -1,0 +1,17 @@
+{
+  "runId": "20260713T152039Z-7ae1072",
+  "rcSha": "7ae10724c511d18ec8f9de828da4088df9026266",
+  "branch": "r7",
+  "finishedAtUtc": "2026-07-13T15:20:39Z",
+  "timezone": "UTC",
+  "providerMode": "fake/offline-mock",
+  "fixtureVersion": "r7-demo-fixture-v1",
+  "namespace": "r7-demo-v1",
+  "composeProject": "r7demo07",
+  "candidateDirty": true,
+  "docker": "Docker version 29.1.5, build 0e6fee6",
+  "compose": "Docker Compose version v5.0.1",
+  "containsSecrets": false,
+  "result": "BLOCKED",
+  "blockerOwner": "R3 workflow rate-limit/Redis integration"
+}

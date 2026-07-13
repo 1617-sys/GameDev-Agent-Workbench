@@ -1,0 +1,5 @@
+command=.\tools\verify-demo.ps1
+elapsedSeconds=0.6
+exitCode=1
+result=prepare did not complete an asynchronous workflow; R3 prerequisite is blocked
+secretFieldsRecorded=none

@@ -1,0 +1,20 @@
+{
+  "conclusion": "BLOCKED",
+  "providerMode": "fake/offline-mock",
+  "namespace": "r7-demo-v1",
+  "fixtureVersion": "r7-demo-fixture-v1",
+  "composeHealthBeforeSubmission": "PASS",
+  "knowledgeDocumentReady": true,
+  "prepareWarmElapsedSeconds": 34.3,
+  "submissionHttpEnvelopeCode": 50302,
+  "submissionMessage": "Workflow submission is temporarily unavailable",
+  "workflowRunCreated": false,
+  "traceIdCreated": false,
+  "metricsCreated": 0,
+  "artifactsCreated": 0,
+  "ragEvidenceCreated": false,
+  "resetExitCode": 0,
+  "resetScope": "exact demo namespace, user, and project marker; no volume deletion",
+  "blockerOwner": "R3 workflow rate-limit/Redis integration",
+  "secretFieldsRecorded": []
+}

@@ -1,0 +1,8 @@
+command=.\tools\prepare-demo.ps1
+providerMode=fake/offline-mock
+firstFinalCycleElapsedSeconds=55.1
+repeatAfterResetElapsedSeconds=46.3
+exitCode=1
+infrastructureAndSeedResult=PASS
+result=HTTP business code 50302; asynchronous workflow was not created
+secretFieldsRecorded=none
