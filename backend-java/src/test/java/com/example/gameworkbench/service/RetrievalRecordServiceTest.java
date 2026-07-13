@@ -1,0 +1,2 @@
+package com.example.gameworkbench.service; import static org.assertj.core.api.Assertions.*; import static org.mockito.ArgumentMatchers.*; import static org.mockito.Mockito.*; import org.junit.jupiter.api.Test; import com.example.gameworkbench.mapper.*;
+class RetrievalRecordServiceTest { @Test void deniesCrossProjectRun(){var r=mock(RetrievalRecordMapper.class);var a=mock(AgentRunMapper.class);assertThat(new RetrievalRecordService(r,a).list(1L,2L,3L)).isEmpty();verify(r,never()).selectList(any());} }
