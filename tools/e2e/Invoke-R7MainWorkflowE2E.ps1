@@ -230,7 +230,6 @@ try {
     finally {
         Pop-Location
     }
-    Assert-EvidenceRedacted
 }
 catch {
     Write-TextFile -Path (Join-Path $consoleDir 'harness-error.txt') -Text ($_ | Out-String)
@@ -239,6 +238,27 @@ catch {
 }
 finally {
     $cleanupExitCode = 0
+    if ($stackStarted) {
+        foreach ($service in @('backend-java', 'python-agent', 'redis', 'rabbitmq')) {
+            try {
+                $container = Get-ComposeContainer -Service $service
+                $log = Invoke-Docker -Arguments @('logs', '--tail', '200', $container)
+                Write-TextFile -Path (Join-Path $composeEvidenceDir "$service.log") -Text (($log -join [Environment]::NewLine) + [Environment]::NewLine)
+            }
+            catch {
+                Write-TextFile -Path (Join-Path $composeEvidenceDir "$service-log-error.txt") -Text ($_ | Out-String)
+                $cleanupExitCode = 1
+            }
+        }
+        try {
+            Assert-EvidenceRedacted
+        }
+        catch {
+            Write-TextFile -Path (Join-Path $consoleDir 'evidence-redaction-error.txt') -Text ($_ | Out-String)
+            Write-Error "Evidence redaction check failed. Evidence: $evidenceRoot`n$($_.Exception.Message)"
+            $cleanupExitCode = 1
+        }
+    }
     if ($stackStarted -and -not $KeepFixture) {
         try {
             & $cleanupScript -FixtureUsername $fixtureUsername -ComposeProject $composeProject 2>&1 |

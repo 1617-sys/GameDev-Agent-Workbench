@@ -14,5 +14,7 @@ export default defineConfig({
     // Raw Playwright traces can include Authorization request headers. The main E2E writes a redacted client trace instead.
     trace: "off"
   },
-  reporter: [["list"], ["html", { open: "never", outputFolder: process.env.PLAYWRIGHT_HTML_REPORT_DIR || "playwright-report" }]]
+  reporter: mainWorkflowE2E
+    ? [["list"]]
+    : [["list"], ["html", { open: "never", outputFolder: process.env.PLAYWRIGHT_HTML_REPORT_DIR || "playwright-report" }]]
 });
