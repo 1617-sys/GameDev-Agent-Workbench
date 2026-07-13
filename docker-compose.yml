@@ -1,13 +1,13 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: gamedev-mysql
+    command: ["mysqld", "--log-bin-trust-function-creators=1"]
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: gamedev_agent_workbench
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gamedev_agent_workbench}
       TZ: Asia/Shanghai
     ports:
-      - "127.0.0.1:3307:3306"
+      - "127.0.0.1:${MYSQL_HOST_PORT:-3307}:3306"
     volumes:
       - mysql-data:/var/lib/mysql
       - ./docker/mysql/init:/docker-entrypoint-initdb.d
@@ -16,72 +16,151 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 20s
+    mem_limit: 768m
+    cpus: 1.0
+
+  mysql-bootstrap:
+    image: mysql:8.4
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      MYSQL_PWD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD must be set}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-gamedev_agent_workbench}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+    volumes:
+      - ./docker/mysql/bootstrap/create-app-user.sh:/usr/local/bin/create-app-user.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/create-app-user.sh"]
+    restart: "no"
 
   rabbitmq:
     image: rabbitmq:3.13-management
-    container_name: gamedev-rabbitmq
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME must be set}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
       TZ: Asia/Shanghai
-    ports:
-      - "127.0.0.1:5672:5672"
-      - "127.0.0.1:15672:15672"
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 20s
+    mem_limit: 512m
+    cpus: 0.75
+
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --no-auth-warning -a \"$$REDIS_PASSWORD\" ping | grep -q PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    mem_limit: 256m
+    cpus: 0.5
 
   python-agent:
     build:
       context: ./python-agent
-    container_name: gamedev-python-agent
     environment:
       LLM_API_KEY: ${LLM_API_KEY}
       LLM_BASE_URL: ${LLM_BASE_URL}
       LLM_MODEL: ${LLM_MODEL}
       LLM_ENABLE_MOCK_FALLBACK: ${LLM_ENABLE_MOCK_FALLBACK}
     ports:
-      - "127.0.0.1:8000:8000"
+      - "127.0.0.1:${PYTHON_AGENT_HOST_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; assert urlopen('http://127.0.0.1:8000/health', timeout=2).getcode() == 200"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    init: true
+    mem_limit: 512m
+    cpus: 1.0
 
   backend-java:
     build:
       context: ./backend-java
-    container_name: gamedev-backend-java
     depends_on:
       mysql:
         condition: service_healthy
+      mysql-bootstrap:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
       python-agent:
-        condition: service_started
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
     environment:
-      DB_URL: jdbc:mysql://mysql:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_EXPIRE_SECONDS: ${JWT_EXPIRE_SECONDS}
+      DB_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-gamedev_agent_workbench}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      JWT_EXPIRE_SECONDS: ${JWT_EXPIRE_SECONDS:-3600}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       PYTHON_AGENT_BASE_URL: http://python-agent:8000
       GAME_BUILD_BASE_URL: http://localhost:5173
       SPRING_PROFILES_ACTIVE: async
+      JAVA_OPTS: -Dfile.encoding=UTF-8 -XX:InitialRAMPercentage=25.0 -XX:MaxRAMPercentage=75.0
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:?RABBITMQ_USERNAME must be set}
       RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       RABBITMQ_VHOST: ${RABBITMQ_VHOST:-/}
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:${BACKEND_HOST_PORT:-8080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8080/actuator/health > /dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 24
+      start_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    init: true
+    mem_limit: 1024m
+    cpus: 2.0
 
   frontend-vue:
     build:
       context: ./frontend-vue
-    container_name: gamedev-frontend-vue
     depends_on:
-      - backend-java
+      backend-java:
+        condition: service_healthy
     ports:
-      - "127.0.0.1:5173:5173"
+      - "127.0.0.1:${FRONTEND_HOST_PORT:-5173}:5173"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:5173/').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    init: true
+    mem_limit: 256m
+    cpus: 0.5
 
 volumes:
   mysql-data:
+  redis-data:

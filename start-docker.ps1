@@ -1,14 +1,97 @@
+param(
+    [ValidateRange(30, 600)]
+    [int]$TimeoutSeconds = 180
+)
+
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-if (-not (Test-Path ".env")) {
-    Copy-Item ".env.example" ".env"
-    Write-Host ""
-    Write-Host "Created .env from .env.example."
-    Write-Host "Please edit .env first, especially MYSQL_ROOT_PASSWORD, DB_PASSWORD, JWT_SECRET, LLM_API_KEY, RABBITMQ_USERNAME and RABBITMQ_PASSWORD."
-    Write-Host "Then run this script again:"
-    Write-Host "  .\start-docker.ps1"
-    exit 1
+$projectRoot = Split-Path -Parent $PSCommandPath
+Set-Location -LiteralPath $projectRoot
+
+function New-RandomSecret {
+    param([Parameter(Mandatory = $true)][int]$Length)
+
+    $bytes = [byte[]]::new(48)
+    [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    $encoded = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
+    return $encoded.Substring(0, $Length)
 }
 
-Write-Host "Starting GameDev Agent Workbench with Docker Compose..."
-docker compose up --build
+function Get-DotEnvValue {
+    param([Parameter(Mandatory = $true)][string]$Name)
+
+    foreach ($line in Get-Content -LiteralPath (Join-Path $projectRoot '.env') -Encoding UTF8) {
+        if ($line -match "^\s*$([regex]::Escape($Name))=(.*)$") {
+            return $Matches[1].Trim()
+        }
+    }
+
+    return $null
+}
+
+function Assert-StrongSecret {
+    param(
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][int]$MinimumLength
+    )
+
+    $value = Get-DotEnvValue -Name $Name
+    if ([string]::IsNullOrWhiteSpace($value) -or $value.Length -lt $MinimumLength -or
+        $value -match '(?i)replace|change[_-]?me|your[_-]?|password|secret|123456') {
+        throw "$Name must be a non-placeholder local secret of at least $MinimumLength characters. Regenerate or rotate it without committing .env."
+    }
+}
+
+if (-not (Test-Path -LiteralPath (Join-Path $projectRoot '.env'))) {
+    $envLines = @(
+        "MYSQL_ROOT_PASSWORD=$(New-RandomSecret -Length 48)",
+        'MYSQL_DATABASE=gamedev_agent_workbench',
+        'DB_USERNAME=gamedev_app',
+        "DB_PASSWORD=$(New-RandomSecret -Length 40)",
+        "JWT_SECRET=$(New-RandomSecret -Length 48)",
+        'JWT_EXPIRE_SECONDS=3600',
+        "REDIS_PASSWORD=$(New-RandomSecret -Length 40)",
+        'PYTHON_AGENT_BASE_URL=http://python-agent:8000',
+        'GAME_BUILD_BASE_URL=http://localhost:5173',
+        'LLM_API_KEY=',
+        'LLM_BASE_URL=https://api.deepseek.com',
+        'LLM_MODEL=deepseek-chat',
+        'LLM_ENABLE_MOCK_FALLBACK=true',
+        'RABBITMQ_USERNAME=gamedev_app',
+        "RABBITMQ_PASSWORD=$(New-RandomSecret -Length 40)",
+        'RABBITMQ_VHOST=/'
+    )
+    Set-Content -LiteralPath (Join-Path $projectRoot '.env') -Value $envLines -Encoding utf8NoBOM
+    Write-Host 'Created .env with generated local credentials and deterministic mock fallback.'
+    Write-Host 'No secret values were printed. Keep .env local and out of version control.'
+}
+
+Assert-StrongSecret -Name 'MYSQL_ROOT_PASSWORD' -MinimumLength 24
+Assert-StrongSecret -Name 'DB_PASSWORD' -MinimumLength 24
+Assert-StrongSecret -Name 'JWT_SECRET' -MinimumLength 32
+Assert-StrongSecret -Name 'REDIS_PASSWORD' -MinimumLength 24
+Assert-StrongSecret -Name 'RABBITMQ_PASSWORD' -MinimumLength 24
+
+$databaseUser = Get-DotEnvValue -Name 'DB_USERNAME'
+if ([string]::IsNullOrWhiteSpace($databaseUser) -or $databaseUser -eq 'root' -or $databaseUser -notmatch '^[A-Za-z0-9_]+$') {
+    throw 'DB_USERNAME must be a non-root identifier containing only letters, digits, and underscores.'
+}
+
+$rabbitUser = Get-DotEnvValue -Name 'RABBITMQ_USERNAME'
+if ([string]::IsNullOrWhiteSpace($rabbitUser) -or $rabbitUser -eq 'guest') {
+    throw 'RABBITMQ_USERNAME must not be empty or the default guest account.'
+}
+
+$mockFallback = Get-DotEnvValue -Name 'LLM_ENABLE_MOCK_FALLBACK'
+if ($mockFallback -notin @('true', 'false')) {
+    throw 'LLM_ENABLE_MOCK_FALLBACK must be true or false.'
+}
+
+& (Join-Path $projectRoot 'tools\verify-bootstrap.ps1') -TimeoutSeconds $TimeoutSeconds
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}
+
+Write-Host ''
+Write-Host 'Bootstrap completed. Default mode is mock/fake unless a real local Provider key was explicitly configured.'
