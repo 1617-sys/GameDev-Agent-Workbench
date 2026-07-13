@@ -3,7 +3,7 @@
 一个把“游戏创意”转换为可审计工作流、结构化 GameConfig 与 Phaser 演示产物的 AI 工程工作台。Java 负责业务状态、事务、可靠消息与权限边界；Python 负责 Agent/RAG 协议；Vue 负责提交、SSE 运行中心、知识证据和可玩页面。
 
 ```powershell
-# Windows + PowerShell 7 + Docker Desktop
+# Windows PowerShell 5.1+ or PowerShell 7 + Docker Desktop
 .\start-docker.ps1
 # 浏览器打开 http://127.0.0.1:5173/
 ```

@@ -12,8 +12,15 @@ Set-Location -LiteralPath $projectRoot
 function New-RandomSecret {
     param([Parameter(Mandatory = $true)][int]$Length)
 
-    $bytes = [byte[]]::new(48)
-    [System.Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+    # GetBytes works in both Windows PowerShell 5.1 and PowerShell 7.
+    $bytes = New-Object byte[] 48
+    $randomNumberGenerator = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $randomNumberGenerator.GetBytes($bytes)
+    }
+    finally {
+        $randomNumberGenerator.Dispose()
+    }
     $encoded = [Convert]::ToBase64String($bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_')
     return $encoded.Substring(0, $Length)
 }
@@ -63,7 +70,9 @@ if (-not (Test-Path -LiteralPath (Join-Path $projectRoot '.env'))) {
         "RABBITMQ_PASSWORD=$(New-RandomSecret -Length 40)",
         'RABBITMQ_VHOST=/'
     )
-    Set-Content -LiteralPath (Join-Path $projectRoot '.env') -Value $envLines -Encoding utf8NoBOM
+    # WriteAllLines keeps the generated .env UTF-8 without a BOM in both PowerShell 5.1 and 7.
+    $utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllLines((Join-Path $projectRoot '.env'), [string[]]$envLines, $utf8WithoutBom)
     Write-Host 'Created .env with generated local credentials and deterministic mock fallback.'
     Write-Host 'No secret values were printed. Keep .env local and out of version control.'
 }
