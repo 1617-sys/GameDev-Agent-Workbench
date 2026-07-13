@@ -1,0 +1,1 @@
+package com.example.gameworkbench.service; public record RetrievalCandidate(String chunkUuid,String documentUuid,String documentVersion,float score,int rank,String textReference,String embeddingModel) { }
