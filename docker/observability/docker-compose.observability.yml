@@ -1,0 +1,35 @@
+services:
+  backend-java:
+    environment:
+      MANAGEMENT_PORT: 8081
+      # Port 8081 is reachable only on the Compose network; the host publishes no management port.
+      OBSERVABILITY_PROMETHEUS_ANONYMOUS_ACCESS: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8081/actuator/health/readiness > /dev/null"]
+
+  python-agent:
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import urlopen; assert urlopen('http://127.0.0.1:8000/health/ready', timeout=2).getcode() == 200"]
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    profiles: ["observability"]
+    depends_on:
+      backend-java:
+        condition: service_healthy
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=24h
+    volumes:
+      - ./docker/observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "127.0.0.1:${PROMETHEUS_HOST_PORT:-9090}:9090"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /prometheus:size=128m,mode=0700,uid=65534,gid=65534
+    mem_limit: 256m
+    cpus: 0.5

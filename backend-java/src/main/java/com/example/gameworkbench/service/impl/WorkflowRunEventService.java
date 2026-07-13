@@ -3,6 +3,7 @@ package com.example.gameworkbench.service.impl;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowRunEvent;
 import com.example.gameworkbench.mapper.WorkflowRunEventMapper;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.WorkflowRunEventPublisher;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -25,6 +26,7 @@ public class WorkflowRunEventService implements WorkflowRunEventRecorder {
     private final WorkflowRunEventMapper workflowRunEventMapper;
     private final WorkflowRunEventPublisher workflowRunEventPublisher;
     private final ObjectMapper objectMapper;
+    private final ApplicationObservability observability;
 
     @Override
     @Transactional
@@ -51,6 +53,7 @@ public class WorkflowRunEventService implements WorkflowRunEventRecorder {
                 .artifactUuid(artifactUuid).payloadJson(payload(workflowRunUuid, eventType, sequence, stepKey, status, attempt, artifactUuid))
                 .traceId(traceId).occurredAt(LocalDateTime.now()).build();
         workflowRunEventMapper.insert(event);
+        observability.workflowEventPersisted(eventType, status);
         publishAfterCommit(event);
         return event;
     }

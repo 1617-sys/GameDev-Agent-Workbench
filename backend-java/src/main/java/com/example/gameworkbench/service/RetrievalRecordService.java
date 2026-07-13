@@ -10,12 +10,13 @@ import com.example.gameworkbench.entity.AgentRun;
 import com.example.gameworkbench.entity.RetrievalRecord;
 import com.example.gameworkbench.mapper.AgentRunMapper;
 import com.example.gameworkbench.mapper.RetrievalRecordMapper;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.RequiredArgsConstructor;
 
 @Service @RequiredArgsConstructor
 public class RetrievalRecordService {
-    private final RetrievalRecordMapper records; private final AgentRunMapper runs;
+    private final RetrievalRecordMapper records; private final AgentRunMapper runs; private final ApplicationObservability observability;
     public void recordSelected(AgentRun run, JsonNode usedReferences, String queryHash) {
         if (!Boolean.TRUE.equals(run.getRagEnabled()) || usedReferences == null || !usedReferences.isArray()) return;
         for (JsonNode ref : usedReferences) {
@@ -25,7 +26,10 @@ public class RetrievalRecordService {
             record.setRankNo(ref.path("rank").asInt()); record.setScore(BigDecimal.valueOf(ref.path("score").asDouble()));
             record.setChunkingVersion(run.getChunkingVersion()); record.setEmbeddingModel(run.getEmbeddingModel()); record.setQueryHash(queryHash);
             record.setRagEnabled(true); record.setContextBudget(run.getContextBudget()); record.setMock("TRUE".equals(run.getMockState())); record.setSelectedAt(LocalDateTime.now());
-            if (records.selectCount(new LambdaQueryWrapper<RetrievalRecord>().eq(RetrievalRecord::getAgentRunId, run.getId()).eq(RetrievalRecord::getChunkUuid, record.getChunkUuid())) == 0) records.insert(record);
+            if (records.selectCount(new LambdaQueryWrapper<RetrievalRecord>().eq(RetrievalRecord::getAgentRunId, run.getId()).eq(RetrievalRecord::getChunkUuid, record.getChunkUuid())) == 0) {
+                records.insert(record);
+                observability.retrievalPersisted(Boolean.TRUE.equals(record.getMock()));
+            }
         }
     }
     public List<RetrievalRecord> list(Long userId, Long projectId, Long agentRunId) {

@@ -30,6 +30,8 @@ logging:
   level:
     org.apache.ibatis: warn
     com.baomidou.mybatisplus: warn
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${spring.application.name} traceId=%X{traceId:-none} workflowRunUuid=%X{workflowRunUuid:-none} stepRunUuid=%X{stepRunUuid:-none} agentRunUuid=%X{agentRunUuid:-none} messageId=%X{messageId:-none} logger=%logger{36} msg=%msg%n"
 
 mybatis-plus:
   configuration:
@@ -40,6 +42,8 @@ mybatis-plus:
       id-type: auto
 
 app:
+  observability:
+    prometheus-anonymous-access: ${OBSERVABILITY_PROMETHEUS_ANONYMOUS_ACCESS:false}
   jwt:
     secret: ${JWT_SECRET}
     expire-seconds: ${JWT_EXPIRE_SECONDS:86400}
@@ -68,11 +72,34 @@ knowledge:
   max-bytes: ${KNOWLEDGE_UPLOAD_MAX_BYTES:10485760}
 
 management:
+  server:
+    port: ${MANAGEMENT_PORT:8080}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  metrics:
+    tags:
+      application: ${spring.application.name}
   endpoint:
     health:
       probes:
         enabled: true
+      group:
+        readiness:
+          include: readinessState,db,redis,rabbit
       show-details: never
+      show-components: never
+    env:
+      enabled: false
+    configprops:
+      enabled: false
+    shutdown:
+      enabled: false
   health:
     livenessstate:
       enabled: true

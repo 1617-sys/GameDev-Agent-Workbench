@@ -8,6 +8,7 @@ import com.example.gameworkbench.common.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Objects;
+import java.util.UUID;
+
+import static com.example.gameworkbench.observability.CorrelationIdFilter.TRACE_HEADER;
+import static com.example.gameworkbench.observability.DiagnosticContext.TRACE_ID;
 
 @Slf4j
 @Component
@@ -61,21 +66,24 @@ public class PythonAgentClient {
         try {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            String traceId = MDC.get(TRACE_ID);
+            headers.set(TRACE_HEADER, StringUtils.hasText(traceId) ? traceId : UUID.randomUUID().toString());
 
             HttpEntity<PythonAgentRequest> entity = new HttpEntity<>(request, headers);
-            log.info("[Python] call started agentType={} url={}", agentType, url);
+            log.info("[Python] call started agentType={} endpoint={}", agentType, agentType.getPythonPath());
             responseBody = restTemplate.postForObject(url, entity, String.class);
-            log.info("[Python] call finished agentType={} url={} timeTakenMs={}",
-                    agentType, url, System.currentTimeMillis() - startTime);
+            log.info("[Python] call finished agentType={} endpoint={} timeTakenMs={}",
+                    agentType, agentType.getPythonPath(), System.currentTimeMillis() - startTime);
         } catch (Exception exception) {
-            log.error("[Python] call exception agentType={} url={} timeTakenMs={}",
-                    agentType, url, System.currentTimeMillis() - startTime, exception);
+            log.error("[Python] call failed agentType={} endpoint={} errorCode={} exceptionType={} timeTakenMs={}",
+                    agentType, agentType.getPythonPath(), ErrorCode.PYTHON_CALL_FAILED.getCode(),
+                    exception.getClass().getSimpleName(), System.currentTimeMillis() - startTime);
             throw new BusinessException(ErrorCode.PYTHON_CALL_FAILED);
         }
 
         // 校验 HTTP 响应体非空
         if (!StringUtils.hasText(responseBody)) {
-            log.warn("[Python] call failed: empty response agentType={} url={}", agentType, url);
+            log.warn("[Python] call failed: empty response agentType={} endpoint={}", agentType, agentType.getPythonPath());
             throw new BusinessException(ErrorCode.PYTHON_EMPTY_RESPONSE);
         }
 
@@ -83,23 +91,22 @@ public class PythonAgentClient {
         try {
             PythonAgentResponse response = objectMapper.readValue(responseBody, PythonAgentResponse.class);
             if (response.getCode() == null) {
-                log.warn("[Python] call failed: response code is null agentType={} url={}", agentType, url);
+                log.warn("[Python] call failed: response code is null agentType={} endpoint={}", agentType, agentType.getPythonPath());
                 throw new BusinessException(ErrorCode.PYTHON_INVALID_RESPONSE);
             }
             if (!Objects.equals(response.getCode(), 0)) {
-                String message = StringUtils.hasText(response.getMessage())
-                        ? response.getMessage()
-                        : ErrorCode.PYTHON_RESPONSE_FAILED.getMessage();
-                log.warn("[Python] call returned failure agentType={} url={} code={} message={}",
-                        agentType, url, response.getCode(), message);
-                throw new BusinessException(ErrorCode.PYTHON_RESPONSE_FAILED.getCode(), message);
+                log.warn("[Python] call returned failure agentType={} endpoint={} providerCode={} errorCode={}",
+                        agentType, agentType.getPythonPath(), response.getCode(), ErrorCode.PYTHON_RESPONSE_FAILED.getCode());
+                throw new BusinessException(ErrorCode.PYTHON_RESPONSE_FAILED);
             }
-            log.info("[Python] call succeeded agentType={} url={} code={}", agentType, url, response.getCode());
+            log.info("[Python] call succeeded agentType={} endpoint={} code={}", agentType, agentType.getPythonPath(), response.getCode());
             return response;
         } catch (BusinessException exception) {
             throw exception;
         } catch (Exception exception) {
-            log.error("[Python] response parse exception agentType={} url={}", agentType, url, exception);
+            log.error("[Python] response parse failed agentType={} endpoint={} errorCode={} exceptionType={}",
+                    agentType, agentType.getPythonPath(), ErrorCode.PYTHON_RESPONSE_PARSE_FAILED.getCode(),
+                    exception.getClass().getSimpleName());
             throw new BusinessException(ErrorCode.PYTHON_RESPONSE_PARSE_FAILED);
         }
     }

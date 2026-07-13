@@ -2,6 +2,7 @@ package com.example.gameworkbench.service.impl;
 
 import com.example.gameworkbench.dto.workflow.WorkflowRunSseEventDTO;
 import com.example.gameworkbench.entity.WorkflowRunEvent;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.WorkflowRunQueryService;
 import com.example.gameworkbench.service.WorkflowRunSseEmitterFactory;
 import com.example.gameworkbench.vo.workflow.WorkflowRunDetailVO;
@@ -28,6 +29,7 @@ public class WorkflowRunSubscriptionService {
     private final WorkflowRunQueryService workflowRunQueryService;
     private final WorkflowRunEventService workflowRunEventService;
     private final WorkflowRunSseEmitterFactory emitterFactory;
+    private final ApplicationObservability observability;
     private final Map<String, Map<String, Subscriber>> subscribersByRun = new ConcurrentHashMap<>();
 
     public SseEmitter subscribe(Long userId, String workflowRunUuid, String lastEventId) {
@@ -84,6 +86,7 @@ public class WorkflowRunSubscriptionService {
     private void register(Subscriber subscriber) {
         subscribersByRun.computeIfAbsent(subscriber.workflowRunUuid, ignored -> new ConcurrentHashMap<>())
                 .put(subscriber.subscriptionId, subscriber);
+        observability.sseOpened();
     }
 
     private void removeAndComplete(Subscriber subscriber) {
@@ -96,7 +99,10 @@ public class WorkflowRunSubscriptionService {
         if (subscribers == null) {
             return;
         }
-        subscribers.remove(subscriber.subscriptionId);
+        if (subscribers.remove(subscriber.subscriptionId) == null) {
+            return;
+        }
+        observability.sseClosed();
         if (subscribers.isEmpty()) {
             subscribersByRun.remove(subscriber.workflowRunUuid, subscribers);
         }

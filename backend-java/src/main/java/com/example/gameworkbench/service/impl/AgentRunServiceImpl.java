@@ -18,6 +18,7 @@ import com.example.gameworkbench.service.RetrievalRecordService;
 import com.example.gameworkbench.service.KnowledgeStorage;
 import com.example.gameworkbench.service.KnowledgeChunker;
 import com.example.gameworkbench.service.EmbeddingProvider;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
@@ -59,6 +60,7 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final RetrievalRecordService retrievalRecordService;
     private final KnowledgeStorage knowledgeStorage;
     private final EmbeddingProvider embeddingProvider;
+    private final ApplicationObservability observability;
 
     /**
      * 执行一次 Agent 运行任务。
@@ -195,6 +197,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             recordActualRagSnapshot(agentRun, execution.path("used_references"));
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            observability.ragRunPersisted(agentRun.getRagStatus(), agentRun.getMockState());
             retrievalRecordService.recordSelected(agentRun, execution.path("used_references"), sha256(request.getContent()));
             recordMetric(agentRun, execution, "AVAILABLE");
 
@@ -212,6 +215,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            observability.ragRunPersisted(agentRun.getRagStatus(), agentRun.getMockState());
             recordMetric(agentRun, null, "UNAVAILABLE");
 
             log.warn("[Agent] run failed userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={} message={}",
@@ -228,11 +232,13 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            observability.ragRunPersisted(agentRun.getRagStatus(), agentRun.getMockState());
             recordMetric(agentRun, null, "UNAVAILABLE");
 
-            log.error("[Agent] run exception userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
+            log.error("[Agent] run failed userId={} projectId={} projectUuid={} runUuid={} agentType={} errorCode={} exceptionType={} timeTakenMs={}",
                     userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),
-                    request.getAgentType(), agentRun.getTimeTakenMs(), exception);
+                    request.getAgentType(), ErrorCode.AGENT_RUN_ERROR.getCode(),
+                    exception.getClass().getSimpleName(), agentRun.getTimeTakenMs());
             throw new BusinessException(ErrorCode.AGENT_RUN_ERROR);
         }
     }

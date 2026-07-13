@@ -1,0 +1,41 @@
+{
+  "conclusion": "BLOCKED",
+  "traceId": "r705-observability-workflow-001",
+  "httpTracePropagation": {
+    "javaStatus": 200,
+    "pythonStatus": 200,
+    "javaResponseTraceMatched": true,
+    "pythonResponseTraceMatched": true
+  },
+  "management": {
+    "health": 200,
+    "liveness": 200,
+    "readiness": 200,
+    "readinessBody": { "status": "UP" },
+    "prometheusInsideCompose": 200,
+    "env": 403,
+    "configprops": 403,
+    "shutdown": 403
+  },
+  "prometheus": {
+    "target": "http://backend-java:8081/actuator/prometheus",
+    "targetHealth": "up",
+    "upQuery": 1,
+    "sseGaugePresent": true,
+    "uuidLabelsObserved": false
+  },
+  "workflowDrill": {
+    "submissionAccepted": false,
+    "diagnosis": "WorkflowSubmissionGateImpl reported Redis unavailable before durable WorkflowRun creation",
+    "correlatedLogFound": true,
+    "successfulRun": "BLOCKED",
+    "controlledFailureRun": "BLOCKED",
+    "recoveryRun": "BLOCKED"
+  },
+  "cleanup": {
+    "composeDownWithoutVolumes": true,
+    "residualContainers": 0,
+    "temporaryEnvironmentRemoved": true,
+    "volumesPreserved": true
+  }
+}

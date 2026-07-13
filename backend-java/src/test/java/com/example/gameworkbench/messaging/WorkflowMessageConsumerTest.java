@@ -15,6 +15,7 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.RedisService;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.rabbitmq.client.Channel;
@@ -39,12 +40,13 @@ class WorkflowMessageConsumerTest {
     @Mock private WorkflowErrorClassifier classifier;
     @Mock private RabbitTemplate rabbitTemplate;
     @Mock private WorkflowRunEventRecorder events;
+    @Mock private ApplicationObservability observability;
     private WorkflowMessageConsumer consumer;
 
     @BeforeEach
     void setUp() {
         consumer = new WorkflowMessageConsumer(runs, projects, redis, runner, new WorkflowConsumerProperties(900),
-                classifier, new WorkflowRetryProperties(3, 30000, 300000, 1800000), rabbitTemplate, events);
+                classifier, new WorkflowRetryProperties(3, 30000, 300000, 1800000), rabbitTemplate, events, observability);
     }
 
     @Test

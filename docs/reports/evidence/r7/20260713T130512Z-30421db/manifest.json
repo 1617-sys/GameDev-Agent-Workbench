@@ -1,0 +1,17 @@
+{
+  "runId": "20260713T130512Z-30421db",
+  "startedAtUtc": "2026-07-13T13:05:12Z",
+  "completedAtUtc": "2026-07-13T13:35:30Z",
+  "branch": "r7",
+  "rcSha": "30421db646ca95f00d03f490c1e2f9caf260518c",
+  "environment": "isolated Docker Compose project r705obs",
+  "versions": {
+    "java": "21.0.8",
+    "python": "3.13.3",
+    "dockerClient": "29.1.5",
+    "dockerServer": "29.1.5",
+    "prometheus": "3.5.0"
+  },
+  "providerMode": "mock fallback configured; workflow execution blocked before provider invocation",
+  "credentials": "ephemeral random values stored outside the repository and removed during cleanup"
+}

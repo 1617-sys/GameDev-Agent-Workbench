@@ -3,6 +3,7 @@ package com.example.gameworkbench.service.impl;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.entity.WorkflowRunEvent;
 import com.example.gameworkbench.mapper.WorkflowRunEventMapper;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.WorkflowRunEventPublisher;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import static org.mockito.Mockito.when;
 class WorkflowRunEventServiceTest {
     @Mock private WorkflowRunEventMapper events;
     @Mock private WorkflowRunEventPublisher publisher;
+    @Mock private ApplicationObservability observability;
 
     @Test
     void shouldLockAllocatePersistAndPublishOnlySafeEvent() {
@@ -45,6 +47,7 @@ class WorkflowRunEventServiceTest {
         order.verify(events).selectByRunAndEventKey("run", "step.design.1.SUCCESS");
         order.verify(events).allocateNextSequence("run");
         order.verify(events).insert(event);
+        verify(observability).workflowEventPersisted("step.status-changed", "SUCCESS");
         verify(publisher).publishPersisted(event);
     }
 
@@ -58,6 +61,7 @@ class WorkflowRunEventServiceTest {
                 .isSameAs(existing);
         verify(events, never()).allocateNextSequence(any());
         verify(events, never()).insert(any(WorkflowRunEvent.class));
+        verify(observability, never()).workflowEventPersisted(any(), any());
         verify(publisher, never()).publishPersisted(any());
     }
 
@@ -71,6 +75,6 @@ class WorkflowRunEventServiceTest {
     }
 
     private WorkflowRunEventService service() {
-        return new WorkflowRunEventService(events, publisher, new ObjectMapper().findAndRegisterModules());
+        return new WorkflowRunEventService(events, publisher, new ObjectMapper().findAndRegisterModules(), observability);
     }
 }

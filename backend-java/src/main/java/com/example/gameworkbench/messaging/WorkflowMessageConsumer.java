@@ -10,11 +10,14 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.WorkflowRun;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.WorkflowRunMapper;
+import com.example.gameworkbench.observability.DiagnosticContext;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.RedisService;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 import com.rabbitmq.client.Channel;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +45,7 @@ public class WorkflowMessageConsumer {
     private final WorkflowRetryProperties retryProperties;
     private final RabbitTemplate rabbitTemplate;
     private final WorkflowRunEventRecorder workflowRunEventRecorder;
+    private final ApplicationObservability observability;
 
     @RabbitListener(queues = "${app.messaging.workflow-queue}", containerFactory = "workflowRabbitListenerContainerFactory")
     public void consume(WorkflowRunMessage message, Channel channel, @Header(AmqpHeaders.DELIVERY_TAG) long deliveryTag) throws IOException {
@@ -49,13 +53,18 @@ public class WorkflowMessageConsumer {
             ack(channel, deliveryTag);
             return;
         }
+        observability.workflowMessage("RECEIVED");
+        try (DiagnosticContext ignored = DiagnosticContext.open(
+                message.traceId(), message.workflowRunUuid(), message.messageId())) {
         WorkflowRun run = workflowRunMapper.selectOne(new LambdaQueryWrapper<WorkflowRun>()
                 .eq(WorkflowRun::getWorkflowRunUuid, message.workflowRunUuid()));
         if (run == null || terminal(run.getStatus()) || run.getAttempt() == null || run.getAttempt() != message.attempt()) {
+            observability.workflowMessage("DUPLICATE");
             ack(channel, deliveryTag);
             return;
         }
         if ("PENDING".equals(run.getStatus())) {
+            observability.workflowMessage("REDELIVERED");
             nackForRedelivery(channel, deliveryTag);
             return;
         }
@@ -81,14 +90,19 @@ public class WorkflowMessageConsumer {
             return;
         }
         if (!lockAcquired) {
+            observability.workflowMessage("DUPLICATE");
             ack(channel, deliveryTag);
             return;
         }
 
         try {
             if (workflowRunMapper.claimForExecution(run.getWorkflowRunUuid(), message.attempt(), run.getStatusVersion(), LocalDateTime.now()) != 1) {
+                observability.workflowMessage("DUPLICATE");
                 ack(channel, deliveryTag);
                 return;
+            }
+            if (run.getCreatedAt() != null) {
+                observability.workflowQueueLatency(Duration.between(run.getCreatedAt(), LocalDateTime.now()));
             }
             workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "run.status-changed",
                     "consumer." + message.messageId() + ".RUNNING", null, "RUNNING", message.attempt(), null, message.traceId());
@@ -103,15 +117,19 @@ public class WorkflowMessageConsumer {
                 routeFailure(run, message, new IllegalArgumentException("Workflow project is unavailable"), channel, deliveryTag);
                 return;
             }
+            long executionStarted = System.nanoTime();
             try {
                 workflowRunner.run(run.getWorkflowRunUuid(), project.getProjectUuid(), WorkflowExecutionListener.noop());
+                observability.workflowExecution(Duration.ofNanos(System.nanoTime() - executionStarted), "SUCCESS");
             } catch (RuntimeException exception) {
+                observability.workflowExecution(Duration.ofNanos(System.nanoTime() - executionStarted), "FAILED");
                 routeFailure(run, message, exception, channel, deliveryTag);
                 return;
             }
             WorkflowRun persisted = workflowRunMapper.selectOne(new LambdaQueryWrapper<WorkflowRun>()
                     .eq(WorkflowRun::getWorkflowRunUuid, run.getWorkflowRunUuid()));
             if (persisted != null && terminal(persisted.getStatus())) {
+                observability.workflowMessage("ACKED");
                 ack(channel, deliveryTag);
             } else {
                 nackForRedelivery(channel, deliveryTag);
@@ -122,6 +140,7 @@ public class WorkflowMessageConsumer {
             } catch (RuntimeException exception) {
                 log.warn("[WorkflowConsumer] redis lock release failed traceId={} workflowRunUuid={}", message.traceId(), run.getWorkflowRunUuid());
             }
+        }
         }
     }
 
@@ -153,6 +172,7 @@ public class WorkflowMessageConsumer {
                     outbound.getMessageProperties().setHeader("lastErrorCode", code.name());
                     return outbound;
                 });
+                observability.workflowRetryOrDlq("RETRY", code.name());
             } else {
                 if (workflowRunMapper.recordTerminalFailure(run.getWorkflowRunUuid(), code.name(), error, now) != 1) { nackForRedelivery(channel, deliveryTag); return; }
                 workflowRunEventRecorder.record(run.getWorkflowRunUuid(), "run.terminal",
@@ -163,6 +183,7 @@ public class WorkflowMessageConsumer {
                     outbound.getMessageProperties().setHeader("lastErrorMessage", error);
                     return outbound;
                 });
+                observability.workflowRetryOrDlq("DLQ", code.name());
             }
             ack(channel, deliveryTag);
         } catch (RuntimeException handoffFailure) {

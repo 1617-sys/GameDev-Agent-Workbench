@@ -3,6 +3,7 @@ package com.example.gameworkbench.service.impl;
 import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.entity.WorkflowRunEvent;
+import com.example.gameworkbench.observability.ApplicationObservability;
 import com.example.gameworkbench.service.WorkflowRunQueryService;
 import com.example.gameworkbench.service.WorkflowRunSseEmitterFactory;
 import com.example.gameworkbench.vo.workflow.WorkflowRunDetailVO;
@@ -31,6 +32,7 @@ class WorkflowRunSubscriptionServiceTest {
     @Mock private WorkflowRunQueryService queries;
     @Mock private WorkflowRunEventService events;
     @Mock private WorkflowRunSseEmitterFactory emitters;
+    @Mock private ApplicationObservability observability;
     @Mock private SseEmitter first;
     @Mock private SseEmitter second;
 
@@ -129,7 +131,7 @@ class WorkflowRunSubscriptionServiceTest {
     }
 
     private WorkflowRunSubscriptionService service() {
-        return new WorkflowRunSubscriptionService(queries, events, emitters);
+        return new WorkflowRunSubscriptionService(queries, events, emitters, observability);
     }
 
     private WorkflowRunDetailVO snapshot(String status, Long lastSequence) {

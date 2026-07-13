@@ -1,0 +1,18 @@
+R7-05 validation summary (Asia/Shanghai, 2026-07-13)
+
+PASS  mvn -Dtest=*Observability*Test,*Trace*Test,*Health*Test,*Security*Test test
+      10 tests, 0 failures, 0 errors, 0 skipped
+PASS  mvn test
+      136 tests, 0 failures, 0 errors, 1 existing skip
+PASS  python -m pytest
+      6 passed, 1 deprecation warning
+PASS  .\tools\verify.ps1 -Profile integration
+      Script exit 0 and Compose config passed; 3 Testcontainers tests skipped because
+      Testcontainers 1.19.8 could not negotiate with the local Docker 29 API.
+PASS  isolated Compose health, safe endpoint and Prometheus target drill
+BLOCK workflow success/failure/recovery drill at the pre-existing Redis submission gate
+WARN  final Docker image rebuild retry failed on transient Maven Central partial downloads;
+      the earlier runtime image already contained the health/security/Prometheus configuration,
+      while the final metrics additions were verified by local Java tests.
+PASS  final scope, secret, metric-cardinality, evidence-checksum and diff audits
+      zero out-of-scope paths, zero secret-pattern hits and zero UUID/trace metric labels

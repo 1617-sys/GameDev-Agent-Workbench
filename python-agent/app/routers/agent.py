@@ -44,54 +44,54 @@ def _build_response(request: Request, agent_result, payload: AgentMockRequest | 
 
 @router.post("/requirement-breakdown", response_model=ApiResponse)
 async def requirement_breakdown(payload: AgentMockRequest, request: Request):
-    logger.info("requirement-breakdown received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=requirement-breakdown content_len=%s", len(payload.content))
     result = build_requirement_breakdown_result(payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/api-design", response_model=ApiResponse)
 async def api_design(payload: AgentMockRequest, request: Request):
-    logger.info("api-design received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=api-design content_len=%s", len(payload.content))
     result = build_api_design_result(payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/bug-analysis", response_model=ApiResponse)
 async def bug_analysis(payload: AgentMockRequest, request: Request):
-    logger.info("bug-analysis received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=bug-analysis content_len=%s", len(payload.content))
     result = build_bug_analysis_result(payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/prompt-generate", response_model=ApiResponse)
 async def prompt_generate(payload: AgentMockRequest, request: Request):
-    logger.info("prompt-generate received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=prompt-generate content_len=%s", len(payload.content))
     result = build_prompt_generate_result(payload)
     return _build_response(request, result, payload)
 
 @router.post("/game-concept", response_model=ApiResponse)
 async def game_concept(payload: AgentMockRequest, request: Request):
-    logger.info("game-concept received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=game-concept content_len=%s", len(payload.content))
     result = await run_langchain_agent("GAME_CONCEPT", payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/core-loop-design", response_model=ApiResponse)
 async def core_loop_design(payload: AgentMockRequest, request: Request):
-    logger.info("core-loop-design received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=core-loop-design content_len=%s", len(payload.content))
     result = await run_langchain_agent("CORE_LOOP_DESIGN", payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/task-breakdown", response_model=ApiResponse)
 async def task_breakdown(payload: AgentMockRequest, request: Request):
-    logger.info("task-breakdown received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=task-breakdown content_len=%s", len(payload.content))
     result = await run_langchain_agent("TASK_BREAKDOWN", payload)
     return _build_response(request, result, payload)
 
 
 @router.post("/game-config-generate", response_model=ApiResponse)
 async def game_config_generate(payload: AgentMockRequest, request: Request):
-    logger.info("game-config-generate received title=%s content_len=%s", payload.title, len(payload.content))
+    logger.info("agent request received agent_type=game-config-generate content_len=%s", len(payload.content))
     result = await run_game_config_agent(payload)
     return _build_response(request, result, payload)
