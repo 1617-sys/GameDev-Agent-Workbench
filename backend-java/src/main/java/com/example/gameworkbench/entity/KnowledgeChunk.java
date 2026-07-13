@@ -21,7 +21,9 @@ public class KnowledgeChunk {
     private Integer tokenCount;
     private String chunkingVersion;
     private String embeddingModel;
+    private Integer embeddingDimension;
     private String indexStatus;
+    private String vectorRef;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     @TableLogic private Integer deleted;
