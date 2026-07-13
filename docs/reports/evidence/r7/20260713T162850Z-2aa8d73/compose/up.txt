@@ -1,0 +1,165 @@
+ Image r7perf-a6d13f02-python-agent Building
+ Image r7perf-a6d13f02-backend-java Building
+#1 [internal] load local bake definitions
+#1 reading from stdin 1.14kB 0.0s done
+#1 DONE 0.0s
+
+#2 [python-agent internal] load build definition from Dockerfile
+#2 transferring dockerfile: 161B done
+#2 DONE 0.0s
+
+#3 [backend-java internal] load build definition from Dockerfile
+#3 transferring dockerfile: 668B done
+#3 DONE 0.0s
+
+#4 [backend-java internal] load metadata for docker.io/library/eclipse-temurin:21-jre
+#4 ...
+
+#5 [backend-java internal] load metadata for docker.io/library/maven:3.9.9-eclipse-temurin-21
+#5 DONE 1.8s
+
+#6 [python-agent internal] load metadata for docker.io/library/python:3.13-slim
+#6 ...
+
+#4 [backend-java internal] load metadata for docker.io/library/eclipse-temurin:21-jre
+#4 DONE 2.2s
+
+#7 [backend-java internal] load .dockerignore
+#7 transferring context: 86B done
+#7 DONE 0.0s
+
+#8 [backend-java internal] load build context
+#8 DONE 0.0s
+
+#9 [backend-java stage-1 1/4] FROM docker.io/library/eclipse-temurin:21-jre@sha256:d2b9f8f12212cadcfdf889461531784e8fd097feade954d65b31ee7a71c473ec
+#9 resolve docker.io/library/eclipse-temurin:21-jre@sha256:d2b9f8f12212cadcfdf889461531784e8fd097feade954d65b31ee7a71c473ec 0.1s done
+#9 DONE 0.1s
+
+#10 [backend-java build 1/5] FROM docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e
+#10 resolve docker.io/library/maven:3.9.9-eclipse-temurin-21@sha256:3a4ab3276a087bf276f79cae96b1af04f53731bec53fb2e651aca79e4b10211e 0.1s done
+#10 DONE 0.1s
+
+#8 [backend-java internal] load build context
+#8 transferring context: 33.91kB 0.0s done
+#8 DONE 0.0s
+
+#11 [backend-java build 2/5] WORKDIR /app
+#11 CACHED
+
+#12 [backend-java stage-1 2/4] WORKDIR /app
+#12 CACHED
+
+#13 [backend-java build 3/5] COPY pom.xml .
+#13 CACHED
+
+#14 [backend-java build 4/5] COPY src ./src
+#14 CACHED
+
+#15 [backend-java build 5/5] RUN mvn -B -ntp -Dmaven.test.skip=true package
+#15 CACHED
+
+#16 [backend-java stage-1 3/4] RUN apt-get update     && apt-get install -y --no-install-recommends curl     && rm -rf /var/lib/apt/lists/*     && groupadd --system app     && useradd --system --gid app --create-home app
+#16 CACHED
+
+#17 [backend-java stage-1 4/4] COPY --from=build --chown=app:app /app/target/*.jar app.jar
+#17 CACHED
+
+#18 [backend-java] exporting to image
+#18 exporting layers done
+#18 exporting manifest sha256:f242a3550bb90e974e4db0f7474f7563ed86e44fd359d2ff5b4dff0d76a3ac02 0.0s done
+#18 exporting config sha256:2cde7ca9650344386fc091677699014755a6d2a166f8b0b287487591f2ed3597 0.0s done
+#18 exporting attestation manifest sha256:f2172d0255e5705547be3668735b3c476176297cfae77308267394efc5497cc9 0.1s done
+#18 exporting manifest list sha256:4cc6ad93401b69033dc803580d0b8d3becbc7cd2798edaf436acbf30f5a4194e
+#18 ...
+
+#6 [python-agent internal] load metadata for docker.io/library/python:3.13-slim
+#6 DONE 2.7s
+
+#19 [python-agent internal] load .dockerignore
+#19 transferring context: 2B done
+#19 DONE 0.0s
+
+#18 [backend-java] exporting to image
+#18 exporting manifest list sha256:4cc6ad93401b69033dc803580d0b8d3becbc7cd2798edaf436acbf30f5a4194e 0.0s done
+#18 naming to docker.io/library/r7perf-a6d13f02-backend-java:latest 0.0s done
+#18 unpacking to docker.io/library/r7perf-a6d13f02-backend-java:latest 0.0s done
+#18 DONE 0.3s
+
+#20 [python-agent internal] load build context
+#20 transferring context: 4.33kB done
+#20 DONE 0.0s
+
+#21 [python-agent 1/3] FROM docker.io/library/python:3.13-slim@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
+#21 resolve docker.io/library/python:3.13-slim@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280 0.1s done
+#21 DONE 0.1s
+
+#21 [python-agent 1/3] FROM docker.io/library/python:3.13-slim@sha256:eb43ff125d8d58d7449dcba7d336c23bcac412f526d861db493b9994d8010280
+#21 DONE 0.1s
+
+#22 [python-agent 2/3] WORKDIR /app
+#22 CACHED
+
+#23 [python-agent 3/3] COPY fake_agent.py /app/fake_agent.py
+#23 CACHED
+
+#24 [python-agent] exporting to image
+#24 exporting layers done
+#24 exporting manifest sha256:3fae4aaf3103822ffe471494ac85f6c56702e15424a07a961b7feb4be8a3dbd4 0.0s done
+#24 exporting config sha256:75ff5feee06d98fe603121b5aa62fc869b4718c12fc2a88454e0a523661b85f0 0.0s done
+#24 exporting attestation manifest sha256:4d5781a490b410db57a15811f5189cdd130afb6f34be085f3e410d46a4b6d20b
+#24 exporting attestation manifest sha256:4d5781a490b410db57a15811f5189cdd130afb6f34be085f3e410d46a4b6d20b 0.1s done
+#24 exporting manifest list sha256:2bf74ecea9122dd326f1c18cce7705106a96b5b32ffe0def9bf64fa3aad56fb8
+#24 exporting manifest list sha256:2bf74ecea9122dd326f1c18cce7705106a96b5b32ffe0def9bf64fa3aad56fb8 0.1s done
+#24 naming to docker.io/library/r7perf-a6d13f02-python-agent:latest done
+#24 unpacking to docker.io/library/r7perf-a6d13f02-python-agent:latest 0.0s done
+#24 DONE 0.3s
+
+#25 [backend-java] resolving provenance for metadata file
+#25 DONE 0.0s
+
+#26 [python-agent] resolving provenance for metadata file
+#26 DONE 0.0s
+ Image r7perf-a6d13f02-python-agent Built
+ Image r7perf-a6d13f02-backend-java Built
+ Network r7perf-a6d13f02_default Creating
+ Network r7perf-a6d13f02_default Created
+ Volume r7perf-a6d13f02_redis-data Creating
+ Volume r7perf-a6d13f02_redis-data Created
+ Volume r7perf-a6d13f02_mysql-data Creating
+ Volume r7perf-a6d13f02_mysql-data Created
+ Container r7perf-a6d13f02-python-agent-1 Creating
+ Container r7perf-a6d13f02-mysql-1 Creating
+ Container r7perf-a6d13f02-redis-1 Creating
+ Container r7perf-a6d13f02-rabbitmq-1 Creating
+ Container r7perf-a6d13f02-mysql-1 Created
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Creating
+ Container r7perf-a6d13f02-redis-1 Created
+ Container r7perf-a6d13f02-rabbitmq-1 Created
+ Container r7perf-a6d13f02-python-agent-1 Created
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Created
+ Container r7perf-a6d13f02-backend-java-1 Creating
+ Container r7perf-a6d13f02-backend-java-1 Created
+ Container r7perf-a6d13f02-mysql-1 Starting
+ Container r7perf-a6d13f02-python-agent-1 Starting
+ Container r7perf-a6d13f02-redis-1 Starting
+ Container r7perf-a6d13f02-rabbitmq-1 Starting
+ Container r7perf-a6d13f02-redis-1 Started
+ Container r7perf-a6d13f02-rabbitmq-1 Started
+ Container r7perf-a6d13f02-python-agent-1 Started
+ Container r7perf-a6d13f02-mysql-1 Started
+ Container r7perf-a6d13f02-mysql-1 Waiting
+ Container r7perf-a6d13f02-mysql-1 Healthy
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Starting
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Started
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Waiting
+ Container r7perf-a6d13f02-redis-1 Waiting
+ Container r7perf-a6d13f02-python-agent-1 Waiting
+ Container r7perf-a6d13f02-rabbitmq-1 Waiting
+ Container r7perf-a6d13f02-mysql-1 Waiting
+ Container r7perf-a6d13f02-redis-1 Healthy
+ Container r7perf-a6d13f02-rabbitmq-1 Healthy
+ Container r7perf-a6d13f02-python-agent-1 Healthy
+ Container r7perf-a6d13f02-mysql-bootstrap-1 Exited
+ Container r7perf-a6d13f02-mysql-1 Healthy
+ Container r7perf-a6d13f02-backend-java-1 Starting
+ Container r7perf-a6d13f02-backend-java-1 Started

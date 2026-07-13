@@ -1,0 +1,8 @@
+Performance execution must start from a clean candidate commit. Current git status: ?? docs/reports/evidence/r7/2026071
+3T162504Z-2aa8d73/, ?? docs/reports/evidence/r7/20260713T162731Z-2aa8d73/
+At <repo-root>\tools\run-performance-baseline.ps1:381 char:9
++         throw "Performance execution must start from a clean candidat ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Performance exe...62731Z-2aa8d73/:String) [], RuntimeException
+    + FullyQualifiedErrorId : Performance execution must start from a clean candidate commit. Current git status: ?? d
+   ocs/reports/evidence/r7/20260713T162504Z-2aa8d73/, ?? docs/reports/evidence/r7/20260713T162731Z-2aa8d73/

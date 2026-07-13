@@ -1,0 +1,24 @@
+
+> gamedev-agent-workbench-vue@0.1.0 test:e2e:main
+> playwright test tests/mainWorkflow.browser.e2e.js
+
+
+Running 1 test using 1 worker
+
+  x  1 tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence (3ms)
+
+
+  1) tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence
+
+    Error: browserType.launch: Executable doesn't exist at <user-home>\AppData\Local\ms-playwright\chromium_headless_shell-1193\chrome-win\headless_shell.exe
+    ╔═════════════════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright Test or Playwright was just installed or updated. ║
+    ║ Please run the following command to download new browsers:              ║
+    ║                                                                         ║
+    ║     npx playwright install                                              ║
+    ║                                                                         ║
+    ║ <3 Playwright Team                                                      ║
+    ╚═════════════════════════════════════════════════════════════════════════╝
+
+  1 failed
+    tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence

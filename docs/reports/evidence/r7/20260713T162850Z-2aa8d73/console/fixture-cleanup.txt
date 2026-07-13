@@ -1,0 +1,1 @@
+Removed only the user-scoped R7 performance fixture namespace 'r7perf-a6d13f02*'; volumes were preserved.

@@ -1,0 +1,48 @@
+{
+    "runId":  "20260713T162850Z-2aa8d73",
+    "rcSha":  "2aa8d73108a83552d80a93c1a550ee7e60904c53",
+    "branch":  "r7",
+    "dirtyStateAtStart":  [
+
+                          ],
+    "operator":  "codex-local",
+    "startedAtUtc":  "2026-07-13T16:28:51.8748990Z",
+    "completedAtUtc":  "2026-07-13T16:29:46.3035950Z",
+    "os":  "Microsoft Windows 11 家庭版 中文版 10.0.26200",
+    "powershell":  "5.1.26100.8655",
+    "git":  "git version 2.48.1.windows.1",
+    "docker":  "Docker version 29.1.5, build 0e6fee6",
+    "compose":  "5.0.1",
+    "java":  "java version \"21.0.8\" 2025-07-15 LTS Java(TM) SE Runtime Environment (build 21.0.8+12-LTS-250) Java HotSpot(TM) 64-Bit Server VM (build 21.0.8+12-LTS-250, mixed mode, sharing)",
+    "python":  "Python 3.13.3",
+    "node":  "v24.14.1",
+    "host":  {
+                 "logicalCpu":  16,
+                 "memoryBytes":  16295424000,
+                 "freeDiskBytes":  96554315776
+             },
+    "dockerResources":  {
+                            "logicalCpu":  16,
+                            "memoryBytes":  7889678336,
+                            "memoryGiB":  7.35,
+                            "operatingSystem":  "Docker Desktop"
+                        },
+    "referenceQualification":  {
+                                   "powerShell7OrLaterMet":  false,
+                                   "hostMinimumMet":  false,
+                                   "dockerFixed6Cpu8GiBMet":  false,
+                                   "standardDurationMet":  true,
+                                   "acPowerAndBackgroundLoadConfirmed":  false,
+                                   "eligible":  false
+                               },
+    "providerMode":  "fake",
+    "fixtureVersion":  "r7-performance-fixed-agent-v1",
+    "fixedAgentLatencyMs":  300,
+    "composeProject":  "r7perf-a6d13f02",
+    "fixtureNamespace":  "r7perf-a6d13f02",
+    "profile":  "R7-03 performance",
+    "images":  [
+                   "[{\"ID\":\"sha256:6ab0b6e7381779332f97b8ca76193e45b0756f38d4c0dcda72dbb3c32061ab99\",\"ContainerName\":\"r7perf-a6d13f02-redis-1\",\"Repository\":\"redis\",\"Tag\":\"7.4-alpine\",\"Platform\":\"linux/amd64\",\"Size\":16275739,\"Created\":\"2026-05-07T17:34:49.043581139Z\",\"LastTagTime\":\"2026-07-13T06:46:18.772432468Z\"},{\"ID\":\"sha256:2bf74ecea9122dd326f1c18cce7705106a96b5b32ffe0def9bf64fa3aad56fb8\",\"ContainerName\":\"r7perf-a6d13f02-python-agent-1\",\"Repository\":\"r7perf-a6d13f02-python-agent\",\"Tag\":\"latest\",\"Platform\":\"linux/amd64\",\"Size\":42976029,\"Created\":\"2026-07-13T08:15:32.063544037Z\",\"LastTagTime\":\"2026-07-13T16:28:57.169675852Z\"},{\"ID\":\"sha256:c36050afdca850f23cef85703f84c7531a5ae155a11b5ee1c60acb09937c4084\",\"ContainerName\":\"r7perf-a6d13f02-mysql-1\",\"Repository\":\"mysql\",\"Tag\":\"8.4\",\"Platform\":\"linux/amd64\",\"Size\":238266123,\"Created\":\"2026-05-12T19:12:43.419591713Z\",\"LastTagTime\":\"2026-06-10T09:41:59.885908069Z\"},{\"ID\":\"sha256:c36050afdca850f23cef85703f84c7531a5ae155a11b5ee1c60acb09937c4084\",\"ContainerName\":\"r7perf-a6d13f02-mysql-bootstrap-1\",\"Repository\":\"mysql\",\"Tag\":\"8.4\",\"Platform\":\"linux/amd64\",\"Size\":238266123,\"Created\":\"2026-05-12T19:12:43.419591713Z\",\"LastTagTime\":\"2026-06-10T09:41:59.885908069Z\"},{\"ID\":\"sha256:4cc6ad93401b69033dc803580d0b8d3becbc7cd2798edaf436acbf30f5a4194e\",\"ContainerName\":\"r7perf-a6d13f02-backend-consumer-2\",\"Repository\":\"r7perf-a6d13f02-backend-java\",\"Tag\":\"latest\",\"Platform\":\"linux/amd64\",\"Size\":172752353,\"Created\":\"2026-07-13T15:08:59.903104699Z\",\"LastTagTime\":\"2026-07-13T16:28:56.685721663Z\"},{\"ID\":\"sha256:4cc6ad93401b69033dc803580d0b8d3becbc7cd2798edaf436acbf30f5a4194e\",\"ContainerName\":\"r7perf-a6d13f02-backend-java-1\",\"Repository\":\"r7perf-a6d13f02-backend-java\",\"Tag\":\"latest\",\"Platform\":\"linux/amd64\",\"Size\":172752353,\"Created\":\"2026-07-13T15:08:59.903104699Z\",\"LastTagTime\":\"2026-07-13T16:28:56.685721663Z\"},{\"ID\":\"sha256:e582c0bc7766f3342496d8485efb5a1df782b5ce3886ad017e2eaae442311f69\",\"ContainerName\":\"r7perf-a6d13f02-rabbitmq-1\",\"Repository\":\"rabbitmq\",\"Tag\":\"3.13-management\",\"Platform\":\"linux/amd64\",\"Size\":114479602,\"Created\":\"2025-12-02T03:07:49.756246158Z\",\"LastTagTime\":\"2026-05-31T12:29:23.233070157Z\"}]"
+               ],
+    "secretsStoredIn":  "temporary local env file and process environment; excluded from evidence"
+}

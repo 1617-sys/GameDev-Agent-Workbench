@@ -1,0 +1,7 @@
+{
+    "command":  ".\\tools\\run-performance-baseline.ps1",
+    "childCommand":  "node tools/performance/run-load.mjs",
+    "startedAtUtc":  "2026-07-13T16:29:38.3422043Z",
+    "completedAtUtc":  "2026-07-13T16:29:41.4906526Z",
+    "exitCode":  1
+}

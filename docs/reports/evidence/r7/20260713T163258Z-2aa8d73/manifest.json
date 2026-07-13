@@ -1,0 +1,15 @@
+{
+  "schema": "r7-final-acceptance-evidence-v1",
+  "run_id": "20260713T163258Z-2aa8d73",
+  "started_at_utc": "2026-07-13T16:22:00Z",
+  "completed_at_utc": "2026-07-13T16:35:34Z",
+  "date_timezone": "2026-07-14 Asia/Shanghai",
+  "branch": "r7",
+  "rc_sha": "2aa8d73108a83552d80a93c1a550ee7e60904c53",
+  "initial_worktree": "clean",
+  "final_worktree": "only final-acceptance report, status, minimal archive redaction, and new redacted evidence under review",
+  "operator": "redacted local operator",
+  "provider_mode": "fake/mock only; no external provider invoked",
+  "result": "BLOCKED",
+  "tag_decision": "DO_NOT_CREATE"
+}

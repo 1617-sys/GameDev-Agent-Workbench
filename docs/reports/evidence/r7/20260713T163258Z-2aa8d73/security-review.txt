@@ -1,0 +1,11 @@
+R7 final acceptance security review
+
+- The contract-defined tracked-file scan returned 9 lines after minimal archive redaction.
+- All 9 remaining lines are the scan expression in frozen acceptance documents or the historical baseline report; application source, runtime configuration, examples, and evidence contributed zero.
+- Three legacy weak-default strings in a tracked migration-session archive were replaced by an explicit redaction marker.
+- High-confidence private-key, cloud-token, provider-token, GitHub-token, Slack-token, Google-key, and JWT-shape scans over new acceptance evidence returned zero matches.
+- Local username and absolute workstation-path scans over new acceptance evidence returned zero after pre-commit redaction.
+- The ignored local environment file was not copied, printed, committed, or overwritten. Its existing values fail the standard startup security gate and require local regeneration/rotation before a future Fresh run.
+- New evidence JSON and checksum files were verified after redaction.
+
+Conclusion: no credential material from this run is approved for publication, but the release security gate remains BLOCKED because the standard local startup configuration and the prior R7 security audit are not fully passing.

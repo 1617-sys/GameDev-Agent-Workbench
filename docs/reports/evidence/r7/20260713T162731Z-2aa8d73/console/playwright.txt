@@ -1,0 +1,32 @@
+
+> gamedev-agent-workbench-vue@0.1.0 test:e2e:main
+> playwright test tests/mainWorkflow.browser.e2e.js
+
+
+Running 1 test using 1 worker
+
+  x  1 tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence (2.3s)
+
+
+  1) tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence
+
+    Error: UI submit 1 did not create a WorkflowRun (HTTP 200, code 50302, message Workflow submission is temporarily unavailable).
+
+      171 |     if (!workflowRunUuid) {
+      172 |       await page.screenshot({ path: path.join(evidenceDir, `workflow-submit-${sequence}-failed.png`), fullPage: true });
+    > 173 |       throw new Error(`UI submit ${sequence} did not create a WorkflowRun (HTTP ${response.status()}, code ${payload?.code ?? "missing"}, message ${payload?.message || "missing"}).`);
+          |             ^
+      174 |     }
+      175 |     await expect(page).toHaveURL(new RegExp(`/workflow-runs/${workflowRunUuid}$`), { timeout: 15_000 });
+      176 |     await expect(page.locator(".run-summary h2")).toHaveText("SUCCESS", { timeout: 115_000 });
+        at submitWorkflowFromUi (<repo-root>\frontend-vue\tests\mainWorkflow.browser.e2e.js:173:13)
+        at <repo-root>\frontend-vue\tests\mainWorkflow.browser.e2e.js:204:24
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ..\docs\reports\evidence\r7\20260713T162731Z-2aa8d73\traces\mainWorkflow.browser.e2e.j-50d5e-reak-with-redacted-evidence\test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ..\docs\reports\evidence\r7\20260713T162731Z-2aa8d73\traces\mainWorkflow.browser.e2e.j-50d5e-reak-with-redacted-evidence\error-context.md
+
+  1 failed
+    tests\mainWorkflow.browser.e2e.js:241:3 › R7 main workflow Compose E2E › proves the full user chain and reports every contract break with redacted evidence

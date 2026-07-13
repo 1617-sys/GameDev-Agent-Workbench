@@ -1,0 +1,26 @@
+{
+  "rc_sha": "2aa8d73108a83552d80a93c1a550ee7e60904c53",
+  "gates": {
+    "initial_git_status": "PASS; clean",
+    "git_diff_check": "PASS",
+    "native_compose_config": "BLOCKED; ignored local environment file is missing required secure values",
+    "controlled_compose_config": "PASS with process-only ephemeral values",
+    "fresh_bootstrap": "BLOCKED; standard start rejected the existing local environment file and no qualifying fresh report exists",
+    "quick": "PASS; Java 142 tests, 0 failures/errors, 1 skip; Python compile, Vue build, Compose config passed",
+    "integration": "BLOCKED; command exit 0 but all 3 Testcontainers tests skipped",
+    "e2e": "BLOCKED; rerun reached HTTP 200 / business code 50302 before WorkflowRun creation",
+    "performance": "BLOCKED at preflight; warm-up and measurement not run",
+    "fault_recovery": "BLOCKED; 2 Redis scenarios passed, 4 downstream scenarios failed before durable submission, MySQL scenario not run",
+    "observability": "BLOCKED; no same-candidate success/failure/recovery trace set",
+    "security": "BLOCKED; tracked scan reviewed and archive values redacted, but standard local configuration and prior audit gaps remain",
+    "demo": "BLOCKED; prepare and verify stopped at business code 50302; scoped reset passed",
+    "delivery_materials": "BLOCKED; package checks passed but prerequisite reports are not all PASS on this candidate"
+  },
+  "related_runs": {
+    "e2e_environment_failure": "20260713T162504Z-2aa8d73",
+    "e2e_contract_failure": "20260713T162731Z-2aa8d73",
+    "performance_dirty_candidate_rejection": "20260713T162829Z-2aa8d73",
+    "performance_contract_failure": "20260713T162850Z-2aa8d73",
+    "fault_contract_failure": "20260713T162956Z-2aa8d73"
+  }
+}
