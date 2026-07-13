@@ -22,15 +22,17 @@ import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.KnowledgeDocument;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.KnowledgeDocumentMapper;
+import com.example.gameworkbench.service.KnowledgeIndexingService;
 
 @ExtendWith(MockitoExtension.class)
 class KnowledgeDocumentServiceImplTest {
     @Mock private GameProjectMapper gameProjectMapper;
     @Mock private KnowledgeDocumentMapper knowledgeDocumentMapper;
+    @Mock private KnowledgeIndexingService indexingService;
     private KnowledgeDocumentServiceImpl service;
 
     @BeforeEach void setUp() {
-        service = new KnowledgeDocumentServiceImpl(gameProjectMapper, knowledgeDocumentMapper);
+        service = new KnowledgeDocumentServiceImpl(gameProjectMapper, knowledgeDocumentMapper, indexingService);
         when(gameProjectMapper.selectOne(any())).thenReturn(project(7L));
     }
 
@@ -80,7 +82,18 @@ class KnowledgeDocumentServiceImplTest {
         assertThat(uploaded.getStatus()).isEqualTo("DELETED");
         assertThat(uploaded.getDeleted()).isEqualTo(1);
         assertThat(uploaded.getDeletedAt()).isNotNull();
+        verify(indexingService).invalidate(uploaded);
         verify(knowledgeDocumentMapper).updateById(uploaded);
+    }
+
+    @Test void invalidationRemovesTheDocumentFromTheActiveIndex() {
+        KnowledgeDocument ready = document("doc", "READY");
+        when(knowledgeDocumentMapper.selectActiveByUuidAndProject(7L, "doc")).thenReturn(ready);
+
+        service.invalidate(3L, 7L, "doc");
+
+        assertThat(ready.getStatus()).isEqualTo("INVALID");
+        verify(indexingService).invalidate(ready);
     }
 
     @Test void rejectsUnauthorizedProjectBeforeAnyDocumentQuery() {

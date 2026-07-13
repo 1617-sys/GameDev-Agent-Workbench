@@ -1,6 +1,6 @@
 # R6-04: 项目隔离 RetrievalService 与引用选择
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R6-03`
 >

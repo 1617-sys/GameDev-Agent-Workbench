@@ -19,6 +19,7 @@ import com.example.gameworkbench.entity.KnowledgeDocument;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.KnowledgeDocumentMapper;
 import com.example.gameworkbench.service.KnowledgeDocumentService;
+import com.example.gameworkbench.service.KnowledgeIndexingService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     private final GameProjectMapper gameProjectMapper;
     private final KnowledgeDocumentMapper knowledgeDocumentMapper;
+    private final KnowledgeIndexingService indexingService;
 
     @Override
     @Transactional
@@ -79,8 +81,11 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
     }
 
     @Override
+    @Transactional
     public KnowledgeDocument invalidate(Long userId, Long projectId, String documentUuid) {
-        return transition(userId, projectId, documentUuid, KnowledgeDocumentStatus.INVALID);
+        KnowledgeDocument document = transition(userId, projectId, documentUuid, KnowledgeDocumentStatus.INVALID);
+        indexingService.invalidate(document);
+        return document;
     }
 
     @Override
@@ -90,6 +95,7 @@ public class KnowledgeDocumentServiceImpl implements KnowledgeDocumentService {
         KnowledgeDocument document = requireDocument(projectId, documentUuid);
         KnowledgeDocumentStatus current = KnowledgeDocumentStatus.valueOf(document.getStatus());
         if (!current.canTransitionTo(KnowledgeDocumentStatus.DELETED)) throw new BusinessException(ErrorCode.INVALID_PARAM);
+        indexingService.invalidate(document);
         document.setStatus(KnowledgeDocumentStatus.DELETED.name());
         document.setDeletedAt(LocalDateTime.now());
         document.setDeleted(1);

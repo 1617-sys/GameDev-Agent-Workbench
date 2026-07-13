@@ -1,6 +1,6 @@
 # R6-01: KnowledgeDocument/Chunk 数据模型与项目隔离生命周期
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R6-00`
 >

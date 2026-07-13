@@ -1,6 +1,6 @@
 # R6-02: Markdown/TXT/PDF 导入、解析与文件安全
 
-> 状态：`TODO`
+> 状态：`BLOCKED`
 >
 > 前置任务：`R6-01`
 >

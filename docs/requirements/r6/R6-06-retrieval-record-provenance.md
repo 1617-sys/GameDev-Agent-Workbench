@@ -1,6 +1,6 @@
 # R6-06: RetrievalRecord 持久化与 AgentRun 引用证据
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`R5-01`、`R6-05`
 >
