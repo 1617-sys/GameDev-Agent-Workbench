@@ -94,6 +94,7 @@ async def run_game_config_agent(payload: AgentMockRequest) -> AgentMockResult:
     system_prompt = payload.system_prompt or GAME_CONFIG_SYSTEM_PROMPT
     user_prompt_template = payload.user_prompt_template or build_game_config_user_prompt(payload)
 
+    rag_text, _ = render_rag_context(payload.rag)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", user_prompt_template),
@@ -105,7 +106,7 @@ async def run_game_config_agent(payload: AgentMockRequest) -> AgentMockResult:
     result_text = await chain.ainvoke({
         "title": payload.title,
         "content": payload.content,
-        "context": payload.context or "",
+        "context": (payload.context or "") + rag_text,
         "project_uuid": payload.project_uuid or "",
         "user_id": payload.user_id or "",
     })
