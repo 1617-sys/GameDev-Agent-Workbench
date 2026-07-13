@@ -47,6 +47,7 @@ $loadClient = Join-Path $PSScriptRoot 'performance/run-load.mjs'
 $composeArgs = @('compose', '--env-file', $envFile, '-p', $composeProject, '-f', $baseCompose, '-f', $performanceCompose)
 $hardDeadline = (Get-Date).AddMinutes(15)
 $stackStarted = $false
+$secondConsumerStarted = $false
 $loadExitCode = 1
 $cleanupExitCode = 0
 $images = @()
@@ -420,13 +421,15 @@ try {
     Wait-HttpReady -Url 'http://127.0.0.1:8080/actuator/health' -TimeoutSeconds (Get-BoundedTimeoutSeconds -RequestedSeconds $ReadyTimeoutSeconds)
 
     $secondConsumerId = (Invoke-Docker -Arguments ($composeArgs + @('run', '-d', '--no-deps', '--name', $secondConsumerName, 'backend-java')) | Select-Object -Last 1).Trim()
+    $secondConsumerStarted = $true
     Write-TextFile -Path (Join-Path $composeDir 'second-consumer.txt') -Text "Started a second stateless backend consumer container: $secondConsumerId$([Environment]::NewLine)"
     $consumerCount = Wait-QueueConsumers -Username $rabbitUsername -Password $rabbitPassword -ManagementPort $effectiveRabbitManagementPort -TimeoutSeconds (Get-BoundedTimeoutSeconds -RequestedSeconds $ReadyTimeoutSeconds)
     Write-TextFile -Path (Join-Path $composeDir 'consumer-count.txt') -Text "workflow.run.execute consumers=$consumerCount$([Environment]::NewLine)"
 
     Invoke-Docker -Arguments ($composeArgs + @('ps', '--format', 'json')) |
         Tee-Object -FilePath (Join-Path $composeDir 'ps.json') | Out-Null
-    $images = @(Invoke-Docker -Arguments ($composeArgs + @('images', '--format', 'json')))
+    $images = @(Invoke-Docker -Arguments ($composeArgs + @('images', '--format', 'json')) |
+            ForEach-Object { $_.Trim() } | Where-Object { $_ })
     Write-TextFile -Path (Join-Path $composeDir 'images.jsonl') -Text (($images -join [Environment]::NewLine) + [Environment]::NewLine)
 
     $mysqlContainer = Get-ComposeContainer -Service 'mysql'
@@ -491,6 +494,16 @@ finally {
         catch {
             Write-TextFile -Path (Join-Path $consoleDir 'fixture-cleanup-error.txt') -Text ($_ | Out-String)
             $cleanupExitCode = 1
+        }
+        if ($secondConsumerStarted) {
+            try {
+                $removed = Invoke-Docker -Arguments @('rm', '-f', $secondConsumerName)
+                Write-TextFile -Path (Join-Path $composeDir 'second-consumer-down.txt') -Text (($removed -join [Environment]::NewLine) + [Environment]::NewLine)
+            }
+            catch {
+                Write-TextFile -Path (Join-Path $consoleDir 'second-consumer-down-error.txt') -Text ($_ | Out-String)
+                $cleanupExitCode = 1
+            }
         }
         try {
             Invoke-Docker -Arguments ($composeArgs + @('down')) |

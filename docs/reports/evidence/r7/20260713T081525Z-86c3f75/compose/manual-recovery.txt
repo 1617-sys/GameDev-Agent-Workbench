@@ -1,0 +1,5 @@
+Recovery action after the retained cleanup failure:
+docker rm -f r7perf-2bdf6273-backend-consumer-2
+docker network rm r7perf-2bdf6273_default
+Exit code: 0
+Named MySQL and Redis volumes were preserved; no volume deletion command was used.

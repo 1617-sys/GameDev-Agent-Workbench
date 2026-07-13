@@ -1,0 +1,7 @@
+Expected exactly one running 'backend-java' container for Compose project 'r7perf-2bdf6273', found 2.
+At F:\coe\java\GameDev Agent Workbench\tools\e2e\Remove-R7E2EFixture.ps1:44 char:9
++         throw "Expected exactly one running '$Service' container for  ...
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OperationStopped: (Expected exactl...6273', found 2.:String) [], RuntimeException
+    + FullyQualifiedErrorId : Expected exactly one running 'backend-java' container for Compose project 'r7perf-2bdf62
+   73', found 2.
