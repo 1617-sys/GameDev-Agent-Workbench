@@ -1,0 +1,17 @@
+R7-08 quick verification
+Command: .\tools\verify.ps1 -Profile quick
+Exit code: 0
+Total wall time: 42.4 seconds
+
+Java tests: PASS in 35.1 seconds
+Tests run: 142, failures: 0, errors: 0, skipped: 1
+Python compile: PASS in 0.2 seconds
+Vue production build: PASS in 6.4 seconds
+Docker Compose config: PASS in 0.2 seconds
+
+Non-blocking warnings retained for review:
+- Java test process reported the existing ByteBuddy dynamic-agent warning.
+- Vue reported one generated chunk of 1,588.91 kB, above its 500 kB warning threshold.
+
+No provider was invoked. Process-only local configuration values were not written
+to repository files or copied into this evidence.

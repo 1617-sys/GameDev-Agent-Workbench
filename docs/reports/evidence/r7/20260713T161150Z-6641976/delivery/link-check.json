@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "delivery_files_checked": 7,
+  "relative_links_checked": 127,
+  "broken_relative_links": 0,
+  "command_references_checked": 8,
+  "missing_command_references": 0,
+  "local_absolute_path_matches": 0,
+  "credential_signature_matches": 0
+}

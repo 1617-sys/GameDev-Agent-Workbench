@@ -1,0 +1,17 @@
+R7-08 contract-defined broad keyword scan
+Scope: README.md and docs
+Exit code: 0 (matches found)
+Total matches: 275
+
+Classification:
+- requirement documents: 54
+- historical migration/session archives: 145
+- existing reports and immutable evidence: 63
+- operations, demo, and other existing documents: 13
+- current R7-08 delivery documents: 0
+
+High-confidence credential-signature scan over tracked README/docs files: 0 matches
+Local absolute-path scan over current R7-08 delivery documents: 0 matches
+
+Review: the contract-defined command is intentionally broad. Existing immutable evidence,
+historical archives, and frozen requirements were not rewritten by R7-08.

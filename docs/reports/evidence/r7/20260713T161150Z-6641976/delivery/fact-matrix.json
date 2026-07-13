@@ -1,0 +1,25 @@
+{
+  "release_conclusion": "BLOCKED",
+  "prerequisites": {
+    "R7-02_main_workflow_e2e": "BLOCKED",
+    "R7-03_concurrency_performance": "BLOCKED; measurement not run",
+    "R7-04_fault_recovery": "BLOCKED",
+    "R7-05_observability_operations": "BLOCKED; diagnostic sub-gates passed",
+    "R7-06_security_release_audit": "BLOCKED",
+    "R7-07_reproducible_demo": "BLOCKED; reset passed"
+  },
+  "primary_shared_blocker": "async submission returned HTTP 200 with business code 50302, so no durable workflow run was created",
+  "delivery_facts": {
+    "flyway_migrations": 26,
+    "documented_workflow_steps": 4,
+    "quick_java_tests_run": 142,
+    "quick_java_tests_skipped": 1,
+    "quick_java_test_failures": 0
+  },
+  "prohibited_claims": [
+    "no production-scale claim",
+    "no user-volume or revenue claim",
+    "no concurrency percentile or throughput baseline claim",
+    "no final release recommendation"
+  ]
+}
