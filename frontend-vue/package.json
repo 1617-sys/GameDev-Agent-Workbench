@@ -9,6 +9,7 @@
     "test:runtime-smoke": "playwright test tests/runtimeSmoke.browser.e2e.js",
     "test:unit": "node --test tests/*.test.js",
     "test:e2e": "playwright test",
+    "test:e2e:main": "playwright test tests/mainWorkflow.browser.e2e.js",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173"
   },

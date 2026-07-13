@@ -117,9 +117,14 @@ switch ($Profile) {
     }
     "e2e" {
         Invoke-VerificationStep `
-            -Name "R4 browser E2E harness" `
-            -WorkingDirectory (Join-Path $projectRoot "frontend-vue") `
-            -Action { Invoke-NativeCommand "npm" @("run", "test:e2e") }
+            -Name "R7 Compose main-workflow browser and database harness" `
+            -WorkingDirectory $projectRoot `
+            -Action {
+                & (Join-Path $projectRoot "tools\e2e\Invoke-R7MainWorkflowE2E.ps1")
+                if ($LASTEXITCODE -ne 0) {
+                    throw "R7 main-workflow E2E harness exited with code $LASTEXITCODE."
+                }
+            }
     }
 }
 

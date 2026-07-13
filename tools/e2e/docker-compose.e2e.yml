@@ -1,0 +1,5 @@
+services:
+  python-agent:
+    build:
+      context: ./tools/e2e/fake-agent
+    environment: {}
