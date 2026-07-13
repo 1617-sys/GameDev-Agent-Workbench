@@ -63,3 +63,7 @@ app:
 
 game-build:
   base-url: ${GAME_BUILD_BASE_URL:http://localhost:5173}
+
+knowledge:
+  storage-root: ${KNOWLEDGE_STORAGE_ROOT:${java.io.tmpdir}/gamedev-knowledge}
+  max-bytes: ${KNOWLEDGE_UPLOAD_MAX_BYTES:10485760}
