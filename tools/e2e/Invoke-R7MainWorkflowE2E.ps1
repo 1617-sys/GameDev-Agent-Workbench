@@ -157,6 +157,19 @@ function Assert-EvidenceRedacted {
     }
 }
 
+function Write-EvidenceChecksums {
+    $lines = foreach ($file in Get-ChildItem -LiteralPath $evidenceRoot -Recurse -File | Where-Object { $_.Name -ne 'checksums.sha256' }) {
+        $relativePath = $file.FullName.Substring($evidenceRoot.Length).TrimStart('\', '/') -replace '\\', '/'
+        $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        "$hash  $relativePath"
+    }
+    [System.IO.File]::WriteAllLines(
+        (Join-Path $evidenceRoot 'checksums.sha256'),
+        @($lines | Sort-Object),
+        [System.Text.UTF8Encoding]::new($false)
+    )
+}
+
 $baseCompose = Join-Path $projectRoot 'docker-compose.yml'
 $e2eCompose = Join-Path $PSScriptRoot 'docker-compose.e2e.yml'
 $cleanupScript = Join-Path $PSScriptRoot 'Remove-R7E2EFixture.ps1'
@@ -296,6 +309,7 @@ finally {
             cleanupExitCode = $cleanupExitCode
             completedAtUtc  = (Get-Date).ToUniversalTime().ToString('o')
         })
+    Write-EvidenceChecksums
 }
 
 if ($testExitCode -ne 0 -or $cleanupExitCode -ne 0) {
