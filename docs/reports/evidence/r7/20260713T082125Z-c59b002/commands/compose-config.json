@@ -1,0 +1,6 @@
+{
+    "command":  "docker compose --env-file \u003ctemporary\u003e -p \u003crun-project\u003e -f docker-compose.yml -f tools/performance/docker-compose.performance.yml config --quiet",
+    "startedAtUtc":  "2026-07-13T08:21:28.1443453Z",
+    "completedAtUtc":  "2026-07-13T08:21:28.3604560Z",
+    "exitCode":  0
+}

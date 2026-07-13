@@ -132,5 +132,5 @@ select count(*) from sys_user where username like '$sqlUsername%';
     }
 }
 
-Write-Host "Removed only the user-scoped R7 performance fixture namespace '$FixtureUsername*'; volumes were preserved."
+Write-Output "Removed only the user-scoped R7 performance fixture namespace '$FixtureUsername*'; volumes were preserved."
 exit 0
