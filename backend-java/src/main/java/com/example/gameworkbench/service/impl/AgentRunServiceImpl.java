@@ -12,6 +12,12 @@ import com.example.gameworkbench.entity.ModelCallMetric;
 import com.example.gameworkbench.entity.PromptVersion;
 import com.example.gameworkbench.mapper.PromptVersionMapper;
 import com.example.gameworkbench.service.ModelCallMetricService;
+import com.example.gameworkbench.service.RetrievalService;
+import com.example.gameworkbench.service.RetrievalRequest;
+import com.example.gameworkbench.service.RetrievalRecordService;
+import com.example.gameworkbench.service.KnowledgeStorage;
+import com.example.gameworkbench.service.KnowledgeChunker;
+import com.example.gameworkbench.service.EmbeddingProvider;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +55,10 @@ public class AgentRunServiceImpl implements AgentRunService {
     private final PromptTemplateMapper promptTemplateMapper;
     private final PromptVersionMapper promptVersionMapper;
     private final ModelCallMetricService modelCallMetricService;
+    private final RetrievalService retrievalService;
+    private final RetrievalRecordService retrievalRecordService;
+    private final KnowledgeStorage knowledgeStorage;
+    private final EmbeddingProvider embeddingProvider;
 
     /**
      * 执行一次 Agent 运行任务。
@@ -97,6 +107,12 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setInputContent(writeJsonSafely(request));
         agentRun.setStatus(AgentRunStatus.RUNNING.name());
         agentRun.setMockState("UNKNOWN");
+        agentRun.setRagEnabled(Boolean.TRUE.equals(request.getRagEnabled()));
+        agentRun.setRagStatus(Boolean.TRUE.equals(request.getRagEnabled()) ? "PENDING" : "DISABLED");
+        agentRun.setContextBudget(request.getRagContextBudget() == null ? 8000 : Math.min(request.getRagContextBudget(), 50000));
+        agentRun.setRetrievalVersion("retrieval-v1");
+        agentRun.setChunkingVersion(KnowledgeChunker.VERSION);
+        agentRun.setEmbeddingModel(embeddingProvider.model());
         agentRun.setCreatedAt(now);
         agentRun.setUpdatedAt(now);
         agentRunMapper.insert(agentRun);
@@ -137,6 +153,7 @@ public class AgentRunServiceImpl implements AgentRunService {
             /*
              * 组装请求参数，将前端输入与后端查询到的提示词模板合并，通过 Python 客户端调用 Agent 服务。
              */
+            Object ragPayload = buildRagPayload(agentRun, request);
             PythonAgentRequest pythonRequest = PythonAgentRequest.builder()
                     .projectUuid(request.getProjectUuid())
                     .title(request.getTitle())
@@ -147,6 +164,7 @@ public class AgentRunServiceImpl implements AgentRunService {
                     .templateUuid(promptVersion.getTemplateUuid())
                     .templateVersion(promptVersion.getVersion())
                     .userId(userId)
+                    .rag(ragPayload)
                     .build();
 
             PythonAgentResponse pythonResponse = pythonAgentClient.invoke(request.getAgentType(), pythonRequest);
@@ -172,8 +190,10 @@ public class AgentRunServiceImpl implements AgentRunService {
             agentRun.setMockState(execution.path("mock").asBoolean() ? "TRUE" : "FALSE");
             agentRun.setTraceId(pythonResponse.getTraceId());
             agentRun.setRawOutputRef(textOrNull(execution, "raw_output_ref"));
+            agentRun.setRagStatus(execution.path("rag_status").asText(agentRun.getRagStatus()));
             agentRun.setUpdatedAt(LocalDateTime.now());
             agentRunMapper.updateById(agentRun);
+            retrievalRecordService.recordSelected(agentRun, execution.path("used_references"), sha256(request.getContent()));
             recordMetric(agentRun, execution, "AVAILABLE");
 
             log.info("[Agent] run succeeded userId={} projectId={} projectUuid={} runUuid={} agentType={} timeTakenMs={}",
@@ -403,6 +423,34 @@ public class AgentRunServiceImpl implements AgentRunService {
 
     private String textOrNull(JsonNode node, String field) {
         return node.path(field).isTextual() && !node.path(field).asText().isBlank() ? node.path(field).asText() : null;
+    }
+
+    private Object buildRagPayload(AgentRun run, AgentRunRequest request) {
+        if (!Boolean.TRUE.equals(run.getRagEnabled())) return Map.of("rag_enabled", false, "retrieved_chunks", List.of(), "budget_chars", run.getContextBudget());
+        try {
+            int topK = request.getRagTopK() == null ? 5 : Math.max(1, Math.min(request.getRagTopK(), 20));
+            var candidates = retrievalService.retrieve(new RetrievalRequest(run.getProjectId(), request.getContent(), topK, 0.0f, run.getContextBudget()));
+            var chunks = candidates.stream().map(candidate -> {
+                try {
+                    return Map.<String, Object>of("chunk_uuid", candidate.chunkUuid(), "document_uuid", candidate.documentUuid(),
+                            "document_version", candidate.documentVersion(), "rank", candidate.rank(), "score", candidate.score(),
+                            "text", new String(knowledgeStorage.read(candidate.textReference()), java.nio.charset.StandardCharsets.UTF_8));
+                } catch (Exception failure) { throw new IllegalStateException(failure); }
+            }).toList();
+            run.setRagStatus(chunks.isEmpty() ? "EMPTY" : "AVAILABLE");
+            run.setRagContextSnapshot(writeJsonSafely(Map.of("candidate_count", chunks.size(), "top_k", topK, "budget", run.getContextBudget())));
+            return Map.of("rag_enabled", true, "retrieved_chunks", chunks, "retrieval_version", run.getRetrievalVersion(), "budget_chars", run.getContextBudget());
+        } catch (Exception failure) {
+            run.setRagStatus("UNAVAILABLE"); run.setRagContextSnapshot("{\"candidate_count\":0,\"failure\":true}");
+            return Map.of("rag_enabled", true, "retrieved_chunks", List.of(), "retrieval_version", run.getRetrievalVersion(), "budget_chars", run.getContextBudget());
+        }
+    }
+
+    private String sha256(String value) {
+        try {
+            byte[] hash = java.security.MessageDigest.getInstance("SHA-256").digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            StringBuilder result = new StringBuilder(64); for (byte part : hash) result.append(String.format("%02x", part)); return result.toString();
+        } catch (Exception failure) { throw new IllegalStateException(failure); }
     }
 
     private String errorCategory(BusinessException exception) {

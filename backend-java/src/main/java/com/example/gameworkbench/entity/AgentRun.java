@@ -53,6 +53,14 @@ public class AgentRun {
 
     private String rawOutputRef;
 
+    private Boolean ragEnabled;
+    private String ragStatus;
+    private Integer contextBudget;
+    private String retrievalVersion;
+    private String chunkingVersion;
+    private String embeddingModel;
+    private String ragContextSnapshot;
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;

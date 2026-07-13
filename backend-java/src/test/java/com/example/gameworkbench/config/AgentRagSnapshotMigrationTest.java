@@ -1,0 +1,3 @@
+package com.example.gameworkbench.config;
+import static org.assertj.core.api.Assertions.assertThat; import java.nio.charset.StandardCharsets; import org.junit.jupiter.api.Test; import org.springframework.core.io.ClassPathResource;
+class AgentRagSnapshotMigrationTest { @Test void migrationFreezesRagCohortFacts() throws Exception { String sql = new String(new ClassPathResource("db/migration/V25__add_agent_run_rag_snapshot.sql").getInputStream().readAllBytes(), StandardCharsets.UTF_8); assertThat(sql).contains("rag_enabled", "rag_status", "context_budget", "retrieval_version", "chunking_version", "embedding_model", "rag_context_snapshot"); } }

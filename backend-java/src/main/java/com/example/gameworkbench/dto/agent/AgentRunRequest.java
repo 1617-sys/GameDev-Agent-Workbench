@@ -32,4 +32,8 @@ public class AgentRunRequest {
 
     @Size(max = 2000, message = "Context length must not exceed 2000")
     private String context;
+
+    private Boolean ragEnabled;
+    private Integer ragTopK;
+    private Integer ragContextBudget;
 }

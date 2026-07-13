@@ -36,4 +36,6 @@ public class PythonAgentRequest {
 
     @JsonProperty("user_id")
     private Long userId;
+
+    private Object rag;
 }
