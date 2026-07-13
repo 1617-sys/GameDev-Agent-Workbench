@@ -1,0 +1,1 @@
+Compose configuration validated; secret-bearing expanded output was intentionally not persisted.

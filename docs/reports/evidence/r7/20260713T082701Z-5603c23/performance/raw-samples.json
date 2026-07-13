@@ -1,0 +1,132 @@
+{
+  "providerMode": "fake",
+  "fixtureVersion": "r7-performance-fixed-agent-v1",
+  "uniqueRequests": [],
+  "resourceSamples": [
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "backend-java",
+      "container": "r7perf-b6f6e4a8-backend-consumer-2",
+      "cpuPercent": 1.47,
+      "memoryBytes": 336697753.6,
+      "memoryPercent": 31.36,
+      "pids": 42
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "backend-java",
+      "container": "r7perf-b6f6e4a8-backend-java-1",
+      "cpuPercent": 194.39,
+      "memoryBytes": 354733260.8,
+      "memoryPercent": 33.04,
+      "pids": 55
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "python-agent",
+      "container": "r7perf-b6f6e4a8-python-agent-1",
+      "cpuPercent": 0.02,
+      "memoryBytes": 16588472.32,
+      "memoryPercent": 3.09,
+      "pids": 2
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "redis",
+      "container": "r7perf-b6f6e4a8-redis-1",
+      "cpuPercent": 0.36,
+      "memoryBytes": 3596615.68,
+      "memoryPercent": 1.34,
+      "pids": 6
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "rabbitmq",
+      "container": "r7perf-b6f6e4a8-rabbitmq-1",
+      "cpuPercent": 72.15,
+      "memoryBytes": 136944025.6,
+      "memoryPercent": 25.51,
+      "pids": 56
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.337Z",
+      "service": "mysql",
+      "container": "r7perf-b6f6e4a8-mysql-1",
+      "cpuPercent": 4.24,
+      "memoryBytes": 487797555.2,
+      "memoryPercent": 60.58,
+      "pids": 60
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "backend-java",
+      "container": "r7perf-b6f6e4a8-backend-consumer-2",
+      "cpuPercent": 1.4,
+      "memoryBytes": 336907468.8,
+      "memoryPercent": 31.38,
+      "pids": 42
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "backend-java",
+      "container": "r7perf-b6f6e4a8-backend-java-1",
+      "cpuPercent": 0.58,
+      "memoryBytes": 364694732.8,
+      "memoryPercent": 33.96,
+      "pids": 56
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "python-agent",
+      "container": "r7perf-b6f6e4a8-python-agent-1",
+      "cpuPercent": 0.02,
+      "memoryBytes": 16588472.32,
+      "memoryPercent": 3.09,
+      "pids": 2
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "redis",
+      "container": "r7perf-b6f6e4a8-redis-1",
+      "cpuPercent": 2.76,
+      "memoryBytes": 4030726.144,
+      "memoryPercent": 1.5,
+      "pids": 6
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "rabbitmq",
+      "container": "r7perf-b6f6e4a8-rabbitmq-1",
+      "cpuPercent": 0.96,
+      "memoryBytes": 136524595.2,
+      "memoryPercent": 25.42,
+      "pids": 56
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.361Z",
+      "service": "mysql",
+      "container": "r7perf-b6f6e4a8-mysql-1",
+      "cpuPercent": 4.59,
+      "memoryBytes": 524497715.2,
+      "memoryPercent": 65.13,
+      "pids": 60
+    }
+  ],
+  "queueSamples": [
+    {
+      "sampledAtUtc": "2026-07-13T08:28:04.346Z",
+      "messages": 0,
+      "ready": 0,
+      "unacknowledged": 0,
+      "consumers": 2
+    },
+    {
+      "sampledAtUtc": "2026-07-13T08:28:07.365Z",
+      "messages": 0,
+      "ready": 0,
+      "unacknowledged": 0,
+      "consumers": 2
+    }
+  ],
+  "monitorErrors": []
+}

@@ -1,0 +1,19 @@
+{
+    "providerMode":  "fake",
+    "fixtureVersion":  "r7-performance-fixed-agent-v1",
+    "fixedAgentLatencyMs":  300,
+    "uniqueConcurrency":  20,
+    "sameKeyConcurrency":  10,
+    "queryConnections":  20,
+    "sseConnections":  20,
+    "consumerProcesses":  2,
+    "warmupSeconds":  60,
+    "measurementSeconds":  300,
+    "maxRequests":  1000,
+    "timeoutSeconds":  900,
+    "rateLimitPolicy":  "r7-performance-v1",
+    "rateLimitMaxPerUserPerMinute":  120,
+    "backpressureMaxPendingRuns":  1000,
+    "percentileMethod":  "nearest-rank",
+    "rabbitManagementPort":  59883
+}
