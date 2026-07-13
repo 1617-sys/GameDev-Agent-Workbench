@@ -1,0 +1,12 @@
+{
+    "runId":  "20260713T081228Z-bd7f639",
+    "rcSha":  "bd7f6397eaabd8e688b95109fc1152c868c6a760",
+    "branch":  "r7",
+    "startedAtUtc":  "2026-07-13T08:12:28.6417281Z",
+    "providerMode":  "fake",
+    "fixtureVersion":  "r7-e2e-fixed-agent-v1",
+    "composeProject":  "r7e2e-dedef874",
+    "apiBaseUrl":  "http://127.0.0.1:8080",
+    "frontendBaseUrl":  "http://127.0.0.1:5173",
+    "secretsStoredIn":  "temporary local env file; excluded from evidence"
+}
