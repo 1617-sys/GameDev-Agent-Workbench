@@ -303,7 +303,8 @@ $dockerInfo = $dockerInfoRaw | ConvertFrom-Json
 $dockerCpu = [int]$dockerInfo.NCPU
 $dockerMemoryBytes = [int64]$dockerInfo.MemTotal
 $dockerMemoryGiB = [Math]::Round($dockerMemoryBytes / 1GB, 2)
-$hostQualified = $logicalCpu -ge 8 -and $hostMemoryBytes -ge 16GB -and $freeDiskBytes -ge 30GB
+$powerShellQualified = $PSVersionTable.PSVersion.Major -ge 7
+$hostQualified = $logicalCpu -ge 8 -and $hostMemoryBytes -ge 16GB -and $freeDiskBytes -ge 30GB -and $powerShellQualified
 $dockerQualified = $dockerCpu -eq 6 -and $dockerMemoryBytes -ge 7.5GB -and $dockerMemoryBytes -le 8.5GB
 $durationQualified = $WarmupSeconds -eq 60 -and $MeasurementSeconds -eq 300
 $referenceEligible = $hostQualified -and $dockerQualified -and $durationQualified -and $ReferenceEnvironmentConfirmed.IsPresent
@@ -337,6 +338,7 @@ $manifest = [ordered]@{
         operatingSystem = $dockerInfo.OperatingSystem
     }
     referenceQualification = [ordered]@{
+        powerShell7OrLaterMet = $powerShellQualified
         hostMinimumMet = $hostQualified
         dockerFixed6Cpu8GiBMet = $dockerQualified
         standardDurationMet = $durationQualified

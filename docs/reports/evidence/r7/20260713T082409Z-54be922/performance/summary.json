@@ -1,0 +1,182 @@
+{
+  "providerMode": "fake",
+  "fixtureVersion": "r7-performance-fixed-agent-v1",
+  "fixedAgentLatencyMs": 300,
+  "configuration": {
+    "uniqueConcurrency": 20,
+    "sameKeyConcurrency": 10,
+    "queryConnections": 20,
+    "sseConnections": 20,
+    "consumerProcesses": 2,
+    "warmupSeconds": 60,
+    "measurementSeconds": 300,
+    "maxRequests": 1000,
+    "percentileMethod": "nearest-rank",
+    "referenceEligible": false
+  },
+  "startedAtUtc": "2026-07-13T08:25:10.096Z",
+  "phases": {
+    "preflight": {
+      "httpStatus": 200,
+      "responseCode": 50302,
+      "responseMessage": "Workflow submission is temporarily unavailable",
+      "apiLatencyMs": 104.15,
+      "workflowRunUuid": null
+    }
+  },
+  "checks": {},
+  "conclusion": "BLOCKED",
+  "fixture": {
+    "userCount": 20,
+    "projectCount": 20,
+    "namespace": "r7perf-1ae51c23"
+  },
+  "blocker": {
+    "type": "ContractBlocker",
+    "message": "The asynchronous submission prerequisite rejected the performance preflight.",
+    "owner": "R3",
+    "httpStatus": 200,
+    "responseCode": 50302,
+    "responseMessage": "Workflow submission is temporarily unavailable",
+    "workflowRunUuid": null
+  },
+  "resources": {
+    "backend-java": {
+      "cpuPercent": {
+        "samples": 2,
+        "p50": 0.87,
+        "p95": 193.54,
+        "p99": 193.54,
+        "max": 193.54
+      },
+      "memoryBytes": {
+        "samples": 2,
+        "p50": 350958387.2,
+        "p95": 352845824,
+        "p99": 352845824,
+        "max": 352845824
+      },
+      "maxPids": 54
+    },
+    "redis": {
+      "cpuPercent": {
+        "samples": 1,
+        "p50": 0.33,
+        "p95": 0.33,
+        "p99": 0.33,
+        "max": 0.33
+      },
+      "memoryBytes": {
+        "samples": 1,
+        "p50": 3584032.768,
+        "p95": 3584032.768,
+        "p99": 3584032.768,
+        "max": 3584032.768
+      },
+      "maxPids": 6
+    },
+    "rabbitmq": {
+      "cpuPercent": {
+        "samples": 1,
+        "p50": 75.81,
+        "p95": 75.81,
+        "p99": 75.81,
+        "max": 75.81
+      },
+      "memoryBytes": {
+        "samples": 1,
+        "p50": 201326592,
+        "p95": 201326592,
+        "p99": 201326592,
+        "max": 201326592
+      },
+      "maxPids": 107
+    },
+    "mysql": {
+      "cpuPercent": {
+        "samples": 1,
+        "p50": 14.87,
+        "p95": 14.87,
+        "p99": 14.87,
+        "max": 14.87
+      },
+      "memoryBytes": {
+        "samples": 1,
+        "p50": 521247129.6,
+        "p95": 521247129.6,
+        "p99": 521247129.6,
+        "max": 521247129.6
+      },
+      "maxPids": 60
+    },
+    "python-agent": {
+      "cpuPercent": {
+        "samples": 1,
+        "p50": 0.01,
+        "p95": 0.01,
+        "p99": 0.01,
+        "max": 0.01
+      },
+      "memoryBytes": {
+        "samples": 1,
+        "p50": 16588472.32,
+        "p95": 16588472.32,
+        "p99": 16588472.32,
+        "max": 16588472.32
+      },
+      "maxPids": 2
+    }
+  },
+  "containerStates": [
+    {
+      "name": "r7perf-1ae51c23-backend-consumer-2",
+      "service": "backend-java",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    },
+    {
+      "name": "r7perf-1ae51c23-backend-java-1",
+      "service": "backend-java",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    },
+    {
+      "name": "r7perf-1ae51c23-mysql-bootstrap-1",
+      "service": "mysql-bootstrap",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "exited"
+    },
+    {
+      "name": "r7perf-1ae51c23-redis-1",
+      "service": "redis",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    },
+    {
+      "name": "r7perf-1ae51c23-rabbitmq-1",
+      "service": "rabbitmq",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    },
+    {
+      "name": "r7perf-1ae51c23-mysql-1",
+      "service": "mysql",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    },
+    {
+      "name": "r7perf-1ae51c23-python-agent-1",
+      "service": "python-agent",
+      "restartCount": 0,
+      "oomKilled": false,
+      "status": "running"
+    }
+  ],
+  "completedAtUtc": "2026-07-13T08:25:15.522Z"
+}
