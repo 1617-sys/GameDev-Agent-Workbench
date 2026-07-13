@@ -1,0 +1,16 @@
+services:
+  python-agent:
+    build:
+      context: ./tools/performance/fake-agent
+    environment: {}
+
+  backend-java:
+    environment:
+      WORKFLOW_RATE_LIMIT_POLICY_VERSION: r7-performance-v1
+      WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS: "120"
+      WORKFLOW_RATE_LIMIT_WINDOW_SECONDS: "60"
+      WORKFLOW_BACKPRESSURE_MAX_PENDING_RUNS: "1000"
+
+  rabbitmq:
+    ports:
+      - "127.0.0.1:${RABBITMQ_MANAGEMENT_HOST_PORT:-15672}:15672"
