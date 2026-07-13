@@ -1,6 +1,24 @@
 from typing import Any
 
-from pydantic import AliasChoices, BaseModel, ConfigDict, Field
+from pydantic import AliasChoices, BaseModel, ConfigDict, Field, model_validator
+
+class RetrievedChunk(BaseModel):
+    chunk_uuid: str
+    document_uuid: str
+    rank: int = Field(ge=1)
+    score: float
+    text: str = Field(min_length=1, max_length=12000)
+    document_version: str | None = None
+
+class RagContext(BaseModel):
+    rag_enabled: bool = False
+    retrieved_chunks: list[RetrievedChunk] = Field(default_factory=list)
+    retrieval_version: str | None = None
+    budget_chars: int = Field(default=8000, ge=1, le=50000)
+    @model_validator(mode="after")
+    def disabled_has_no_chunks(self):
+        if not self.rag_enabled and self.retrieved_chunks: raise ValueError("retrieved_chunks must be empty when rag_enabled is false")
+        return self
 
 
 class AgentMockRequest(BaseModel):
@@ -14,6 +32,7 @@ class AgentMockRequest(BaseModel):
     title: str = Field(..., min_length=1, max_length=200, description="Task title")
     content: str = Field(..., min_length=1, max_length=5000, description="Task content")
     context: str | None = Field(default=None, max_length=50000, description="Extra context")
+    rag: RagContext | None = None
     user_id: int | None = Field(
         default=None,
         validation_alias=AliasChoices("user_id", "userId"),

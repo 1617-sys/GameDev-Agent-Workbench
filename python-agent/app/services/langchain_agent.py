@@ -3,6 +3,7 @@ import os
 import time
 
 from app.prompts.agent_prompts import GAME_CONFIG_SYSTEM_PROMPT, build_game_config_user_prompt
+from app.services.rag_context import render_rag_context
 from app.schemas.agent import AgentMockRequest, AgentMockResult
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -48,6 +49,7 @@ async def run_langchain_agent(agent_type: str, payload: AgentMockRequest) -> Age
     system_prompt = payload.system_prompt or DEFAULT_SYSTEM_PROMPT
     user_prompt_template = payload.user_prompt_template or DEFAULT_USER_PROMPT_TEMPLATE
 
+    rag_text, _ = render_rag_context(payload.rag)
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
         ("human", user_prompt_template),
@@ -59,7 +61,7 @@ async def run_langchain_agent(agent_type: str, payload: AgentMockRequest) -> Age
     result_text = await chain.ainvoke({
         "title": payload.title,
         "content": payload.content,
-        "context": payload.context or "",
+        "context": (payload.context or "") + rag_text,
     })
     time_taken_ms = int((time.perf_counter() - start) * 1000)
 
