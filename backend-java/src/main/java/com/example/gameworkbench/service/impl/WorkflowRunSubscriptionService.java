@@ -58,7 +58,7 @@ public class WorkflowRunSubscriptionService {
             log.info("[WorkflowSse] subscribed workflowRunUuid={} subscriptionId={}", workflowRunUuid, subscriptionId);
         } catch (RuntimeException exception) {
             remove(subscriber);
-            emitter.completeWithError(exception);
+            emitter.complete();
         }
         return emitter;
     }
@@ -187,7 +187,7 @@ public class WorkflowRunSubscriptionService {
                 }
             } catch (RuntimeException exception) {
                 remove(this);
-                emitter.completeWithError(exception);
+                emitter.complete();
             }
         }
 
@@ -196,7 +196,7 @@ public class WorkflowRunSubscriptionService {
                 send(emitter, SseEmitter.event().comment("heartbeat"));
             } catch (RuntimeException exception) {
                 remove(this);
-                emitter.completeWithError(exception);
+                emitter.complete();
             }
         }
     }

@@ -5,6 +5,7 @@ export function createWorkflowApi(http) {
     getRun: (uuid) => http(base(uuid)),
     getSteps: (uuid) => http(`${base(uuid)}/steps`),
     getArtifacts: (uuid) => http(`${base(uuid)}/artifacts`),
+    getArtifact: (uuid) => http(`/api/artifacts/${encodeURIComponent(uuid)}`),
     cancel: (uuid) => http(`${base(uuid)}/cancel`, { method: "POST" }),
     retry: (uuid) => http(`${base(uuid)}/retry`, { method: "POST" }),
     eventsUrl: (uuid) => base(uuid) + "/events",

@@ -50,7 +50,7 @@ export function createWorkflowRunStore({
     if (!run.snapshot) return "snapshot-required";
 
     const snapshot = { ...run.snapshot };
-    if (event.status) snapshot.status = event.status;
+    if (event.status && event.eventType?.startsWith("run.")) snapshot.status = event.status;
     if (Number.isSafeInteger(Number(event.attempt))) snapshot.attempt = Number(event.attempt);
     run.lastSequence = sequence;
     snapshot.lastSequence = sequence;
@@ -176,7 +176,13 @@ export function createWorkflowRunStore({
   function disconnectAll() { Object.keys(state.runs).forEach(disconnect); }
   async function runCommand(uuid, action) {
     const run = ensure(uuid); run.actionLoading = true;
-    try { const snapshot = await api[action](uuid); return snapshot?.workflowRunUuid ? applySnapshot(uuid, snapshot) : await loadRun(uuid); }
+    try {
+      await api[action](uuid);
+      const latest = await loadRun(uuid);
+      if (isTerminal(latest)) disconnect(uuid);
+      else if (!latest.source && latest.snapshot) connect(uuid);
+      return latest;
+    }
     catch (error) { run.error = { code: error.code || "NETWORK", message: error.message }; throw error; }
     finally { run.actionLoading = false; }
   }

@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -117,8 +118,23 @@ class WorkflowRunSubscriptionServiceTest {
         WorkflowRunSubscriptionService service = service();
         service.subscribe(7L, "run", null);
 
-        verify(first).completeWithError(any(RuntimeException.class));
+        verify(first).complete();
         verify(events, never()).findAfter(any(), any(Long.class));
+        assertThat(service.subscriberCount("run")).isZero();
+    }
+
+    @Test
+    void persistedEventSendFailureDoesNotEscapeIntoWorkflowExecution() throws Exception {
+        when(queries.getRun(7L, "run")).thenReturn(snapshot("RUNNING", 0L));
+        when(emitters.create()).thenReturn(first);
+        when(events.findAfter("run", 0L)).thenReturn(List.of());
+        org.mockito.Mockito.doNothing().doThrow(new IOException("client closed"))
+                .when(first).send(any(SseEmitter.SseEventBuilder.class));
+        WorkflowRunSubscriptionService service = service();
+        service.subscribe(7L, "run", null);
+
+        assertThatCode(() -> service.onPersistedEvent(event(1L, "step.status-changed"))).doesNotThrowAnyException();
+        verify(first).complete();
         assertThat(service.subscriberCount("run")).isZero();
     }
 

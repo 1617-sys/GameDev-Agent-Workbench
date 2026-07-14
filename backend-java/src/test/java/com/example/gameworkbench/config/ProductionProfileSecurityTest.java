@@ -17,7 +17,7 @@ class ProductionProfileSecurityTest {
         String productionConfig = new String(
                 new ClassPathResource("application-prod.yml").getInputStream().readAllBytes(),
                 StandardCharsets.UTF_8
-        );
+        ).replace("\r\n", "\n");
 
         assertThat(profile.value()).containsExactly("!prod");
         assertThat(productionConfig).contains(

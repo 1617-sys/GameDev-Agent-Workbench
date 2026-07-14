@@ -21,6 +21,8 @@ docker compose config --quiet
 
 成功时所有服务持续在后台运行。主机端口仅绑定到 `127.0.0.1`：Vue `5173`、Java `8080`、Python `8000` 和 MySQL `3307`。Redis 与 RabbitMQ（AMQP、Management UI）均为 Compose 内部服务；需要队列诊断时使用受控的 `docker compose exec`，不开放管理控制台。
 
+打开 `http://127.0.0.1:5173` 后，先注册一个**业务账号**，再创建项目并提交游戏想法。业务账号由页面注册产生；它不是 MySQL、Redis、RabbitMQ 或 Docker 的连接账号，也不应写入仓库或演示文档。
+
 若某个默认端口已被本机其他程序占用，Compose 会失败并保留具体端口错误，不会假装服务 healthy。可只在本机 `.env` 覆盖对应变量后重试，例如：
 
 ```env
@@ -58,6 +60,17 @@ docker compose logs --tail 100 backend-java
 docker compose logs --tail 100 python-agent
 docker compose logs --tail 100 frontend-vue
 ```
+
+## 浏览器主链路验收
+
+浏览器验收使用一次性的隔离 Compose 栈和受控测试账号；脚本会在完成后清理该账号及其项目、运行和关联数据。隔离栈需要 `8080`、`5173`、`8000`、`3307` 空闲，因此先停止日常本地栈，再执行：
+
+```powershell
+.\tools\stop-docker.ps1
+.\tools\verify.ps1 -Profile e2e
+```
+
+该验收覆盖注册/登录、项目创建与选择、生成提交、运行详情刷新及 Phaser 预览。它使用临时本机凭据，生成的 evidence 和 Playwright 临时文件不得提交。
 
 ## 已有 `.env` 或 volume 的安全升级
 

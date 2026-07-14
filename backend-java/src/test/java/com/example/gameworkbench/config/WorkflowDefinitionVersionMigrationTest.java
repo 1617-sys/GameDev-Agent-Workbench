@@ -31,4 +31,20 @@ class WorkflowDefinitionVersionMigrationTest {
                 .contains("'" + AgentType.GAME_CONFIG_GENERATE.name() + "'")
                 .contains("'" + ArtifactType.GAME_CONFIG.name() + "'");
     }
+
+    @Test
+    void gameGenerateMigrationProvidesTheFrontendSubmissionContract() throws Exception {
+        ClassPathResource migration = new ClassPathResource("db/migration/V27__add_game_generate_workflow_definition.sql");
+        String sql = new String(migration.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+
+        assertThat(migration.exists()).isTrue();
+        assertThat(sql)
+                .contains("'GAME_GENERATE'")
+                .contains("'ACTIVE'")
+                .contains("'" + AgentType.GAME_CONCEPT.name() + "'")
+                .contains("'" + AgentType.CORE_LOOP_DESIGN.name() + "'")
+                .contains("'" + AgentType.TASK_BREAKDOWN.name() + "'")
+                .contains("'" + AgentType.GAME_CONFIG_GENERATE.name() + "'")
+                .contains("'" + ArtifactType.GAME_CONFIG.name() + "'");
+    }
 }

@@ -19,6 +19,17 @@ test("http client serializes request DTOs without persisting credentials", async
   assert.equal(request.body, '{"workflowKey":"GAME_GENERATE"}');
   assert.equal(request.headers.Authorization, "Bearer memory-token");
 });
+test("401 responses notify the session owner without exposing the token", async () => {
+  let unauthorized = 0;
+  const http = createHttpClient({
+    getToken: () => "memory-token",
+    onUnauthorized: () => { unauthorized += 1; },
+    fetchImpl: async () => ({ ok: false, status: 401, json: async () => ({ code: 401, message: "Unauthorized" }) })
+  });
+
+  await assert.rejects(http("/api/auth/me"), { status: 401 });
+  assert.equal(unauthorized, 1);
+});
 test("SSE client keeps authorization and Last-Event-ID in headers, never in the URL", async () => {
   let request;
   const http = createHttpClient({ getToken: () => "memory-token", fetchImpl: async (url, options) => { request = { url, options }; return { ok: false, status: 401 }; } });
@@ -81,4 +92,37 @@ test("403 and 404 SSE failures stop reconnection and clear protected snapshots",
   assert.equal(store.ensure("run").connectionState, "forbidden");
   assert.equal(store.ensure("run").snapshot, null);
   assert.equal(store.ensure("run").retryTimer, null);
+});
+
+test("step events update only their step and cannot complete the workflow early", () => {
+  const store = createWorkflowRunStore({ api: { getRun: async () => ({}), eventsUrl: () => "" }, eventSourceFactory: () => ({ addEventListener() {}, close() {} }) });
+  store.applySnapshot("run", snapshot("run", 1, "RUNNING"));
+
+  store.applyEvent("run", { workflowRunUuid: "run", eventType: "step.status-changed", sequence: 2, stepKey: "design", status: "SUCCESS" });
+
+  assert.equal(store.ensure("run").snapshot.status, "RUNNING");
+  assert.equal(store.ensure("run").steps[0].status, "SUCCESS");
+});
+
+test("network snapshot failures retain an understandable error and can recover from the server", async () => {
+  let online = false;
+  const store = createWorkflowRunStore({
+    api: {
+      getRun: async () => {
+        if (!online) throw new Error("Network request failed");
+        return snapshot("run", 2, "SUCCESS");
+      },
+      eventsUrl: () => "/events"
+    },
+    eventSourceFactory: () => new FakeEventSource()
+  });
+
+  await store.open("run");
+  assert.equal(store.ensure("run").snapshot, null);
+  assert.equal(store.ensure("run").error.message, "Network request failed");
+
+  online = true;
+  await store.open("run");
+  assert.equal(store.ensure("run").snapshot.status, "SUCCESS");
+  assert.equal(store.ensure("run").error, null);
 });

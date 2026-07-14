@@ -80,6 +80,23 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(encoded)
 
+    def _request_body(self) -> bytes:
+        content_length = self.headers.get("Content-Length")
+        if content_length is not None:
+            return self.rfile.read(int(content_length))
+        if self.headers.get("Transfer-Encoding", "").lower() != "chunked":
+            return b""
+
+        chunks = []
+        while True:
+            size_line = self.rfile.readline().strip()
+            size = int(size_line.split(b";", 1)[0], 16)
+            if size == 0:
+                self.rfile.readline()
+                return b"".join(chunks)
+            chunks.append(self.rfile.read(size))
+            self.rfile.read(2)
+
     def do_GET(self) -> None:
         if self.path == "/health":
             self._json(HTTPStatus.OK, {"status": "UP", "providerMode": "fake"})
@@ -91,8 +108,7 @@ class Handler(BaseHTTPRequestHandler):
             self._json(HTTPStatus.NOT_FOUND, {"code": 404, "message": "not found"})
             return
         try:
-            length = int(self.headers.get("Content-Length", "0"))
-            payload = json.loads(self.rfile.read(length).decode("utf-8"))
+            payload = json.loads(self._request_body().decode("utf-8"))
         except (ValueError, UnicodeDecodeError, json.JSONDecodeError):
             self._json(HTTPStatus.BAD_REQUEST, {"code": 400, "message": "invalid JSON"})
             return

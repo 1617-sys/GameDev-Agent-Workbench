@@ -2,7 +2,7 @@ export class ApiError extends Error {
   constructor(message, { status = 0, code = "NETWORK" } = {}) { super(message); this.status = status; this.code = code; }
 }
 
-export function createHttpClient({ baseUrl = "http://localhost:8080", getToken = () => "", fetchImpl = fetch, timeoutMs = 15000 } = {}) {
+export function createHttpClient({ baseUrl = "http://localhost:8080", getToken = () => "", onUnauthorized = () => {}, fetchImpl = fetch, timeoutMs = 15000 } = {}) {
   async function request(path, options = {}) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -17,6 +17,7 @@ export function createHttpClient({ baseUrl = "http://localhost:8080", getToken =
       if (body && !multipart) headers["Content-Type"] = "application/json";
       const response = await fetchImpl(`${baseUrl}${path}`, { ...options, body, headers, signal: controller.signal });
       const payload = response.status === 204 ? null : await response.json().catch(() => null);
+      if (response.status === 401) onUnauthorized();
       if (!response.ok || (payload && payload.code !== 0)) throw new ApiError(payload?.message || `HTTP ${response.status}`, { status: response.status, code: payload?.code || String(response.status) });
       return payload?.data ?? payload;
     } catch (error) {
@@ -35,7 +36,10 @@ export function createHttpClient({ baseUrl = "http://localhost:8080", getToken =
       onerror: null
     };
     const emit = (type, data) => listeners.get(type)?.({ data });
-    const fail = (status = 0) => { if (!closed) source.onerror?.({ status }); };
+    const fail = (status = 0) => {
+      if (status === 401) onUnauthorized();
+      if (!closed) source.onerror?.({ status });
+    };
     const parse = (chunk) => {
       chunk.split(/\r?\n\r?\n/).forEach((frame) => {
         const lines = frame.split(/\r?\n/);

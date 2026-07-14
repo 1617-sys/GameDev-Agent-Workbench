@@ -1,71 +1,24 @@
 <template>
-  <aside class="stepper-panel">
+  <section class="content-section">
     <div class="section-heading">
-      <span>Workflow Stepper</span>
-      <small>{{ completedCount }}/{{ steps.length }}</small>
+      <div><span>生成步骤</span><p class="hint">进度以服务端保存的步骤状态为准。</p></div>
+      <small>{{ completedCount }}/{{ steps.length }} 已完成</small>
     </div>
-    <ol class="stepper">
-      <li v-for="step in steps" :key="step.key" :class="['step', stepStatus(step.key).toLowerCase()]">
-        <span class="step-dot"></span>
-        <div>
-          <strong>{{ step.label }}</strong>
-          <p>{{ stepMessage(step.key) }}</p>
-        </div>
+    <ol v-if="steps.length" class="run-steps">
+      <li v-for="step in orderedSteps" :key="step.stepKey">
+        <strong>{{ step.stepKey }}</strong>
+        <span>{{ step.status || "PENDING" }} · 第 {{ step.attempt ?? 0 }} 次</span>
+        <p v-if="step.error?.message" class="error">{{ step.error.message }}</p>
       </li>
     </ol>
-  </aside>
+    <p v-else class="empty-state">服务端尚未返回步骤信息。</p>
+  </section>
 </template>
 
 <script setup>
 import { computed } from "vue";
 
-const props = defineProps({
-  events: {
-    type: Array,
-    default: () => []
-  },
-  configValid: {
-    type: Boolean,
-    default: false
-  },
-  demoReady: {
-    type: Boolean,
-    default: false
-  }
-});
-
-const steps = [
-  { key: "GAME_CONCEPT", label: "游戏概念" },
-  { key: "TASK_BREAKDOWN", label: "任务拆解" },
-  { key: "CORE_LOOP_DESIGN", label: "核心循环" },
-  { key: "GAME_CONFIG_GENERATE", label: "GameConfig 校验" },
-  { key: "DEMO_READY", label: "试玩 Demo" }
-];
-
-const completedCount = computed(() => steps.filter((step) => stepStatus(step.key) === "SUCCESS").length);
-
-function latestEvent(stage) {
-  if (stage === "DEMO_READY") {
-    return props.events.find((event) => ["COMPLETED", "GAME_BUILD", "DEMO_READY"].includes(event.stage));
-  }
-  return props.events.find((event) => event.stage === stage);
-}
-
-function stepStatus(stage) {
-  if (stage === "GAME_CONFIG_GENERATE" && props.configValid) return "SUCCESS";
-  if (stage === "DEMO_READY" && props.demoReady) return "SUCCESS";
-  const event = latestEvent(stage);
-  if (!event) return "WAITING";
-  if (event.status === "FAILED") return "FAILED";
-  if (event.status === "SUCCESS") return "SUCCESS";
-  return "RUNNING";
-}
-
-function stepMessage(stage) {
-  const status = stepStatus(stage);
-  if (status === "WAITING") return "等待执行";
-  if (stage === "GAME_CONFIG_GENERATE" && props.configValid) return "配置合法，可进入试玩";
-  if (stage === "DEMO_READY" && props.demoReady) return "Demo 已生成";
-  return latestEvent(stage)?.message || status;
-}
+const props = defineProps({ steps: { type: Array, default: () => [] } });
+const orderedSteps = computed(() => [...props.steps].sort((left, right) => (left.stepOrder ?? 0) - (right.stepOrder ?? 0)));
+const completedCount = computed(() => props.steps.filter((step) => step.status === "SUCCESS").length);
 </script>

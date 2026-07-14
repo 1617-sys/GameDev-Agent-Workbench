@@ -2,19 +2,20 @@
   <section class="preview-shell">
     <div class="preview-header">
       <div>
-        <strong>{{ normalized.title }}</strong>
-        <p>固定 Phaser3 Runtime 读取 GameConfig 渲染</p>
+        <strong>{{ validation.config?.title || "游戏预览" }}</strong>
+        <p>由已验证的 GameConfig 在固定 Phaser Runtime 中渲染。</p>
       </div>
-      <div class="button-row">
-        <button class="secondary-button" :disabled="!canPlay" @click="restart">重新开始</button>
-        <button class="ghost-button" :disabled="!demoUrl" @click="$emit('open-demo')">新窗口试玩</button>
-      </div>
+      <button class="secondary-button" :disabled="!canPlay" @click="restart">重新开始</button>
     </div>
 
-    <div v-if="!validation.valid" class="config-error">
-      <strong>GameConfig 校验失败</strong>
+    <div v-if="!validation.valid" class="config-error" role="alert">
+      <strong>GameConfig 不可用于预览</strong>
       <p v-for="error in validation.errors" :key="error">{{ error }}</p>
-      <button class="secondary-button" @click="$emit('regenerate-config')">重新生成 GameConfig</button>
+    </div>
+
+    <div v-else-if="runtimeError" class="config-error" role="alert">
+      <strong>游戏预览无法启动</strong>
+      <p>{{ runtimeError }}</p>
     </div>
 
     <div v-else class="game-layout">
@@ -27,61 +28,22 @@
         <div class="runtime-message">{{ hud.message }}</div>
       </aside>
     </div>
-
-    <JsonViewer :value="normalized" label="查看 GameConfig" />
   </section>
 </template>
 
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
-import JsonViewer from "./JsonViewer.vue";
 import { mountGeneratedGame } from "../game/topDownCollectRuntime";
-import { defaultGameConfig, normalizeGameConfig, validateGameConfig } from "../game/gameConfig";
+import { validateGameConfig } from "../game/gameConfig";
 
-const props = defineProps({
-  gameConfig: {
-    type: Object,
-    default: null
-  },
-  demoUrl: {
-    type: String,
-    default: ""
-  }
-});
-
-defineEmits(["open-demo", "regenerate-config"]);
-
+const props = defineProps({ gameConfig: { type: [Object, String], default: null } });
 const gameContainer = ref(null);
 const runtimeReady = ref(false);
+const runtimeError = ref("");
 let destroyGame = null;
-
-const normalized = computed(() => normalizeGameConfig(props.gameConfig || defaultGameConfig));
-const validation = computed(() => validateGameConfig(normalized.value));
+const validation = computed(() => validateGameConfig(props.gameConfig));
 const canPlay = computed(() => validation.value.valid);
-
-const hud = reactive({
-  status: "READY",
-  objective: normalized.value.ui.objective,
-  controls: normalized.value.ui.controls,
-  message: "等待试玩",
-  collected: 0,
-  total: normalized.value.items.length
-});
-
-watch(normalized, () => {
-  hud.objective = normalized.value.ui.objective;
-  hud.controls = normalized.value.ui.controls;
-  hud.total = normalized.value.items.length;
-  restart();
-}, { deep: true });
-
-onMounted(() => {
-  restart();
-});
-
-onBeforeUnmount(() => {
-  cleanup();
-});
+const hud = reactive({ status: "READY", objective: "", controls: "", message: "等待试玩", collected: 0, total: 0 });
 
 function cleanup() {
   if (destroyGame) {
@@ -93,12 +55,25 @@ function cleanup() {
 async function restart() {
   cleanup();
   runtimeReady.value = false;
+  runtimeError.value = "";
   if (!gameContainer.value || !validation.value.valid) return;
+  const config = validation.value.config;
+  hud.objective = config.ui.objective;
+  hud.controls = config.ui.controls;
+  hud.total = config.items.length;
   await nextTick();
   gameContainer.value.innerHTML = "";
-  destroyGame = mountGeneratedGame(gameContainer.value, normalized.value, {
-    onHud: (payload) => Object.assign(hud, payload),
-    onReady: () => { runtimeReady.value = true; }
-  });
+  try {
+    destroyGame = mountGeneratedGame(gameContainer.value, config, {
+      onHud: (payload) => Object.assign(hud, payload),
+      onReady: () => { runtimeReady.value = true; }
+    });
+  } catch {
+    runtimeError.value = "已验证的 GameConfig 无法在当前浏览器启动。";
+  }
 }
+
+watch(validation, restart, { deep: true });
+onMounted(restart);
+onBeforeUnmount(cleanup);
 </script>

@@ -8,7 +8,7 @@ import com.example.gameworkbench.service.WorkflowSubmissionGate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +19,7 @@ public class WorkflowSubmissionGateImpl implements WorkflowSubmissionGate {
     private static final DefaultRedisScript<Long> FIXED_WINDOW_SCRIPT = new DefaultRedisScript<>(
             "local current=redis.call('incr',KEYS[1]); if current==1 then redis.call('expire',KEYS[1],ARGV[1]); end; "
                     + "if current<=tonumber(ARGV[2]) then return 1 else return 0 end", Long.class);
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final StringRedisTemplate redisTemplate;
     private final WorkflowRunMapper workflowRunMapper;
     private final WorkflowRateLimitProperties properties;
 
