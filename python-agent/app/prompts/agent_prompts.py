@@ -123,7 +123,16 @@ Generate one JSON object with this structure:
   "version": "1.0",
   "gameType": "top_down_collect",
   "title": "short game title",
-  "theme": "one sentence theme",
+  "theme": {{
+    "palette": {{
+      "floor": "#14213d",
+      "wall": "#24324a",
+      "player": "#5eead4",
+      "item": "#facc15",
+      "enemy": "#fb7185",
+      "exit": "#22c55e"
+    }}
+  }},
   "world": {{
     "width": 960,
     "height": 540,
@@ -135,33 +144,43 @@ Generate one JSON object with this structure:
     "speed": 220,
     "color": "#60a5fa"
   }},
-  "collectibles": [
-    {{ "id": "item-1", "x": 260, "y": 140, "label": "item name" }},
-    {{ "id": "item-2", "x": 520, "y": 300, "label": "item name" }},
-    {{ "id": "item-3", "x": 760, "y": 180, "label": "item name" }}
+  "obstacles": [
+    {{ "id": "wall-1", "x": 350, "y": 120, "width": 150, "height": 24 }},
+    {{ "id": "wall-2", "x": 330, "y": 390, "width": 180, "height": 24 }},
+    {{ "id": "wall-3", "x": 620, "y": 270, "width": 24, "height": 150 }},
+    {{ "id": "wall-4", "x": 770, "y": 430, "width": 130, "height": 24 }}
+  ],
+  "items": [
+    {{ "id": "item-1", "x": 260, "y": 140, "size": 18, "label": "item name" }},
+    {{ "id": "item-2", "x": 520, "y": 300, "size": 18, "label": "item name" }},
+    {{ "id": "item-3", "x": 760, "y": 180, "size": 18, "label": "item name" }}
   ],
   "enemies": [
-    {{ "id": "enemy-1", "x": 420, "y": 220, "speed": 90, "patrolAxis": "x", "patrolDistance": 180 }},
-    {{ "id": "enemy-2", "x": 700, "y": 380, "speed": 80, "patrolAxis": "y", "patrolDistance": 140 }}
+    {{ "id": "enemy-1", "x": 420, "y": 220, "size": 28, "speed": 90, "range": 180, "axis": "x" }},
+    {{ "id": "enemy-2", "x": 700, "y": 380, "size": 28, "speed": 80, "range": 140, "axis": "y" }}
   ],
   "exit": {{
     "x": 860,
     "y": 450,
-    "lockedUntilCollected": true
+    "width": 54,
+    "height": 72,
+    "label": "EXIT"
   }},
-  "winCondition": {{
-    "collectAll": true,
-    "reachExit": true
+  "rules": {{
+    "targetItems": 3,
+    "winCondition": "collect_all_then_exit",
+    "loseCondition": "touch_enemy"
   }},
   "ui": {{
     "objective": "Chinese objective text",
-    "controlHint": "WASD / arrow keys movement hint"
+    "controls": "WASD / arrow keys movement hint; R restarts the game"
   }}
 }}
 
 Rules:
 1. Output valid JSON only.
 2. Keep all coordinates inside the world.
-3. Keep the gameplay simple enough for a browser MVP.
-4. Use Chinese text for title, theme, objective, and labels when suitable.
+3. Keep the gameplay simple enough for a browser MVP. Use 3 to 6 obstacles to create routes without blocking the player, items, enemies, or exit.
+4. Use Chinese text for title, objective, and labels when suitable.
+5. Keep the field names and object structure exactly as shown. Enemy axis must be "x" or "y".
 """.strip()

@@ -163,16 +163,46 @@ def normalize_game_config(config: dict, payload: AgentMockRequest) -> dict:
     world = config.get("world") if isinstance(config.get("world"), dict) else {}
     player = config.get("player") if isinstance(config.get("player"), dict) else {}
     exit_config = config.get("exit") if isinstance(config.get("exit"), dict) else {}
+    theme = config.get("theme") if isinstance(config.get("theme"), dict) else {}
+    palette = theme.get("palette") if isinstance(theme.get("palette"), dict) else {}
+    rules = config.get("rules") if isinstance(config.get("rules"), dict) else {}
     win_condition = config.get("winCondition") if isinstance(config.get("winCondition"), dict) else {}
     ui = config.get("ui") if isinstance(config.get("ui"), dict) else {}
 
-    collectibles = config.get("collectibles")
-    if not isinstance(collectibles, list) or not collectibles:
-        collectibles = [
+    obstacles = config.get("obstacles")
+    if not isinstance(obstacles, list):
+        obstacles = [
+            {"id": "wall-1", "x": 350, "y": 120, "width": 150, "height": 24},
+            {"id": "wall-2", "x": 330, "y": 390, "width": 180, "height": 24},
+            {"id": "wall-3", "x": 620, "y": 270, "width": 24, "height": 150},
+            {"id": "wall-4", "x": 770, "y": 430, "width": 130, "height": 24},
+        ]
+    obstacles = [
+        {
+            "id": obstacle.get("id") or f"wall-{index + 1}",
+            "x": int(obstacle.get("x") or 240 + index * 120),
+            "y": int(obstacle.get("y") or 180 + index * 60),
+            "width": int(obstacle.get("width") or 100),
+            "height": int(obstacle.get("height") or 24),
+        }
+        for index, obstacle in enumerate(obstacles[:8])
+        if isinstance(obstacle, dict)
+    ]
+
+    items = config.get("items")
+    if not isinstance(items, list):
+        items = config.get("collectibles")
+    if not isinstance(items, list) or not items:
+        items = [
             {"id": "item-1", "x": 260, "y": 140, "label": "Energy Core"},
             {"id": "item-2", "x": 520, "y": 300, "label": "Key"},
             {"id": "item-3", "x": 760, "y": 180, "label": "Gem"},
         ]
+    items = [
+        {**item, "size": int(item.get("size") or 18)}
+        for item in items
+        if isinstance(item, dict)
+    ]
 
     enemies = config.get("enemies")
     if not isinstance(enemies, list):
@@ -180,12 +210,31 @@ def normalize_game_config(config: dict, payload: AgentMockRequest) -> dict:
             {"id": "enemy-1", "x": 420, "y": 220, "speed": 90, "patrolAxis": "x", "patrolDistance": 180},
             {"id": "enemy-2", "x": 700, "y": 380, "speed": 80, "patrolAxis": "y", "patrolDistance": 140},
         ]
+    enemies = [
+        {
+            **enemy,
+            "size": int(enemy.get("size") or 28),
+            "range": int(enemy.get("range") or enemy.get("patrolDistance") or 150),
+            "axis": enemy.get("axis") if enemy.get("axis") in {"x", "y"} else enemy.get("patrolAxis", "x"),
+        }
+        for enemy in enemies
+        if isinstance(enemy, dict)
+    ]
 
     return {
         "version": str(config.get("version") or "1.0"),
         "gameType": config.get("gameType") or "top_down_collect",
         "title": config.get("title") or payload.title,
-        "theme": config.get("theme") or payload.content,
+        "theme": {
+            "palette": {
+                "floor": palette.get("floor") or "#14213d",
+                "wall": palette.get("wall") or "#24324a",
+                "player": palette.get("player") or "#5eead4",
+                "item": palette.get("item") or "#facc15",
+                "enemy": palette.get("enemy") or "#fb7185",
+                "exit": palette.get("exit") or "#22c55e",
+            },
+        },
         "world": {
             "width": int(world.get("width") or 960),
             "height": int(world.get("height") or 540),
@@ -195,21 +244,27 @@ def normalize_game_config(config: dict, payload: AgentMockRequest) -> dict:
             "x": int(player.get("x") or 96),
             "y": int(player.get("y") or 96),
             "speed": int(player.get("speed") or 220),
+            "size": int(player.get("size") or 28),
             "color": player.get("color") or "#60a5fa",
         },
-        "collectibles": collectibles,
+        "obstacles": obstacles,
+        "items": items,
         "enemies": enemies,
         "exit": {
             "x": int(exit_config.get("x") or 860),
             "y": int(exit_config.get("y") or 450),
-            "lockedUntilCollected": bool(exit_config.get("lockedUntilCollected", True)),
+            "width": int(exit_config.get("width") or 54),
+            "height": int(exit_config.get("height") or 72),
+            "label": exit_config.get("label") or "EXIT",
         },
-        "winCondition": {
-            "collectAll": bool(win_condition.get("collectAll", True)),
-            "reachExit": bool(win_condition.get("reachExit", True)),
+        "rules": {
+            "targetItems": int(rules.get("targetItems") or len(items)),
+            "winCondition": rules.get("winCondition")
+            or ("collect_all_then_exit" if win_condition.get("collectAll", True) else "reach_exit"),
+            "loseCondition": rules.get("loseCondition") or "touch_enemy",
         },
         "ui": {
             "objective": ui.get("objective") or "Collect all items, avoid enemies, then reach the exit.",
-            "controlHint": ui.get("controlHint") or "Use WASD or arrow keys to move.",
+            "controls": ui.get("controls") or ui.get("controlHint") or "Use WASD or arrow keys to move. Press R to restart.",
         },
     }
