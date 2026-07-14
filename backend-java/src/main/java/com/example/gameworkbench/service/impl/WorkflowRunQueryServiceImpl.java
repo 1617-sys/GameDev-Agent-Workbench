@@ -10,6 +10,7 @@ import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.WorkflowRunQueryService;
 import com.example.gameworkbench.vo.workflow.WorkflowRunDetailVO;
+import com.example.gameworkbench.vo.workflow.WorkflowRunSummaryVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +29,20 @@ public class WorkflowRunQueryServiceImpl implements WorkflowRunQueryService {
     private final WorkflowRunMapper workflowRunMapper;
     private final WorkflowStepRunMapper workflowStepRunMapper;
     private final AgentArtifactMapper agentArtifactMapper;
+
+    @Override
+    public List<WorkflowRunSummaryVO> listProjectRuns(Long userId, String projectUuid) {
+        if (userId == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        if (projectUuid == null || projectUuid.isBlank()) {
+            return List.of();
+        }
+        return workflowRunMapper.selectRecentByUserIdAndProjectUuid(userId, projectUuid)
+                .stream()
+                .map(this::toSummary)
+                .toList();
+    }
 
     @Override
     public WorkflowRunDetailVO getRun(Long userId, String workflowRunUuid) {
@@ -83,6 +98,18 @@ public class WorkflowRunQueryServiceImpl implements WorkflowRunQueryService {
                 .allowedActions(allowedActions(run.getStatus()))
                 .steps(steps.stream().map(this::toStep).toList())
                 .artifacts(artifacts)
+                .build();
+    }
+
+    private WorkflowRunSummaryVO toSummary(WorkflowRun run) {
+        return WorkflowRunSummaryVO.builder()
+                .workflowRunUuid(run.getWorkflowRunUuid())
+                .workflowType(run.getWorkflowType())
+                .status(run.getStatus())
+                .attempt(run.getAttempt())
+                .timeTakenMs(run.getTimeTakenMs())
+                .createdAt(run.getCreatedAt())
+                .updatedAt(run.getUpdatedAt())
                 .build();
     }
 

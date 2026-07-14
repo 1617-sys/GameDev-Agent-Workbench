@@ -12,6 +12,21 @@ public interface WorkflowRunMapper extends BaseMapper<WorkflowRun> {
 
     @Select("""
             select wr.id, wr.workflow_run_uuid, wr.project_id, wr.user_id, wr.workflow_type,
+                   wr.attempt, wr.status, wr.time_taken_ms, wr.created_at, wr.updated_at
+            from workflow_run wr
+            inner join game_project gp on gp.id = wr.project_id and gp.deleted = 0
+            where gp.project_uuid = #{projectUuid} and gp.user_id = #{userId}
+              and wr.user_id = #{userId} and wr.deleted = 0
+            order by wr.created_at desc, wr.id desc
+            limit 20
+            """)
+    List<WorkflowRun> selectRecentByUserIdAndProjectUuid(
+            @Param("userId") Long userId,
+            @Param("projectUuid") String projectUuid
+    );
+
+    @Select("""
+            select wr.id, wr.workflow_run_uuid, wr.project_id, wr.user_id, wr.workflow_type,
                    wr.workflow_definition_version_id, wr.schema_version, wr.attempt, wr.status_version, wr.event_sequence, wr.command_key,
                    wr.last_error_code, wr.failed_at, wr.status, wr.time_taken_ms, wr.created_at, wr.updated_at
             from workflow_run wr

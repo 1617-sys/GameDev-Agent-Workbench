@@ -34,6 +34,21 @@ class WorkflowRunQueryServiceImplTest {
     @Mock private AgentArtifactMapper artifacts;
 
     @Test
+    void shouldListRecentProjectRunsWithoutLoadingDetails() {
+        WorkflowRun newest = WorkflowRun.builder().workflowRunUuid("run-2").workflowType("GAME_GENERATE")
+                .status("RUNNING").attempt(1).createdAt(LocalDateTime.of(2026, 7, 14, 10, 0)).build();
+        WorkflowRun older = WorkflowRun.builder().workflowRunUuid("run-1").workflowType("GAME_GENERATE")
+                .status("SUCCESS").attempt(1).timeTakenMs(1200L).createdAt(LocalDateTime.of(2026, 7, 14, 9, 0)).build();
+        when(runs.selectRecentByUserIdAndProjectUuid(7L, "project-1")).thenReturn(List.of(newest, older));
+
+        var result = service().listProjectRuns(7L, "project-1");
+
+        assertThat(result).extracting("workflowRunUuid").containsExactly("run-2", "run-1");
+        assertThat(result.get(0).getStatus()).isEqualTo("RUNNING");
+        verifyNoInteractions(steps, artifacts);
+    }
+
+    @Test
     void shouldReturnOnlySafePersistedReadModelAndNeverWrite() {
         WorkflowRun run = WorkflowRun.builder()
                 .workflowRunUuid("run-1").status("FAILED").attempt(2).workflowDefinitionVersionId(8L)

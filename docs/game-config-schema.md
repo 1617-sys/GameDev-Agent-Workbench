@@ -29,6 +29,7 @@ Validation must happen before normalization. Defaults may fill optional visual f
 | `gameType` | string | Must be `top_down_collect`. |
 | `world` | object | Must include numeric `width` and `height`. |
 | `player` | object | Must include numeric `x` and `y`. |
+| `obstacles` | array | Optional route-building rectangles; old configs receive runtime defaults. |
 | `items` | array | Collectible objects consumed by the runtime. |
 | `enemies` | array | Enemy objects consumed by the runtime. |
 | `exit` | object | Must include numeric `x` and `y`. |
@@ -80,14 +81,18 @@ Only aliases covered by tests should be retained:
     "speed": 210,
     "color": "#5eead4"
   },
+  "obstacles": [
+    { "id": "wall-1", "x": 350, "y": 120, "width": 150, "height": 24 },
+    { "id": "wall-2", "x": 620, "y": 270, "width": 24, "height": 150 }
+  ],
   "items": [
     { "id": "gem-1", "x": 260, "y": 150, "size": 18, "label": "Gem" },
     { "id": "gem-2", "x": 520, "y": 340, "size": 18, "label": "Gem" },
     { "id": "gem-3", "x": 740, "y": 180, "size": 18, "label": "Gem" }
   ],
   "enemies": [
-    { "id": "enemy-1", "x": 420, "y": 220, "size": 28, "speed": 90, "range": 150 },
-    { "id": "enemy-2", "x": 700, "y": 380, "size": 28, "speed": 120, "range": 180 }
+    { "id": "enemy-1", "x": 420, "y": 220, "size": 28, "speed": 90, "range": 150, "axis": "x" },
+    { "id": "enemy-2", "x": 700, "y": 380, "size": 28, "speed": 120, "range": 180, "axis": "y" }
   ],
   "exit": {
     "x": 860,
