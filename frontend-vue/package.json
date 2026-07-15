@@ -8,6 +8,7 @@
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 5173",
     "test:game-config": "node --test tests/gameConfig.test.js",
+    "test:runtime-smoke": "playwright test tests/runtime.browser.e2e.js",
     "test:unit": "node --test tests/*.test.js",
     "test:runtime": "playwright test tests/runtime.browser.e2e.js",
     "test:e2e": "playwright test"

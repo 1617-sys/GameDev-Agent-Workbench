@@ -19,6 +19,15 @@ test("default config is mechanically synchronized with the authoritative fixture
   assert.equal(result.config.metadata.gameType, "arcade_collect");
 });
 
+test("validates reactive proxy inputs without mutating or defaulting them", () => {
+  const documented = fixture("valid-minimal.json");
+  const reactiveLike = new Proxy(documented, {});
+  const result = validateGameConfig(reactiveLike);
+  assert.equal(result.valid, true);
+  assert.notEqual(result.config, documented);
+  assert.deepEqual(result.config, documented);
+});
+
 test("extracts only registered wrappers up to four levels", () => {
   assert.deepEqual(extractGameConfig({ game_config: defaultGameConfig }), defaultGameConfig);
   assert.deepEqual(extractGameConfig(JSON.stringify({ data: defaultGameConfig })), defaultGameConfig);

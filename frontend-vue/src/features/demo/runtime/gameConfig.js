@@ -74,7 +74,7 @@ export function validateGameConfig(rawConfig) {
   let candidate = source;
   let migrated = false;
   if (source.metadata?.schemaVersion === "2.0") {
-    candidate = structuredClone(source);
+    candidate = cloneConfigValue(source);
   } else if (source.version === "1.0") {
     migrated = true;
     candidate = migrateLegacyGameConfig(source, errors);
@@ -317,11 +317,29 @@ export function migrateLegacyGameConfig(source, errors = []) {
 }
 
 function canonicalizeV2(value) {
-  const copy = structuredClone(value);
+  const copy = cloneConfigValue(value);
   for (const key of Object.keys(copy.presentation.palette)) copy.presentation.palette[key] = copy.presentation.palette[key].toUpperCase();
   copy.objectives.loseConditions.sort((a, b) => ["health_depleted", "time_expired"].indexOf(a) - ["health_depleted", "time_expired"].indexOf(b));
   copy.telemetry.events = [...TELEMETRY_EVENTS];
   return copy;
+}
+
+function cloneConfigValue(value, seen = new WeakMap()) {
+  if (Array.isArray(value)) {
+    if (seen.has(value)) return seen.get(value);
+    const copy = [];
+    seen.set(value, copy);
+    for (const entry of value) copy.push(cloneConfigValue(entry, seen));
+    return copy;
+  }
+  if (value && typeof value === "object") {
+    if (seen.has(value)) return seen.get(value);
+    const copy = {};
+    seen.set(value, copy);
+    for (const key of Object.keys(value)) copy[key] = cloneConfigValue(value[key], seen);
+    return copy;
+  }
+  return value;
 }
 
 function validateEntries(values, path, allowed, errors, validate, idField = "id") {
