@@ -20,7 +20,7 @@ export function readToken() {
 }
 
 export async function apiRequest(path, options = {}) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 15_000);
   try {
@@ -51,7 +51,7 @@ export async function apiRequest(path, options = {}) {
 }
 
 export function openEventStream(path, { lastEventId = 0, onEvent, onError } = {}) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
   const controller = new AbortController();
   let closed = false;
 

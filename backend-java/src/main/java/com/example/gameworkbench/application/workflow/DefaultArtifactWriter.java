@@ -17,6 +17,7 @@ import com.example.gameworkbench.gameconfig.ResourceManifestContract;
 import com.example.gameworkbench.gameconfig.ResourceManifestContractResult;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
+import com.example.gameworkbench.service.PrototypeVersionService;
 
 @Component
 public class DefaultArtifactWriter implements ArtifactWriter {
@@ -24,22 +25,30 @@ public class DefaultArtifactWriter implements ArtifactWriter {
     private final WorkflowRunEventRecorder workflowRunEventRecorder;
     private final EvaluationOrchestrator evaluationOrchestrator;
     private final ResourceManifestContract resourceManifestContract;
+    private final PrototypeVersionService prototypeVersionService;
 
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper) {
-        this(artifactMapper, noopRecorder(), null, null);
+        this(artifactMapper, noopRecorder(), null, null, null);
     }
 
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder) {
-        this(artifactMapper, workflowRunEventRecorder, null, null);
+        this(artifactMapper, workflowRunEventRecorder, null, null, null);
+    }
+
+    public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder,
+            EvaluationOrchestrator evaluationOrchestrator, ResourceManifestContract resourceManifestContract) {
+        this(artifactMapper, workflowRunEventRecorder, evaluationOrchestrator, resourceManifestContract, null);
     }
 
     @Autowired
     public DefaultArtifactWriter(AgentArtifactMapper artifactMapper, WorkflowRunEventRecorder workflowRunEventRecorder,
-            EvaluationOrchestrator evaluationOrchestrator, ResourceManifestContract resourceManifestContract) {
+            EvaluationOrchestrator evaluationOrchestrator, ResourceManifestContract resourceManifestContract,
+            PrototypeVersionService prototypeVersionService) {
         this.artifactMapper = artifactMapper;
         this.workflowRunEventRecorder = workflowRunEventRecorder;
         this.evaluationOrchestrator = evaluationOrchestrator;
         this.resourceManifestContract = resourceManifestContract;
+        this.prototypeVersionService = prototypeVersionService;
     }
 
     @Override
@@ -72,6 +81,11 @@ public class DefaultArtifactWriter implements ArtifactWriter {
                 throw new WorkflowEvaluationException("Resource manifest Artifact is not runtime eligible");
             }
             record(context, "resource_manifest", stepRun, companion.artifact());
+            if (prototypeVersionService != null) {
+                prototypeVersionService.createFromWorkflow(context.workflowRun().getUserId(),
+                        context.workflowRun().getProjectId(), context.workflowRun().getWorkflowRunUuid(),
+                        primary.artifact());
+            }
         }
         return new StepOutput(content, primary.artifact().getArtifactUuid(), evaluation.schemaKey(), evaluation.schemaVersion());
     }

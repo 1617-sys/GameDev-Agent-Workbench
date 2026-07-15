@@ -220,6 +220,23 @@ h1, h2, h3, strong { letter-spacing: 0; }
 .artifact-document h2 { font-size: 19px; margin: 0; }
 .artifact-document pre { color: #354056; font-family: inherit; font-size: 14px; line-height: 1.75; margin: 0; max-height: 560px; overflow: auto; padding: 22px; white-space: pre-wrap; overflow-wrap: anywhere; }
 
+.prototype-layout { align-items: start; display: grid; gap: 22px; grid-template-columns: 220px minmax(0, 1fr); }
+.version-sidebar { display: grid; gap: 8px; }
+.version-card { background: white; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); display: grid; gap: 8px; padding: 13px; text-align: left; }
+.version-card.active { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(36,87,214,.1); }
+.version-card > span { align-items: center; display: flex; justify-content: space-between; }.version-card > span small { color: var(--primary); }
+.version-card > small { color: var(--muted); }
+.version-main { display: grid; gap: 22px; min-width: 0; }
+.version-summary, .tuning-panel, .compare-panel { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 22px; }
+.version-summary > header { align-items: flex-start; display: flex; justify-content: space-between; }.version-summary h2 { margin: 0; }
+.version-parameters { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin: 22px 0; }
+.version-parameters > div { background: #f7f8fa; border-radius: 6px; display: grid; gap: 5px; padding: 12px; }.version-parameters dt { color: var(--muted); font-size: 11px; }.version-parameters dd { font-weight: 800; margin: 0; }
+.version-summary details { display: grid; gap: 6px; }.version-summary summary { color: var(--muted); cursor: pointer; font-size: 12px; }.version-summary code { display: block; font-size: 11px; overflow-wrap: anywhere; padding-top: 6px; }
+.tuning-panel > p { color: var(--muted); font-size: 13px; margin: 0; }.tuning-panel > .button { justify-self: start; }
+.enemy-speed-editor { border: 1px solid var(--line); display: grid; gap: 10px; padding: 14px; }.enemy-speed-editor legend { color: var(--muted); font-size: 12px; padding: 0 6px; }.enemy-speed-editor label { align-items: center; display: grid; grid-template-columns: 1fr 120px; }
+.compare-selectors { align-items: end; display: grid; gap: 12px; grid-template-columns: 1fr 1fr auto; }.compare-selectors label { color: var(--muted); display: grid; font-size: 12px; gap: 7px; }.compare-selectors select { border: 1px solid var(--line); border-radius: 6px; min-height: 42px; padding: 0 10px; }
+.compare-panel table { border-collapse: collapse; margin-top: 20px; width: 100%; }.compare-panel th, .compare-panel td { border-bottom: 1px solid var(--line); padding: 11px; text-align: left; }.compare-panel th { background: #f7f8fa; color: var(--muted); font-size: 11px; }.compare-panel tr.changed td { background: #fff9e9; font-weight: 700; }
+
 .game-preview { background: #172033; border-radius: 8px; color: white; overflow: hidden; }
 .game-preview > header { align-items: flex-start; display: flex; justify-content: space-between; padding: 19px 22px; }
 .game-preview h2 { font-size: 20px; margin: 0; }.game-preview .overline { color: #8eacff; }
@@ -248,6 +265,7 @@ h1, h2, h3, strong { letter-spacing: 0; }
   .project-row { grid-template-columns: minmax(0, 1fr) auto; padding: 16px; }
   .project-row > span, .project-row > time { display: none; }
   .studio-layout { grid-template-columns: 1fr; }
+  .prototype-layout { grid-template-columns: 1fr; }.version-sidebar { display: flex; overflow-x: auto; }.version-card { flex: 0 0 190px; }
   .studio-aside { grid-template-columns: 1fr 1fr; }
   .game-stage { grid-template-columns: 1fr; }.game-hud { grid-template-columns: 1fr; }.game-hud > span, .game-hud > .hud-message, .game-hud > .runtime-actions, .game-hud > .resource-warning { grid-column: 1 / -1; }
 }
@@ -267,7 +285,7 @@ h1, h2, h3, strong { letter-spacing: 0; }
   .auth-story { min-height: 250px; padding: 28px 24px; }.auth-story .brand-mark { height: 40px; width: 40px; font-size: 15px; }.auth-story-copy h1 { font-size: 31px; margin-top: 32px; }.auth-story-copy > p:last-child { font-size: 14px; }.workflow-visual { display: none; }
   .auth-panel { padding: 32px 22px 48px; }
   .project-row { gap: 12px; grid-template-columns: 1fr; }.project-row .button { width: 100%; }.project-name small { white-space: normal; }
-  .form-grid, .studio-aside, .technical-grid { grid-template-columns: 1fr; }
+  .form-grid, .studio-aside, .technical-grid, .version-parameters, .compare-selectors { grid-template-columns: 1fr; }
   .form-actions { align-items: stretch; flex-direction: column; }.form-actions .button { width: 100%; }
   .run-actions { display: grid; grid-template-columns: 1fr 1fr; }.run-actions .button { width: 100%; }
   .progress-section { padding: 18px 14px; overflow: hidden; }

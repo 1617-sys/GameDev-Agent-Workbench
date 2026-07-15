@@ -24,6 +24,7 @@ import com.example.gameworkbench.gameconfig.GameConfigContract;
 import com.example.gameworkbench.gameconfig.ResourceManifestContract;
 import com.example.gameworkbench.mapper.AgentArtifactMapper;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
+import com.example.gameworkbench.service.PrototypeVersionService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class DefaultArtifactWriterTest {
@@ -63,7 +64,7 @@ class DefaultArtifactWriterTest {
                 new GameConfigContract(json));
         WorkflowRunEventRecorder events = Mockito.mock(WorkflowRunEventRecorder.class);
 
-        WorkflowRun run = new WorkflowRun(); run.setProjectId(3L); run.setWorkflowRunUuid("run"); run.setTraceId("trace");
+        WorkflowRun run = new WorkflowRun(); run.setProjectId(3L); run.setUserId(7L); run.setWorkflowRunUuid("run"); run.setTraceId("trace");
         WorkflowStepRun step = new WorkflowStepRun(); step.setId(8L); step.setAttempt(2);
         WorkflowStepPlan plan = new WorkflowStepPlan("game_config_generate", 4, AgentType.GAME_CONFIG_GENERATE,
                 ArtifactType.GAME_CONFIG, List.of());
@@ -72,7 +73,8 @@ class DefaultArtifactWriterTest {
         StepExecutionResult result = new StepExecutionResult(new StepOutput(content, null, null, null), 4L,
                 new WorkflowEvaluationResult(true, "game-config", "2.0", content, "validated"));
 
-        new DefaultArtifactWriter(mapper, events, orchestrator, manifest).write(
+        PrototypeVersionService prototypes = Mockito.mock(PrototypeVersionService.class);
+        new DefaultArtifactWriter(mapper, events, orchestrator, manifest, prototypes).write(
                 new WorkflowExecutionContext(run, "project", "brief", List.of(plan)), plan, step, result);
 
         ArgumentCaptor<AgentArtifact> artifacts = ArgumentCaptor.forClass(AgentArtifact.class);
@@ -87,6 +89,7 @@ class DefaultArtifactWriterTest {
         assertThat(resource.getSourceArtifactUuid()).isEqualTo(config.getArtifactUuid());
         assertThat(resource.getContent()).contains(config.getArtifactUuid(), config.getContentDigest())
                 .doesNotContain("https://", "data:");
+        verify(prototypes).createFromWorkflow(7L, 3L, "run", config);
     }
 
     @Test

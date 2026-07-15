@@ -17,6 +17,7 @@ public enum ErrorCode {
     FORBIDDEN_PROJECT_ACCESS(40301, "Forbidden project access", "Project detail"),
     FORBIDDEN_PROJECT_UPDATE(40301, "Forbidden project update", "Project update"),
     FORBIDDEN_ARTIFACT_ACCESS(40301, "Forbidden artifact access", "Artifact detail"),
+    FORBIDDEN_PROTOTYPE_VERSION_ACCESS(40301, "Forbidden prototype version access", "Prototype version"),
 
     DEMO_WORKFLOW_ALREADY_RUNNING(40901, "Demo workflow is already running", "Demo stream duplicate submission"),
     IDEMPOTENCY_KEY_INVALID(40005, "Idempotency-Key is required and must use 1-128 URL-safe characters", "Async workflow submit"),
@@ -24,12 +25,15 @@ public enum ErrorCode {
     WORKFLOW_RATE_LIMITED(42901, "Workflow submission rate limit exceeded", "Async workflow submit"),
     WORKFLOW_BACKPRESSURE(50301, "Workflow submission is temporarily unavailable due to backlog", "Async workflow submit"),
     WORKFLOW_RATE_LIMIT_UNAVAILABLE(50302, "Workflow submission is temporarily unavailable", "Async workflow submit"),
+    PROTOTYPE_TUNING_INVALID(40006, "Prototype tuning parameters are invalid", "Prototype tuning"),
+    PROTOTYPE_ARTIFACT_NOT_ELIGIBLE(40007, "Artifact is not eligible for a prototype version", "Prototype version creation"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
     AGENT_RUN_NOT_FOUND(40401, "Agent run not found", "Agent run detail"),
     ARTIFACT_NOT_FOUND(40401, "Artifact not found", "Artifact detail"),
     WORKFLOW_RUN_NOT_FOUND(40401, "Workflow run not found", "Workflow detail"),
+    PROTOTYPE_VERSION_NOT_FOUND(40401, "Prototype version not found", "Prototype version"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 
