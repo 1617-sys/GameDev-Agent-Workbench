@@ -19,19 +19,19 @@ class GeneratedGameScene extends Phaser.Scene {
 
   create() {
     const config = this.gameConfig;
-    const palette = config.theme.palette;
+    const palette = config.presentation.palette;
     const width = Number(config.world.width);
     const height = Number(config.world.height);
 
-    this.cameras.main.setBackgroundColor(config.world.backgroundColor || palette.floor);
+    this.cameras.main.setBackgroundColor(palette.floor);
     this.physics.world.setBounds(36, 36, width - 72, height - 72);
     this.createSceneTextures(palette);
     this.drawFloor(width, height, palette);
-    this.createObstacles(config.obstacles, palette);
-    this.createExit(config.exit, palette);
-    this.createItems(config.items, palette);
-    this.createEnemies(config.enemies, palette);
-    this.createPlayer(config.player, palette);
+    this.createObstacles(config.world.obstacles, palette);
+    this.createExit(config.entities.exit, palette);
+    this.createItems(config.entities.collectibles, palette);
+    this.createEnemies(config.entities.enemies, config.behaviors.enemyPatrols, palette);
+    this.createPlayer({ ...config.player, ...config.world.spawn }, palette);
 
     this.physics.add.collider(this.player, this.obstacles);
     this.physics.add.collider(this.enemies, this.obstacles, (enemy) => this.reverseEnemy(enemy));
@@ -92,7 +92,7 @@ class GeneratedGameScene extends Phaser.Scene {
 
     const border = this.add.graphics().lineStyle(4, color(palette.wall, "#24324a"), 1);
     border.strokeRect(34, 34, width - 68, height - 68);
-    this.add.text(50, 48, this.gameConfig.title, {
+    this.add.text(50, 48, this.gameConfig.metadata.title, {
       fontFamily: "Arial", fontSize: "13px", color: "#ffffff", alpha: 0.56
     });
   }
@@ -138,16 +138,17 @@ class GeneratedGameScene extends Phaser.Scene {
     });
   }
 
-  createEnemies(enemies, palette) {
+  createEnemies(enemies, patrols, palette) {
     this.enemies = this.physics.add.group({ allowGravity: false });
     enemies.forEach((entry, index) => {
-      const axis = entry.axis === "y" ? "y" : "x";
+      const patrol = patrols.find((value) => value.enemyId === entry.id);
+      const axis = patrol.axis;
       const guard = this.physics.add.sprite(Number(entry.x), Number(entry.y), "generated-enemy");
       guard.setScale(Math.max(0.78, Number(entry.size || 28) / 28));
       guard.setData("origin", axis === "x" ? Number(entry.x) : Number(entry.y));
       guard.setData("axis", axis);
-      guard.setData("range", Math.max(40, Number(entry.range || 150)));
-      guard.setData("speed", Math.max(30, Number(entry.speed || 90)));
+      guard.setData("range", Number(patrol.distance));
+      guard.setData("speed", Number(entry.speed));
       guard.setData("direction", index % 2 === 0 ? 1 : -1);
       guard.setCollideWorldBounds(true);
       this.enemies.add(guard);
@@ -172,7 +173,7 @@ class GeneratedGameScene extends Phaser.Scene {
 
   update() {
     if (!this.player || this.finished) return;
-    const speed = Number(this.gameConfig.player.speed || 210);
+    const speed = Number(this.gameConfig.player.speed);
     const left = this.cursors.left.isDown || this.keys.A.isDown;
     const right = this.cursors.right.isDown || this.keys.D.isDown;
     const up = this.cursors.up.isDown || this.keys.W.isDown;
@@ -224,8 +225,8 @@ class GeneratedGameScene extends Phaser.Scene {
   }
 
   unlockExit() {
-    this.exitVisual.setFillStyle(color(this.gameConfig.theme.palette.exit, "#22c55e"), 0.86);
-    this.exitLabel.setText(this.gameConfig.exit.label || "出口");
+    this.exitVisual.setFillStyle(color(this.gameConfig.presentation.palette.exit, "#22c55e"), 0.86);
+    this.exitLabel.setText(this.gameConfig.entities.exit.label);
     this.cameras.main.flash(180, 34, 197, 94, false);
   }
 
@@ -250,14 +251,14 @@ class GeneratedGameScene extends Phaser.Scene {
   }
 
   targetItems() {
-    return Math.min(Number(this.gameConfig.rules.targetItems || this.gameConfig.items.length), this.gameConfig.items.length);
+    return this.gameConfig.objectives.targetCollectibles;
   }
 
   pushHud(status, message) {
     const payload = {
-      title: this.gameConfig.title,
-      objective: this.gameConfig.ui.objective,
-      controls: this.gameConfig.ui.controls,
+      title: this.gameConfig.metadata.title,
+      objective: this.gameConfig.presentation.ui.objective,
+      controls: this.gameConfig.presentation.ui.controls,
       status,
       message,
       collected: this.collected,
@@ -273,9 +274,9 @@ export function mountGeneratedGame(container, rawConfig, callbacks = {}) {
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent: container,
-    width: Number(config.world.width),
-    height: Number(config.world.height),
-    backgroundColor: config.world.backgroundColor,
+    width: Number(config.viewport.width),
+    height: Number(config.viewport.height),
+    backgroundColor: config.presentation.palette.floor,
     render: { antialias: true, pixelArt: false },
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
     physics: { default: "arcade", arcade: { debug: false } },

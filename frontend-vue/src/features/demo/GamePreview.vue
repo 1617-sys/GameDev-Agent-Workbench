@@ -1,10 +1,11 @@
 <template>
   <section class="game-preview">
     <header>
-      <div><p class="overline">PLAYABLE DEMO</p><h2>{{ validation.config?.title || "可玩 Demo" }}</h2></div>
+      <div><p class="overline">PLAYABLE DEMO</p><h2>{{ validation.config?.metadata?.title || "可玩 Demo" }}</h2></div>
       <StatusPill v-if="validation.valid" status="SUCCESS" label="可试玩" />
     </header>
-    <div v-if="!validation.valid" class="alert danger"><AlertTriangle :size="18" /><span>游戏配置无法运行：{{ validation.errors.join("；") }}</span></div>
+    <p v-if="validation.migrated" class="alert">由 GameConfig 1.0 临时迁移，只读预览不会覆盖历史 Artifact。</p>
+    <div v-if="!validation.valid" class="alert danger"><AlertTriangle :size="18" /><span>游戏配置无法运行：{{ validation.errors.map(formatGameConfigError).join("；") }}</span></div>
     <div v-else class="game-stage">
       <div ref="container" class="game-canvas" data-runtime-ready="false"></div>
       <div class="game-hud"><span>{{ hud.objective }}</span><strong>{{ hud.collected }}/{{ hud.total }}</strong><small>{{ hud.message || hud.controls }}</small></div>
@@ -16,7 +17,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, watch } from "vue";
 import { AlertTriangle } from "@lucide/vue";
 import StatusPill from "../../shared/ui/StatusPill.vue";
-import { validateGameConfig } from "./runtime/gameConfig";
+import { formatGameConfigError, validateGameConfig } from "./runtime/gameConfig";
 import { mountGeneratedGame } from "./runtime/topDownCollectRuntime";
 
 const props = defineProps({ config: { type: Object, required: true } });

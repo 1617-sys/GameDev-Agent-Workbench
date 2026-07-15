@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "title": "博物馆夺宝（历史版）",
+  "gameType": "top_down_collect",
+  "world": {
+    "width": 960,
+    "height": 540,
+    "backgroundColor": "#101827"
+  },
+  "theme": {
+    "palette": {
+      "floor": "#14213D",
+      "wall": "#24324A",
+      "player": "#5EEAD4",
+      "item": "#FACC15",
+      "enemy": "#FB7185",
+      "exit": "#22C55E"
+    }
+  },
+  "player": {
+    "x": 96,
+    "y": 96,
+    "speed": 220,
+    "size": 28
+  },
+  "obstacles": [
+    {
+      "id": "wall-1",
+      "x": 360,
+      "y": 180,
+      "width": 160,
+      "height": 24
+    }
+  ],
+  "items": [
+    {
+      "id": "item-1",
+      "x": 260,
+      "y": 140,
+      "size": 18,
+      "label": "青铜藏品"
+    },
+    {
+      "id": "item-2",
+      "x": 520,
+      "y": 300,
+      "size": 18,
+      "label": "宝石藏品"
+    }
+  ],
+  "enemies": [
+    {
+      "id": "enemy-1",
+      "x": 620,
+      "y": 220,
+      "size": 28,
+      "speed": 90,
+      "axis": "y",
+      "range": 120
+    }
+  ],
+  "exit": {
+    "x": 860,
+    "y": 450,
+    "width": 54,
+    "height": 72,
+    "label": "出口"
+  },
+  "rules": {
+    "targetItems": 2,
+    "winCondition": "collect_all_then_exit",
+    "loseCondition": "touch_enemy"
+  },
+  "ui": {
+    "objective": "取得两件藏品，避开守卫并前往出口。",
+    "controls": "使用 WASD 或方向键移动。"
+  }
+}

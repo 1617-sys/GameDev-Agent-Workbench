@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from app.schemas.agent import AgentMockRequest
 
 
@@ -26,7 +29,33 @@ GAME_CONFIG_SYSTEM_PROMPT = """
 You are a game prototype configuration agent.
 Your job is to convert a lightweight game idea into a strict JSON GameConfig for a Phaser 3 browser demo.
 Only output valid JSON. Do not output markdown fences, explanations, or comments.
-The game must use the top_down_collect format: move, collect items, avoid enemies, and reach the exit.
+The only output contract is GameConfig 2.0 with metadata.gameType=arcade_collect.
+Never output scripts, HTML, URLs, file paths, data URLs, aliases, wrappers, or unknown fields.
+Every required structure and gameplay value must be authored explicitly; do not rely on defaults.
+""".strip()
+
+
+_GAME_CONFIG_EXAMPLE_PATH = Path(__file__).resolve().parents[1] / "contracts" / "game-config-2.0.valid.json"
+
+
+def canonical_game_config_example() -> dict:
+    return json.loads(_GAME_CONFIG_EXAMPLE_PATH.read_text(encoding="utf-8"))
+
+
+def game_config_contract_suffix() -> str:
+    example = json.dumps(canonical_game_config_example(), ensure_ascii=False, indent=2)
+    return f"""
+
+The exact authoritative GameConfig 2.0 example follows. Keep its object shape and field names; change only values within the allowed bounds:
+{example}
+
+Contract rules:
+1. All ten root objects are required and unknown fields are forbidden at every level.
+2. JSON numbers must be numbers, not strings. Keep viewport/world 640-1280 by 360-720, equal to each other and within 1% of 16:9.
+3. Keep every body and patrol inside world bounds. Use 1-20 collectibles, 0-12 enemies, 0-16 obstacles, and exactly one patrol per enemy.
+4. Use only resource keys shown by the example categories and the RFC allow-list. Never output a URL, path, script, HTML, markdown, wrapper, or legacy alias.
+5. telemetry.events must contain exactly the seven values in the example.
+6. Output the JSON object only.
 """.strip()
 
 
@@ -118,69 +147,5 @@ Game idea:
 Context:
 {context}
 
-Generate one JSON object with this structure:
-{{
-  "version": "1.0",
-  "gameType": "top_down_collect",
-  "title": "short game title",
-  "theme": {{
-    "palette": {{
-      "floor": "#14213d",
-      "wall": "#24324a",
-      "player": "#5eead4",
-      "item": "#facc15",
-      "enemy": "#fb7185",
-      "exit": "#22c55e"
-    }}
-  }},
-  "world": {{
-    "width": 960,
-    "height": 540,
-    "backgroundColor": "#111827"
-  }},
-  "player": {{
-    "x": 96,
-    "y": 96,
-    "speed": 220,
-    "color": "#60a5fa"
-  }},
-  "obstacles": [
-    {{ "id": "wall-1", "x": 350, "y": 120, "width": 150, "height": 24 }},
-    {{ "id": "wall-2", "x": 330, "y": 390, "width": 180, "height": 24 }},
-    {{ "id": "wall-3", "x": 620, "y": 270, "width": 24, "height": 150 }},
-    {{ "id": "wall-4", "x": 770, "y": 430, "width": 130, "height": 24 }}
-  ],
-  "items": [
-    {{ "id": "item-1", "x": 260, "y": 140, "size": 18, "label": "item name" }},
-    {{ "id": "item-2", "x": 520, "y": 300, "size": 18, "label": "item name" }},
-    {{ "id": "item-3", "x": 760, "y": 180, "size": 18, "label": "item name" }}
-  ],
-  "enemies": [
-    {{ "id": "enemy-1", "x": 420, "y": 220, "size": 28, "speed": 90, "range": 180, "axis": "x" }},
-    {{ "id": "enemy-2", "x": 700, "y": 380, "size": 28, "speed": 80, "range": 140, "axis": "y" }}
-  ],
-  "exit": {{
-    "x": 860,
-    "y": 450,
-    "width": 54,
-    "height": 72,
-    "label": "EXIT"
-  }},
-  "rules": {{
-    "targetItems": 3,
-    "winCondition": "collect_all_then_exit",
-    "loseCondition": "touch_enemy"
-  }},
-  "ui": {{
-    "objective": "Chinese objective text",
-    "controls": "WASD / arrow keys movement hint; R restarts the game"
-  }}
-}}
-
-Rules:
-1. Output valid JSON only.
-2. Keep all coordinates inside the world.
-3. Keep the gameplay simple enough for a browser MVP. Use 3 to 6 obstacles to create routes without blocking the player, items, enemies, or exit.
-4. Use Chinese text for title, objective, and labels when suitable.
-5. Keep the field names and object structure exactly as shown. Enemy axis must be "x" or "y".
+{game_config_contract_suffix()}
 """.strip()

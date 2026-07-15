@@ -1,6 +1,6 @@
 # V3-01：GameConfig 2.0 契约统一
 
-> 状态：`TODO`
+> 状态：`DONE`
 >
 > 前置任务：`V3-00`
 >
@@ -38,11 +38,11 @@
 
 ## 验收标准
 
-- [ ] Python 新输出、Java 校验和前端 Runtime 字段完全一致。
-- [ ] 当前 `theme`、`patrolDistance/range`、`controlHint/controls`、`rules` 等错位消失。
-- [ ] 合法 1.0 fixture 可以确定性迁移，非法输入不能靠默认值通过。
-- [ ] 2.0 边界值、资源白名单和模板类型有自动化测试。
-- [ ] 文档示例通过同一契约测试。
+- [x] Python 新输出、Java 校验和前端 Runtime 字段完全一致。
+- [x] 当前 `theme`、`patrolDistance/range`、`controlHint/controls`、`rules` 等错位消失。
+- [x] 合法 1.0 fixture 可以确定性迁移，非法输入不能靠默认值通过。
+- [x] 2.0 边界值、资源白名单和模板类型有自动化测试。
+- [x] 文档示例通过同一契约测试。
 
 ## 验证命令
 

@@ -48,7 +48,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class WorkflowServiceImpl implements WorkflowService {
 
     private static final String GAME_DESIGN_WORKFLOW = "GAME_DESIGN";
-    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/2.0";
 
     private final GameProjectMapper gameProjectMapper;
     private final WorkflowRunMapper workflowRunMapper;

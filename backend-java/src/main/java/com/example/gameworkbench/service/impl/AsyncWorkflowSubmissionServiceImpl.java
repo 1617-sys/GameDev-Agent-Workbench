@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissionService {
 
     private static final Pattern IDEMPOTENCY_KEY_PATTERN = Pattern.compile("[A-Za-z0-9._:-]{1,128}");
-    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/2.0";
 
     private final GameProjectMapper gameProjectMapper;
     private final WorkflowRunMapper workflowRunMapper;

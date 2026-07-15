@@ -182,6 +182,7 @@ GameConfig 只保存 key，不保存 URL、路径、base64 或 manifest 内容�
 - 缺失必需结构：[`invalid-missing-entities.json`](examples/game-config-2.0/invalid-missing-entities.json)，必须报 `REQUIRED` at `$.entities`，不能由默认实体补齐。
 - 非法远程资源：[`invalid-remote-resource.json`](examples/game-config-2.0/invalid-remote-resource.json)，必须报 `RESOURCE_KEY_NOT_ALLOWED` at `$.player.spriteKey`。
 - 越界巡逻：[`invalid-out-of-bounds-patrol.json`](examples/game-config-2.0/invalid-out-of-bounds-patrol.json)，必须报 `WORLD_BOUNDS` at `$.behaviors.enemyPatrols[0].distance`。
+- 历史迁移输入：[`legacy-valid-1.0.json`](examples/game-config-2.0/legacy-valid-1.0.json)，三端结果必须等于 [`legacy-valid-1.0.migrated.json`](examples/game-config-2.0/legacy-valid-1.0.migrated.json)。
 
 错误格式冻结为 `{code, path, message, severity}`；`code` 与 `path` 稳定供测试和 UI 使用，`message` 可本地化。上述错误和所有 Schema/白名单错误均为 `BLOCKING`。
 
