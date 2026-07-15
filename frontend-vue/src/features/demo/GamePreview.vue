@@ -47,7 +47,8 @@ import StatusPill from "../../shared/ui/StatusPill.vue";
 import { formatGameConfigError, validateGameConfig } from "./runtime/gameConfig";
 import { mountGeneratedGame } from "./runtime/topDownCollectRuntime";
 
-const props = defineProps({ config: { type: Object, required: true } });
+import { createTelemetryReporter } from "../../shared/api/telemetry";
+const props = defineProps({ config: { type: Object, required: true }, projectUuid: { type: String, default: "" }, versionUuid: { type: String, default: "" } });
 const container = ref(null);
 const hud = ref({ status: "READY", objective: "", controls: "", message: "", collected: 0, total: 0, score: 0, health: 0, remainingSeconds: 0, exitUnlocked: false });
 const warnings = ref([]);
@@ -58,17 +59,21 @@ const overlayTitle = computed(() => ({ READY: "准备好了吗？", PAUSED: "游
 const overlayMessage = computed(() => hud.value.message || hud.value.controls);
 const primaryLabel = computed(() => hud.value.status === "READY" ? "开始游戏" : hud.value.status === "PAUSED" ? "继续游戏" : "重新挑战");
 let runtime = null;
+let reporter = null;
+let lastTelemetryElapsed = 0;
 
 async function mount() {
   runtime?.destroy();
   runtime = null;
   warnings.value = [];
   if (!validation.value.valid) return;
+  reporter = props.projectUuid && props.versionUuid ? await createTelemetryReporter(props.projectUuid, props.versionUuid) : null;
   await nextTick();
   if (!container.value) return;
   runtime = mountGeneratedGame(container.value, validation.value.config, {
     onHud: (value) => { hud.value = value; },
     onWarning: (warning) => { if (!warnings.value.includes(warning)) warnings.value.push(warning); },
+    onTelemetry: (type, elapsed, payload) => { lastTelemetryElapsed = Math.max(lastTelemetryElapsed, Number(elapsed) || 0); reporter?.emit(type, elapsed, payload); },
     onReady: (runtimeInfo) => {
       container.value?.setAttribute("data-runtime-ready", "true");
       container.value?.setAttribute("data-engine", runtimeInfo.engine || "unknown");
@@ -91,5 +96,6 @@ onBeforeUnmount(() => {
   window.removeEventListener("pointerup", releaseAllDirections);
   window.removeEventListener("blur", releaseAllDirections);
   runtime?.destroy();
+  if (reporter) { reporter.emit("SESSION_ENDED", lastTelemetryElapsed, { reason: "USER_EXIT" }); void reporter.flush(); }
 });
 </script>

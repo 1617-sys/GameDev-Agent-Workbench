@@ -23,6 +23,7 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.onMessage = callbacks.onMessage || (() => {});
     this.onReady = callbacks.onReady || (() => {});
     this.onWarning = callbacks.onWarning || (() => {});
+    this.onTelemetry = callbacks.onTelemetry || (() => {});
     this.autoStart = Boolean(data.autoStart);
     this.externalDirections = new Set();
     this.assetWarnings = new Set();
@@ -227,6 +228,7 @@ class ArcadeCollectScene extends Phaser.Scene {
 
   startGame() {
     if (!this.machine.start()) return false;
+    if (!this.autoStart) this.onTelemetry("SESSION_STARTED", 0, {});
     this.physics.resume();
     this.enemies.children.iterate((enemy) => enemy?.active && this.setEnemyVelocity(enemy));
     this.pushHud("游戏开始，收集目标并前往出口。");
@@ -255,6 +257,7 @@ class ArcadeCollectScene extends Phaser.Scene {
   }
 
   restartGame() {
+    if (this.machine.state.status !== RUNTIME_STATES.READY) this.onTelemetry("SESSION_RESTARTED", this.machine.state.elapsedMs, {});
     this.scene.restart({ autoStart: true });
     return true;
   }
@@ -268,6 +271,7 @@ class ArcadeCollectScene extends Phaser.Scene {
   collectItem(item) {
     const itemId = item.getData("id");
     if (!item.active || !this.machine.collect(itemId)) return;
+    this.onTelemetry("ITEM_COLLECTED", this.machine.state.elapsedMs, { itemId });
     const label = item.getData("label");
     item.disableBody(true, true);
     playManifestSound(this.gameConfig.presentation.audio.collect, this.onWarning);
@@ -275,8 +279,9 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.pushHud(`已取得${label}，得分 +${this.gameConfig.entities.collectibles.find((entry) => entry.id === itemId).score}。`);
   }
 
-  hitPlayer() {
+  hitPlayer(enemy) {
     if (!this.machine.hit()) return;
+    this.onTelemetry("PLAYER_HIT", this.machine.state.elapsedMs, { enemyId: enemy.getData("id") });
     playManifestSound(this.gameConfig.presentation.audio.hit, this.onWarning);
     this.player.setAlpha(0.42);
     this.time.delayedCall(this.gameConfig.player.hitInvulnerabilityMs, () => this.player?.active && this.player.setAlpha(1));
@@ -304,10 +309,12 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.physics.pause();
     this.player?.body?.setVelocity(0);
     if (this.machine.state.status === RUNTIME_STATES.WON) {
+      this.onTelemetry("GAME_WON", this.machine.state.elapsedMs, {});
       playManifestSound(this.gameConfig.presentation.audio.win, this.onWarning);
       this.cameras.main.flash(300, 34, 197, 94);
       this.pushHud(`通关成功，胜利奖励 +${this.gameConfig.balance.winBonus}。`);
     } else {
+      this.onTelemetry("GAME_LOST", this.machine.state.elapsedMs, { reason: this.machine.state.outcomeReason });
       playManifestSound(this.gameConfig.presentation.audio.lose, this.onWarning);
       this.cameras.main.shake(220, 0.012);
       const message = this.machine.state.outcomeReason === "TIME_EXPIRED" ? "时间耗尽，挑战失败。" : "生命耗尽，挑战失败。";

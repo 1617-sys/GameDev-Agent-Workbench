@@ -35,6 +35,14 @@
             <div><dt>父版本</dt><dd>{{ parentNumber(selected.parentVersionUuid) }}</dd></div>
           </dl>
           <details><summary>追溯信息</summary><code>{{ selected.versionUuid }}</code><code>{{ selected.configDigest }}</code><code>{{ selected.runtimeCapabilityVersion }}</code></details>
+          <dl v-if="metrics" class="version-parameters telemetry-metrics">
+            <div><dt>结束样本</dt><dd>{{ metrics.sampleSize }}</dd></div><div><dt>通关率</dt><dd>{{ percent(metrics.winRate) }}</dd></div>
+            <div><dt>平均耗时</dt><dd>{{ duration(metrics.averageDurationMs) }}</dd></div><div><dt>平均得分</dt><dd>{{ metrics.averageScore }}</dd></div>
+            <div><dt>平均受击</dt><dd>{{ decimal(metrics.averageHitCount) }}</dd></div><div><dt>失败</dt><dd>{{ failureTotal(metrics) }}</dd></div>
+          </dl>
+          <button class="button ghost" type="button" :disabled="!metrics?.sufficientForAi || suggesting" @click="requestSuggestion">{{ suggesting ? "正在评测…" : "生成 AI 平衡建议" }}</button>
+          <p v-if="metrics && !metrics.sufficientForAi" class="resource-warning">至少需要 5 个已结束会话，当前建议不会夸大少量样本。</p>
+          <p v-if="suggestion" class="alert"><strong>{{ suggestion.source }}</strong> · 样本 {{ suggestion.sampleSize }}：{{ suggestion.recommendation }}</p>
         </section>
 
         <nav class="content-tabs">
@@ -43,7 +51,7 @@
           <button :class="{ active: tab === 'compare' }" type="button" @click="tab = 'compare'"><GitCompareArrows :size="16" />版本对比</button>
         </nav>
 
-        <GamePreview v-if="tab === 'play' && selectedConfig" :key="selected.versionUuid" :config="selectedConfig" />
+        <GamePreview v-if="tab === 'play' && selectedConfig" :key="selected.versionUuid" :config="selectedConfig" :project-uuid="projectUuid" :version-uuid="selected.versionUuid" />
         <p v-else-if="tab === 'play'" class="alert danger" role="alert"><AlertCircle :size="18" />版本配置校验或摘要校验失败，Runtime 不会挂载。</p>
 
         <form v-else-if="tab === 'tune'" class="form-stack tuning-panel" @submit.prevent="submitTune">
@@ -66,6 +74,10 @@
             <button class="button ghost" type="button" :disabled="comparing || !compareLeft || !compareRight" @click="runCompare">对比</button>
           </div>
           <table v-if="comparison"><thead><tr><th>参数</th><th>版本 {{ comparison.left.versionNumber }} · {{ sourceLabel(comparison.left.source) }}</th><th>版本 {{ comparison.right.versionNumber }} · {{ sourceLabel(comparison.right.source) }}</th></tr></thead><tbody><tr v-for="item in comparison.differences" :key="item.key" :class="{ changed: item.changed }"><td>{{ parameterLabel(item.key) }}</td><td>{{ displayValue(item.leftValue) }}</td><td>{{ displayValue(item.rightValue) }}</td></tr></tbody></table>
+          <table v-if="metricComparison"><thead><tr><th>试玩指标</th><th>左侧</th><th>右侧</th></tr></thead><tbody>
+            <tr><td>样本</td><td>{{ metricComparison.left.sampleSize }}</td><td>{{ metricComparison.right.sampleSize }}</td></tr><tr><td>通关率</td><td>{{ percent(metricComparison.left.winRate) }}</td><td>{{ percent(metricComparison.right.winRate) }}</td></tr>
+            <tr><td>平均耗时</td><td>{{ duration(metricComparison.left.averageDurationMs) }}</td><td>{{ duration(metricComparison.right.averageDurationMs) }}</td></tr><tr><td>失败</td><td>{{ failureTotal(metricComparison.left) }}</td><td>{{ failureTotal(metricComparison.right) }}</td></tr>
+          </tbody></table>
         </section>
       </main>
     </div>
@@ -77,6 +89,7 @@ import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 import { AlertCircle, ArrowLeft, GitCompareArrows, Layers3, LoaderCircle, Play, RefreshCw, Save, SlidersHorizontal } from "@lucide/vue";
 import { prototypesApi } from "../../shared/api/prototypes";
+import { telemetryApi } from "../../shared/api/telemetry";
 import { createIdempotencyKey } from "../../shared/presentation/submission";
 import { sha256Hex, validateGameConfig } from "../demo/runtime/gameConfig";
 import GamePreview from "../demo/GamePreview.vue";
@@ -84,6 +97,7 @@ import GamePreview from "../demo/GamePreview.vue";
 const route = useRoute();
 const projectUuid = computed(() => String(route.params.projectUuid));
 const versions = ref([]); const selected = ref(null); const loading = ref(false); const saving = ref(false); const comparing = ref(false);
+const metrics = ref(null); const metricComparison = ref(null); const suggestion = ref(null); const suggesting = ref(false);
 const error = ref(""); const tab = ref("play"); const comparison = ref(null); const compareLeft = ref(""); const compareRight = ref("");
 const tuning = reactive({ timeLimitSeconds: 90, playerSpeed: 220, playerMaxHealth: 3, targetCollectibles: 1, enemyCount: 0, enemySpeeds: {} });
 const selectedConfig = computed(() => {
@@ -105,7 +119,7 @@ async function loadVersions() {
   finally { loading.value = false; }
 }
 async function selectVersion(uuid) {
-  try { selected.value = await prototypesApi.get(projectUuid.value, uuid); resetTuning(); }
+  try { selected.value = await prototypesApi.get(projectUuid.value, uuid); metrics.value = await telemetryApi.metrics(projectUuid.value, uuid); suggestion.value=null; resetTuning(); }
   catch (cause) { error.value = cause.message || "无法读取版本详情"; }
 }
 function resetTuning() {
@@ -123,7 +137,7 @@ async function submitTune() {
 }
 async function runCompare() {
   comparing.value = true; error.value = "";
-  try { comparison.value = await prototypesApi.compare(projectUuid.value, compareLeft.value, compareRight.value); }
+  try { comparison.value = await prototypesApi.compare(projectUuid.value, compareLeft.value, compareRight.value); metricComparison.value=await telemetryApi.compare(projectUuid.value, compareLeft.value, compareRight.value); }
   catch (cause) { error.value = cause.message || "版本对比失败"; }
   finally { comparing.value = false; }
 }
@@ -132,4 +146,6 @@ function parentNumber(uuid) { return versions.value.find((item) => item.versionU
 function formatTime(value) { return value ? new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(value)) : "--"; }
 function parameterLabel(key) { return ({ timeLimitSeconds: "时限", playerSpeed: "玩家速度", playerMaxHealth: "生命", targetCollectibles: "收集目标", enemyCount: "敌人数", enemySpeeds: "敌人速度" })[key] || key; }
 function displayValue(value) { return typeof value === "object" ? JSON.stringify(value) : String(value ?? "--"); }
+async function requestSuggestion(){suggesting.value=true;error.value="";try{suggestion.value=await telemetryApi.suggest(projectUuid.value,selected.value.versionUuid,createIdempotencyKey());}catch(cause){error.value=cause.message||"平衡评测失败";}finally{suggesting.value=false;}}
+function percent(value){return `${Math.round(Number(value||0)*100)}%`;} function duration(value){return `${Math.round(Number(value||0)/1000)} 秒`;} function decimal(value){return Number(value||0).toFixed(1);} function failureTotal(value){return Object.values(value?.failures||{}).reduce((sum,n)=>sum+Number(n||0),0);}
 </script>
