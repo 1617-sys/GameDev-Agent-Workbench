@@ -1,7 +1,6 @@
 package com.example.gameworkbench.application.workflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,14 +37,26 @@ class GameConfigWorkflowEvaluationHookTest {
         assertThat(migrated.summary()).contains("migrated");
         assertThat(mapper.readTree(migrated.normalizedContent()))
                 .isEqualTo(mapper.readTree(fixture("legacy-valid-1.0.migrated.json")));
-        assertThatThrownBy(() -> evaluate(fixture("legacy-valid-1.0.json"), "game-config/2.0"))
-                .isInstanceOf(WorkflowEvaluationException.class).hasMessageContaining("LEGACY_WRITE_NOT_ALLOWED");
+        WorkflowEvaluationResult rejected = evaluate(fixture("legacy-valid-1.0.json"), "game-config/2.0");
+        assertThat(rejected.passed()).isFalse();
+        assertThat(rejected.summary()).contains("LEGACY_WRITE_NOT_ALLOWED");
     }
 
     @Test void rejectsInvalidJson() { rejects("{bad", "INVALID_JSON"); }
     @Test void rejectsMissingRequiredStructures() throws Exception { rejects(fixture("invalid-missing-entities.json"), "REQUIRED at $.entities"); }
     @Test void rejectsRemoteResources() throws Exception { rejects(fixture("invalid-remote-resource.json"), "RESOURCE_KEY_NOT_ALLOWED at $.player.spriteKey"); }
     @Test void rejectsOutOfBoundsPatrols() throws Exception { rejects(fixture("invalid-out-of-bounds-patrol.json"), "WORLD_BOUNDS at $.behaviors.enemyPatrols[0].distance"); }
+
+    @Test
+    void rejectsConfigThatContradictsThePrototypeBrief() throws Exception {
+        WorkflowRun run = new WorkflowRun();
+        run.setSchemaVersion("game-config/2.0");
+        WorkflowEvaluationResult result = hook.evaluate(new WorkflowExecutionContext(run, "project",
+                "{\"durationSeconds\":120,\"difficulty\":\"hard\"}", List.of(plan)), plan,
+                new StepExecutionResult(new StepOutput(fixture("valid-minimal.json"), null, null, null), 1L));
+        assertThat(result.passed()).isFalse();
+        assertThat(result.summary()).contains("BRIEF_DURATION_MISMATCH");
+    }
 
     private WorkflowEvaluationResult evaluate(String content, String schemaVersion) {
         WorkflowRun run = new WorkflowRun();
@@ -55,8 +66,10 @@ class GameConfigWorkflowEvaluationHookTest {
     }
 
     private void rejects(String content, String fragment) {
-        assertThatThrownBy(() -> evaluate(content, "game-config/2.0"))
-                .isInstanceOf(WorkflowEvaluationException.class).hasMessageContaining(fragment);
+        WorkflowEvaluationResult result = evaluate(content, "game-config/2.0");
+        assertThat(result.passed()).isFalse();
+        assertThat(result.normalizedContent()).isEqualTo(content);
+        assertThat(result.summary()).contains(fragment);
     }
 
     private String fixture(String name) throws Exception {

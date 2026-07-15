@@ -14,14 +14,16 @@
         <div class="section-title"><div><p class="overline">NEW GENERATION</p><h2>描述你的游戏想法</h2></div><Sparkles :size="22" /></div>
         <form class="form-stack" @submit.prevent="submit">
           <label>
-            <span>游戏创意</span>
+            <span>主题与玩法</span>
             <textarea v-model="form.idea" required maxlength="5000" rows="8" placeholder="例如：做一个 90 秒的博物馆夺宝小游戏，玩家需要拿到三件藏品，避开巡逻守卫，然后从出口离开。"></textarea>
             <small>{{ form.idea.length }}/5000</small>
           </label>
-          <label>
-            <span>补充要求 <em>可选</em></span>
-            <textarea v-model="form.context" maxlength="5000" rows="4" placeholder="可以补充目标玩家、视觉风格或难度要求。"></textarea>
-          </label>
+          <div class="form-grid">
+            <label><span>单局时长</span><select v-model.number="form.durationSeconds"><option :value="60">60 秒</option><option :value="90">90 秒</option><option :value="180">180 秒</option></select></label>
+            <label><span>难度</span><select v-model="form.difficulty"><option value="easy">轻松</option><option value="normal">标准</option><option value="hard">挑战</option></select></label>
+          </div>
+          <label><span>视觉主题</span><input v-model="form.visualTheme" required maxlength="80" placeholder="例如：深色博物馆、扁平几何霓虹风" /></label>
+          <label><span>补充要求 <em>可选</em></span><textarea v-model="form.additionalRequirements" maxlength="2000" rows="4" placeholder="可以补充目标玩家、氛围或操作反馈要求。"></textarea><small>{{ form.additionalRequirements.length }}/2000</small></label>
           <p v-if="error" class="alert danger" role="alert">{{ error }}</p>
           <div class="form-actions"><span><ShieldCheck :size="16" />提交后可离开页面，任务将在后台继续执行</span><button class="button primary large" :disabled="submitting"><WandSparkles :size="18" />{{ submitting ? "正在创建任务…" : "开始生成" }}</button></div>
         </form>
@@ -55,7 +57,7 @@
         </section>
         <section class="plain-section example-section">
           <h3>快速示例</h3>
-          <button v-for="example in examples" :key="example.title" type="button" @click="useExample(example.idea)"><span>{{ example.title }}</span><small>{{ example.note }}</small></button>
+          <button v-for="example in examples" :key="example.title" type="button" @click="useExample(example)"><span>{{ example.title }}</span><small>{{ example.note }}</small></button>
         </section>
       </aside>
     </div>
@@ -81,12 +83,12 @@ const error = ref("");
 const recentRuns = ref([]);
 const runsLoading = ref(false);
 const runsError = ref("");
-const form = reactive({ idea: "", context: "" });
+const form = reactive({ idea: "", durationSeconds: 90, difficulty: "normal", visualTheme: "扁平几何霓虹风", additionalRequirements: "" });
 let pending = null;
 const examples = [
-  { title: "博物馆夺宝", note: "潜入与收集", idea: "做一个 90 秒的博物馆夺宝小游戏。玩家需要拿到三件藏品，避开巡逻守卫，然后从右下角出口离开。" },
-  { title: "太空维修", note: "限时与躲避", idea: "玩家是一名太空维修员，需要在能量耗尽前收集三个零件，避开失控机器人并返回安全舱。" },
-  { title: "森林寻药", note: "轻松探索", idea: "设计一个森林采药小游戏。玩家收集三种草药，躲避巡逻野兽，最后回到营地完成任务。" }
+  { title: "博物馆夺宝", note: "潜入与收集", idea: "玩家需要拿到三件藏品，避开巡逻守卫，然后从右下角出口离开。", durationSeconds: 90, difficulty: "normal", visualTheme: "深色博物馆霓虹风" },
+  { title: "太空维修", note: "限时与躲避", idea: "玩家收集三个维修零件，避开失控机器人并返回安全舱。", durationSeconds: 60, difficulty: "hard", visualTheme: "冷色太空站扁平风" },
+  { title: "森林寻药", note: "轻松探索", idea: "玩家收集三种草药，躲避巡逻野兽，最后回到营地。", durationSeconds: 180, difficulty: "easy", visualTheme: "明亮森林绘本风" }
 ];
 
 onMounted(async () => {
@@ -112,7 +114,15 @@ function formatRunTime(value) {
   return new Intl.DateTimeFormat("zh-CN", { month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(new Date(value));
 }
 
-function useExample(idea) { form.idea = idea; }
+function useExample(example) {
+  Object.assign(form, {
+    idea: example.idea,
+    durationSeconds: example.durationSeconds,
+    difficulty: example.difficulty,
+    visualTheme: example.visualTheme,
+    additionalRequirements: ""
+  });
+}
 async function submit() {
   if (submitting.value) return;
   const prepared = prepareSubmission(form, pending);

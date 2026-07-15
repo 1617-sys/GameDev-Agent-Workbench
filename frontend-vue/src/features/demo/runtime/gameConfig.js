@@ -380,7 +380,7 @@ function invalid(...errors) { return { valid: false, errors, config: null, migra
 function canonicalStringify(value) { if (Array.isArray(value)) return `[${value.map(canonicalStringify).join(",")}]`; if (isObject(value)) return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalStringify(value[key])}`).join(",")}}`; return JSON.stringify(value); }
 
 // Synchronous SHA-256 keeps legacy migration deterministic in both browsers and Node.
-function sha256Hex(text) {
+export function sha256Hex(text) {
   const rightRotate = (value, amount) => (value >>> amount) | (value << (32 - amount));
   const maxWord = 2 ** 32; const words = []; const hash = []; const k = []; let primeCounter = 0;
   const isComposite = {}; for (let candidate = 2; primeCounter < 64; candidate++) { if (!isComposite[candidate]) { for (let i = 0; i < 313; i += candidate) isComposite[i] = candidate; hash[primeCounter] = (candidate ** 0.5 * maxWord) | 0; k[primeCounter++] = (candidate ** (1 / 3) * maxWord) | 0; } }

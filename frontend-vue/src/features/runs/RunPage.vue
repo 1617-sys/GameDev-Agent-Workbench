@@ -30,6 +30,7 @@
 
     <section v-if="tab === 'results'" class="tab-panel">
       <GamePreview v-if="gameConfig" :config="gameConfig" />
+      <p v-else-if="hasGameConfigArtifact" class="alert danger" role="alert"><AlertCircle :size="18" /><span>游戏配置未通过服务端可玩资格校验，Runtime 不会挂载。</span></p>
       <ArtifactResults :artifacts="run.artifacts" :details="run.artifactDetails" :load-artifact="run.loadArtifact" />
     </section>
 
@@ -59,8 +60,8 @@ import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch 
 import { useRoute } from "vue-router";
 import { AlertCircle, ArrowLeft, Braces, ListChecks, PanelTop, RefreshCw, RotateCcw, Square } from "@lucide/vue";
 import StatusPill from "../../shared/ui/StatusPill.vue";
-import { extractGameConfig } from "../demo/runtime/gameConfig";
 import ArtifactResults from "./ArtifactResults.vue";
+import { selectPlayableGameConfigSummary, validatedPlayableConfig } from "./playableArtifact";
 import RunStepper from "./RunStepper.vue";
 import { useRunStore } from "./runStore";
 import { formatDuration, statusMeta, stepLabel } from "../../shared/presentation/workflow";
@@ -71,21 +72,17 @@ const run = useRunStore();
 const tab = ref("progress");
 const meta = computed(() => statusMeta(run.snapshot?.status));
 const connectionLabel = computed(() => ({ connected: "实时连接正常", connecting: "正在连接", reconnecting: "正在恢复", idle: run.terminal ? "运行已结束" : "未连接" }[run.connection] || run.connection));
+const playableSummary = computed(() => selectPlayableGameConfigSummary(run.artifacts, run.snapshot?.status));
+const hasGameConfigArtifact = computed(() => run.artifacts.some((item) => (item.type || item.artifactType) === "GAME_CONFIG"));
 const gameConfig = computed(() => {
-  for (const detail of Object.values(run.artifactDetails)) {
-    const type = detail?.artifactType || "";
-    if (type.includes("GAME_CONFIG")) {
-      const config = extractGameConfig(detail.content);
-      if (config) return config;
-    }
-  }
-  return null;
+  const summary = playableSummary.value;
+  return summary ? validatedPlayableConfig(run.artifactDetails[summary.artifactUuid], summary) : null;
 });
 
 const allowed = (action) => run.snapshot?.allowedActions?.includes(action);
 
 async function loadGameConfigArtifact() {
-  const artifact = run.artifacts.find((item) => String(item.type || item.artifactType).includes("GAME_CONFIG"));
+  const artifact = playableSummary.value;
   if (artifact) await run.loadArtifact(artifact.artifactUuid);
 }
 

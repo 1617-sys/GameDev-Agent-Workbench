@@ -80,6 +80,16 @@ public class GameConfigContract {
         }
     }
 
+    public static String resourceCategory(String key) {
+        if (PLAYER_KEYS.contains(key)) return "player";
+        if (COLLECTIBLE_KEYS.contains(key)) return "collectible";
+        if (ENEMY_KEYS.contains(key)) return "enemy";
+        if (EXIT_KEYS.contains(key)) return "exit";
+        if (OBSTACLE_KEYS.contains(key)) return "obstacle";
+        if (SOUND_KEYS.contains(key)) return "sound";
+        return null;
+    }
+
     private ObjectNode extract(String raw, List<RuleViolation> errors) {
         JsonNode node;
         try {

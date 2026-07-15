@@ -73,6 +73,9 @@ class WorkflowSubmitIdempotencyTest {
         verify(commandService).create(runCaptor.capture(), org.mockito.ArgumentMatchers.argThat(steps -> steps.size() == 2),
                 org.mockito.ArgumentMatchers.contains("workflowRunUuid"), any());
         assertThat(runCaptor.getValue().getSchemaVersion()).isEqualTo("game-config/2.0");
+        assertThat(runCaptor.getValue().getInputContent()).contains(
+                "\"theme\":\"idea\"", "\"durationSeconds\":90", "\"difficulty\":\"normal\"",
+                "\"visualTheme\":\"neon museum\"", "\"additionalRequirements\":\"context\"");
     }
 
     @Test
@@ -178,7 +181,10 @@ class WorkflowSubmitIdempotencyTest {
         AsyncWorkflowSubmitRequest request = new AsyncWorkflowSubmitRequest();
         request.setWorkflowKey("GAME_DESIGN");
         request.setIdea(idea);
-        request.setContext("context");
+        request.setDurationSeconds(90);
+        request.setDifficulty("normal");
+        request.setVisualTheme("neon museum");
+        request.setAdditionalRequirements("context");
         return request;
     }
 

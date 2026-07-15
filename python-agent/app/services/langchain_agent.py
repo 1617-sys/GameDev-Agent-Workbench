@@ -5,6 +5,7 @@ import time
 from app.prompts.agent_prompts import (
     GAME_CONFIG_SYSTEM_PROMPT,
     build_game_config_user_prompt,
+    canonical_game_config_example,
     game_config_contract_suffix,
 )
 from app.services.rag_context import render_rag_context
@@ -51,6 +52,8 @@ def build_chat_model() -> ChatOpenAI:
 
 
 async def run_langchain_agent(agent_type: str, payload: AgentMockRequest) -> AgentMockResult:
+    if explicit_mock_mode():
+        return mock_design_result(agent_type, payload)
     system_prompt = payload.system_prompt or DEFAULT_SYSTEM_PROMPT
     user_prompt_template = payload.user_prompt_template or DEFAULT_USER_PROMPT_TEMPLATE
 
@@ -96,6 +99,32 @@ async def run_langchain_agent(agent_type: str, payload: AgentMockRequest) -> Age
 
 
 async def run_game_config_agent(payload: AgentMockRequest) -> AgentMockResult:
+    if explicit_mock_mode():
+        game_config = canonical_game_config_example()
+        try:
+            brief = json.loads(payload.content)
+        except (json.JSONDecodeError, TypeError):
+            brief = {}
+        if isinstance(brief, dict):
+            duration = brief.get("durationSeconds")
+            difficulty = brief.get("difficulty")
+            if isinstance(duration, int) and 30 <= duration <= 600:
+                game_config["balance"]["timeLimitSeconds"] = duration
+            if difficulty in {"easy", "normal", "hard"}:
+                game_config["balance"]["difficulty"] = difficulty
+        game_config = validate_game_config_v2(game_config)
+        return AgentMockResult(
+            agent_type="GAME_CONFIG_GENERATE",
+            title=payload.title,
+            summary="Mock GameConfig 2.0 generated from the canonical fixture",
+            content=json.dumps(game_config, ensure_ascii=False, separators=(",", ":")),
+            game_config=game_config,
+            key_points=["Explicit mock fixture", "Validated GameConfig 2.0"],
+            suggestions=[],
+            model="mock",
+            time_taken_ms=0,
+            raw_result={"source": "canonical-fixture", "mode": "mock"},
+        )
     system_prompt = payload.system_prompt or GAME_CONFIG_SYSTEM_PROMPT
     if payload.user_prompt_template:
         user_prompt = render_allowed_template(payload.user_prompt_template, payload)
@@ -175,3 +204,27 @@ def render_allowed_template(template: str, payload: AgentMockRequest) -> str:
     for marker, value in values.items():
         rendered = rendered.replace(marker, value)
     return rendered
+
+
+def explicit_mock_mode() -> bool:
+    return os.getenv("AGENT_MOCK_MODE", "false").lower() == "true"
+
+
+def mock_design_result(agent_type: str, payload: AgentMockRequest) -> AgentMockResult:
+    labels = {
+        "GAME_CONCEPT": "轻量街机收集概念",
+        "CORE_LOOP_DESIGN": "移动、收集、躲避、抵达出口的核心循环",
+        "TASK_BREAKDOWN": "固定 Phaser Runtime 的实现与验收清单",
+    }
+    content = f"{labels.get(agent_type, '轻量游戏原型')}\nPrototype Brief: {payload.content}\nUpstream: {payload.context or 'none'}"
+    return AgentMockResult(
+        agent_type=agent_type,
+        title=payload.title,
+        summary=f"{agent_type} explicit mock result",
+        content=content,
+        key_points=["arcade_collect only", "traceable explicit mock mode"],
+        suggestions=[],
+        model="mock",
+        time_taken_ms=0,
+        raw_result={"source": "deterministic-design-fixture", "mode": "mock"},
+    )
