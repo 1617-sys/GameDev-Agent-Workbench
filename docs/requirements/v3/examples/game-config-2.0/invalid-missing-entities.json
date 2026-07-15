@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "schemaVersion": "2.0",
+    "gameType": "arcade_collect",
+    "title": "缺失实体的配置",
+    "seed": 1
+  },
+  "viewport": {
+    "width": 960,
+    "height": 540,
+    "scaleMode": "fit"
+  },
+  "world": {
+    "width": 960,
+    "height": 540,
+    "spawn": {
+      "x": 96,
+      "y": 96
+    },
+    "obstacles": []
+  },
+  "player": {
+    "speed": 220,
+    "size": 28,
+    "maxHealth": 1,
+    "hitInvulnerabilityMs": 0,
+    "spriteKey": "player.blue"
+  }
+}
