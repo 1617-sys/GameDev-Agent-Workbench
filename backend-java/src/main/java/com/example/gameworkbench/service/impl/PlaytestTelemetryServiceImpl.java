@@ -120,7 +120,7 @@ public class PlaytestTelemetryServiceImpl implements PlaytestTelemetryService {
         body.put("source","AI_BALANCE_EVALUATION"); body.put("recommendation",recommendation); String content=canonical(body);
         AgentArtifact artifact=AgentArtifact.builder().artifactUuid(UUID.randomUUID().toString()).projectId(p.getId()).artifactType("BALANCE_SUGGESTION")
             .title("Balance suggestion for version "+v.getVersionNumber()).content(content).contentDigest(digest(content)).schemaKey("balance-suggestion")
-            .schemaVersion("1.0").validationSummary("sampleSize="+m.getSampleSize()).sourceArtifactUuid(config.getArtifactUuid())
+            .schemaVersion("1.0").validationSummary("sampleSize="+m.getSampleSize()).sourceAttempt(1).sourceArtifactUuid(config.getArtifactUuid())
             .runtimeEligible(false).createdAt(LocalDateTime.now()).updatedAt(LocalDateTime.now()).deleted(0).build(); artifacts.insert(artifact);
         suggestionRequests.insert(BalanceSuggestionRequest.builder().userId(userId).projectId(p.getId()).prototypeVersionUuid(versionUuid)
             .idempotencyKey(key).requestFingerprint(fingerprint).artifactUuid(artifact.getArtifactUuid()).createdAt(LocalDateTime.now()).build());

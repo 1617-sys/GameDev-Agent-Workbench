@@ -50,6 +50,16 @@ export async function apiRequest(path, options = {}) {
   }
 }
 
+export async function apiDownload(path, options = {}) {
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const headers = { ...(options.headers || {}) }; const token = readToken(); if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await fetch(`${baseUrl}${path}`, { ...options, headers });
+  if (response.status === 401) unauthorizedHandler();
+  if (!response.ok) { const payload = await response.json().catch(() => null); throw new ApiError(payload?.message || `Download failed (${response.status})`, { status: response.status, code: payload?.code || String(response.status) }); }
+  const disposition = response.headers.get("content-disposition") || ""; const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1]; const plain = disposition.match(/filename="?([^";]+)"?/i)?.[1];
+  return { blob: await response.blob(), filename: encoded ? decodeURIComponent(encoded) : plain || "prototype.zip" };
+}
+
 export function openEventStream(path, { lastEventId = 0, onEvent, onError } = {}) {
   const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
   const controller = new AbortController();

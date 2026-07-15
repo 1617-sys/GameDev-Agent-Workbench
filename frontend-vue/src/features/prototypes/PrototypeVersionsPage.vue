@@ -41,6 +41,9 @@
             <div><dt>平均受击</dt><dd>{{ decimal(metrics.averageHitCount) }}</dd></div><div><dt>失败</dt><dd>{{ failureTotal(metrics) }}</dd></div>
           </dl>
           <button class="button ghost" type="button" :disabled="!metrics?.sufficientForAi || suggesting" @click="requestSuggestion">{{ suggesting ? "正在评测…" : "生成 AI 平衡建议" }}</button>
+          <button class="button primary" type="button" :disabled="exporting || !suggestion" @click="exportPackage">{{ exporting ? "正在组装…" : "导出离线原型包" }}</button>
+          <button v-if="exportJob?.status === 'FAILED'" class="button ghost" type="button" :disabled="exporting" @click="retryExport">重试同一冻结输入</button>
+          <p v-if="exportJob" class="resource-warning">导出 {{ exportJob.status }} · 尝试 {{ exportJob.attemptCount }} · {{ exportJob.packageDigest || exportJob.errorCode || "等待生成" }}</p>
           <p v-if="metrics && !metrics.sufficientForAi" class="resource-warning">至少需要 5 个已结束会话，当前建议不会夸大少量样本。</p>
           <p v-if="suggestion" class="alert"><strong>{{ suggestion.source }}</strong> · 样本 {{ suggestion.sampleSize }}：{{ suggestion.recommendation }}</p>
         </section>
@@ -90,6 +93,7 @@ import { useRoute } from "vue-router";
 import { AlertCircle, ArrowLeft, GitCompareArrows, Layers3, LoaderCircle, Play, RefreshCw, Save, SlidersHorizontal } from "@lucide/vue";
 import { prototypesApi } from "../../shared/api/prototypes";
 import { telemetryApi } from "../../shared/api/telemetry";
+import { exportsApi, saveExport } from "../../shared/api/exports";
 import { createIdempotencyKey } from "../../shared/presentation/submission";
 import { sha256Hex, validateGameConfig } from "../demo/runtime/gameConfig";
 import GamePreview from "../demo/GamePreview.vue";
@@ -98,6 +102,7 @@ const route = useRoute();
 const projectUuid = computed(() => String(route.params.projectUuid));
 const versions = ref([]); const selected = ref(null); const loading = ref(false); const saving = ref(false); const comparing = ref(false);
 const metrics = ref(null); const metricComparison = ref(null); const suggestion = ref(null); const suggesting = ref(false);
+const exportJob=ref(null); const exporting=ref(false);
 const error = ref(""); const tab = ref("play"); const comparison = ref(null); const compareLeft = ref(""); const compareRight = ref("");
 const tuning = reactive({ timeLimitSeconds: 90, playerSpeed: 220, playerMaxHealth: 3, targetCollectibles: 1, enemyCount: 0, enemySpeeds: {} });
 const selectedConfig = computed(() => {
@@ -119,7 +124,7 @@ async function loadVersions() {
   finally { loading.value = false; }
 }
 async function selectVersion(uuid) {
-  try { selected.value = await prototypesApi.get(projectUuid.value, uuid); metrics.value = await telemetryApi.metrics(projectUuid.value, uuid); suggestion.value=null; resetTuning(); }
+  try { selected.value = await prototypesApi.get(projectUuid.value, uuid); metrics.value = await telemetryApi.metrics(projectUuid.value, uuid); suggestion.value=null; exportJob.value=null; resetTuning(); }
   catch (cause) { error.value = cause.message || "无法读取版本详情"; }
 }
 function resetTuning() {
@@ -147,5 +152,7 @@ function formatTime(value) { return value ? new Intl.DateTimeFormat("zh-CN", { m
 function parameterLabel(key) { return ({ timeLimitSeconds: "时限", playerSpeed: "玩家速度", playerMaxHealth: "生命", targetCollectibles: "收集目标", enemyCount: "敌人数", enemySpeeds: "敌人速度" })[key] || key; }
 function displayValue(value) { return typeof value === "object" ? JSON.stringify(value) : String(value ?? "--"); }
 async function requestSuggestion(){suggesting.value=true;error.value="";try{suggestion.value=await telemetryApi.suggest(projectUuid.value,selected.value.versionUuid,createIdempotencyKey());}catch(cause){error.value=cause.message||"平衡评测失败";}finally{suggesting.value=false;}}
+async function exportPackage(){exporting.value=true;error.value="";try{exportJob.value=await exportsApi.create(projectUuid.value,selected.value.versionUuid,createIdempotencyKey());if(exportJob.value.status==="COMPLETED")saveExport(await exportsApi.download(projectUuid.value,exportJob.value.jobUuid));}catch(cause){error.value=cause.message||"原型包导出失败";}finally{exporting.value=false;}}
+async function retryExport(){exporting.value=true;error.value="";try{exportJob.value=await exportsApi.retry(projectUuid.value,exportJob.value.jobUuid);if(exportJob.value.status==="COMPLETED")saveExport(await exportsApi.download(projectUuid.value,exportJob.value.jobUuid));}catch(cause){error.value=cause.message||"导出重试失败";}finally{exporting.value=false;}}
 function percent(value){return `${Math.round(Number(value||0)*100)}%`;} function duration(value){return `${Math.round(Number(value||0)/1000)} 秒`;} function decimal(value){return Number(value||0).toFixed(1);} function failureTotal(value){return Object.values(value?.failures||{}).reduce((sum,n)=>sum+Number(n||0),0);}
 </script>

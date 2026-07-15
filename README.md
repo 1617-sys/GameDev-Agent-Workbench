@@ -8,7 +8,7 @@
 # 浏览器打开 http://127.0.0.1:5173/
 ```
 
-> 当前发布结论：**BLOCKED，不是可发布版本。** 本地 quick 回归可运行，但 R7 主链路在异步提交门收到业务码 `50302`，因此 E2E、性能、故障恢复与 Demo 的下游结论均未通过。详见[报告索引](docs/reports/README.md)和[已知限制](#已知限制)。本仓库没有生产规模、真实模型质量或容量承诺。
+> 当前结论：**V3 轻量原型发布验收已通过**。Docker 主链路已覆盖 Brief、AI 生成、Phaser 试玩、不可变调参版本、按版本指标、平衡建议与确定性离线导出。该结论只适用于单机 `arcade_collect` 原型能力，不代表生产高可用、模型质量或容量承诺。详见 [V3 发布验收报告](docs/reports/V3-release-acceptance.md)和[已知限制](#已知限制)。
 
 ## 它解决什么问题
 
@@ -51,6 +51,7 @@ flowchart LR
 | Prompt/评测/指标 | PromptVersion 快照、Schema/Rule、Metric、mock 分层统计 | [R5 报告](docs/reports/R5-prompt-evaluation-metrics-report.md)（Runtime 持久化与版本生命周期仍阻断） |
 | 知识与 RAG 证据 | 上传校验、Chunk/检索隔离、实际引用记录、RAG-on/off 显式状态 | [R6 报告](docs/reports/R6-rag-knowledge-report.md)（PDF/索引恢复等仍阻断） |
 | 可玩产物 | GameConfig 契约、Artifact eligibility、Phaser 桌面/移动 smoke | [R2 报告](docs/reports/R2-workflow-runner-report.md)、[R6 报告](docs/reports/R6-rag-knowledge-report.md) |
+| V3 轻量原型闭环 | `arcade_collect` 生成、不可变版本、试玩指标、建议、确定性离线 ZIP | [V3 发布验收报告](docs/reports/V3-release-acceptance.md) |
 | 可观测与安全加固 | 关联 ID、低基数指标、health/readiness、生产端点关闭、内部服务鉴权 | [R7 可观测报告](docs/reports/R7-observability-operations-report.md)、[R7 安全审计](docs/reports/R7-security-release-audit.md) |
 
 “已实现”不等于“发布 gate 已通过”。报告中的 `BLOCKED`、环境跳过和 `NOT RUN` 均保留原义。
@@ -89,6 +90,8 @@ POST /api/v1/workflow-runs/{workflowRunUuid}/retry
 
 提交只负责鉴权、幂等创建 `WorkflowRun` 和 `OutboxEvent`；Consumer 读取冻结定义执行四步 Agent，持久化 Step/Agent/Metric/Retrieval/Evaluation/Artifact。浏览器依靠快照与 SSE 序号恢复展示，不以页面内存作为事实源。详见[核心时序](docs/architecture/system-architecture.md#核心时序)。
 
+V3 在成功生成后自动创建不可变 PrototypeVersion。试玩事件绑定具体版本并由 Java 复算指标；调参只创建子版本。平衡建议生成后，可导出包含设计、任务、GameConfig、资源 manifest、试玩摘要、建议与本地 H5 Demo 的 ZIP。相同冻结输入和幂等键返回同一作业与内容摘要，失败重试不重新调用模型。
+
 ## Demo
 
 默认 Demo 是 **DEMO / MOCK**，不能作为真实模型效果或性能证据：
@@ -99,7 +102,7 @@ POST /api/v1/workflow-runs/{workflowRunUuid}/retry
 .\tools\reset-demo.ps1
 ```
 
-当前候选的 prepare 可在 90 秒门槛内完成基础设施与 seed，但会在同一个 R3 提交门被 `50302` 阻断；reset 已验证只清理 demo namespace 且不删除 volume。不要把这条阻断链路录成成功演示。操作口播、离线切换和录屏脱敏清单见[3–5 分钟 Demo 脚本](docs/demo-script.md)。
+V3 主链路可用 `npm run test:e2e:main` 在已启动的 Compose 环境复现。操作口播、离线包打开方式和录屏脱敏清单见[3–5 分钟 Demo 脚本](docs/demo-script.md)。
 
 ## 如何验证
 
@@ -129,8 +132,9 @@ POST /api/v1/workflow-runs/{workflowRunUuid}/retry
 
 ## 已知限制
 
-- R3 Redis rate-limit/Lua 集成在健康 Redis 上仍被归类为 unavailable，异步提交返回 `50302`；这是 E2E、性能、故障和 Demo 的共同阻断项。
-- R5 的 Prompt 生命周期、浏览器 Runtime 评测持久化和完整版本对比尚未满足冻结契约。
+- V3 只支持单场景 `arcade_collect`；不包含第二模板、复杂战斗、多关卡、原生微信包、Unity/Godot 工程或云端发布平台。
+- 导出包是固定本地 Canvas Runtime，不执行 AI 生成代码；站内试玩仍由 Phaser 3 Runtime 承载。
+- V3 性能数据是单机 Compose 发布基线，不是并发容量或生产 SLA。
 - R6 的受限 PDF 解析、可恢复索引 job、文档失效写 capability 尚未完成；当前向量实现是进程内 fake，不代表真实语义质量或容量。
 - R7 安全 gate 缺少完整 Compose 双用户、镜像和 Maven/Python CVE 扫描；Python 生产模式关闭 mock capability 的证据缺失。
 - Testcontainers 在部分历史运行中因 Docker API 兼容性跳过。性能报告没有形成可发布的 P50/P95/P99、吞吐或容量结论。

@@ -34,6 +34,10 @@ public enum ErrorCode {
     TELEMETRY_IDEMPOTENCY_CONFLICT(40903, "Telemetry replay conflicts with persisted facts", "Playtest telemetry"),
     PLAYTEST_SESSION_CLOSED(40904, "Playtest session no longer accepts events", "Playtest telemetry"),
     PLAYTEST_SAMPLE_INSUFFICIENT(40905, "At least five ended sessions are required", "Balance evaluation"),
+    EXPORT_INPUT_INCOMPLETE(40906, "Prototype export inputs are incomplete", "Prototype export"),
+    EXPORT_NOT_READY(40907, "Prototype export is not ready for download", "Prototype export"),
+    EXPORT_RETRY_EXHAUSTED(40908, "Prototype export retry limit is exhausted", "Prototype export"),
+    EXPORT_SECURITY_REJECTED(40009, "Prototype export failed security validation", "Prototype export"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
@@ -42,6 +46,7 @@ public enum ErrorCode {
     WORKFLOW_RUN_NOT_FOUND(40401, "Workflow run not found", "Workflow detail"),
     PROTOTYPE_VERSION_NOT_FOUND(40401, "Prototype version not found", "Prototype version"),
     PLAYTEST_SESSION_NOT_FOUND(40401, "Playtest session not found", "Playtest telemetry"),
+    PROTOTYPE_EXPORT_NOT_FOUND(40401, "Prototype export not found", "Prototype export"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 

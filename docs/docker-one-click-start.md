@@ -104,3 +104,13 @@ LLM_ENABLE_MOCK_FALLBACK=true
 ```
 
 清理后再次运行 `.\start-docker.ps1` 即从空 volume 执行 Flyway migration 和健康门禁。不得使用 `docker system prune`、全局 volume 删除或未确认的 `docker compose down -v` 作为本项目的日常停止流程。
+# V3 发布主链路
+
+服务全部 healthy 后，可运行不依赖隐藏手工步骤的 V3 验收：
+
+```powershell
+cd frontend-vue
+npm run test:e2e:main
+```
+
+该命令连接 `http://127.0.0.1:5173` 与 `http://127.0.0.1:8080`，真实执行 Brief、AI 生成、两个不可变版本、试玩聚合、平衡建议和 ZIP 导出。等待使用持久化 WorkflowRun 状态轮询，不用固定长 sleep。若端口被覆盖，可设置 `E2E_FRONTEND_BASE_URL` 和 `E2E_API_BASE_URL`。

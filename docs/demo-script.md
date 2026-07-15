@@ -83,3 +83,13 @@ Run only after confirming the printed namespace, username, and project UUID:
 ```
 
 Invoking this named command is the explicit reset confirmation. It refuses missing/ambiguous state, a mismatched namespace, more than one project, a project without the exact marker, or unexpected storage references. It removes only the demo user/project graph, deletes the generated demo login credential/state files, stops Compose without deleting volumes, and never targets development or production namespaces. The repository-external Compose environment remains so the retained infrastructure volumes can be reused safely on the next prepare.
+# V3 原型闭环演示（3–5 分钟）
+
+1. 新建 `arcade_collect` 项目，在创作台填写时长、难度、视觉主题和创意并提交。
+2. 运行成功后打开“原型版本与调参”，说明版本 1 的配置摘要和 Runtime capability 不可变。
+3. 在桌面或手机视口试玩；展示按版本统计的样本数、通关率、耗时、得分和受击。
+4. 修改一个白名单参数创建版本 2，并用版本对比证明版本 1 未被覆盖。
+5. 版本 2 达到 5 个结束样本后生成平衡建议，指出建议绑定的版本、配置摘要和聚合快照。
+6. 点击“导出离线原型包”，解压后断网打开 `demo/index.html`；展示 `manifest.json`、设计、任务、GameConfig、资源、试玩摘要与建议。
+
+不要把第二模板、云发布、生产容量或模型质量说成 V3 能力。录屏前清理浏览器地址栏、终端环境变量与任何个人 Provider 凭据。

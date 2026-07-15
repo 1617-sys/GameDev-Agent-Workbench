@@ -11,7 +11,8 @@
     "test:runtime-smoke": "playwright test tests/runtime.browser.e2e.js",
     "test:unit": "node --test tests/*.test.js",
     "test:runtime": "playwright test tests/runtime.browser.e2e.js",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:main": "playwright test --config playwright.v3.config.js"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
