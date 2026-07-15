@@ -144,7 +144,33 @@ test("V3 main chain generates, tunes, evaluates and exports a self-contained pac
   expect(archive.subarray(0, 4).toString("hex")).toBe("504b0304");
   expect(crypto.createHash("sha256").update(archive).digest("hex")).toBe(exportJob.packageDigest);
 
-  const packageFiles = unzip(archive);
+  await page.addInitScript(({ token }) => sessionStorage.setItem("gameflow.session", token), { token });
+  await page.goto(`/projects/${project.projectUuid}/versions`);
+  await expect(page.getByRole("heading", { name: "原型版本与调参" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /版本 2/ })).toBeVisible();
+  await expect(page.locator(".game-canvas")).toHaveAttribute("data-runtime-ready", "true", { timeout: 20_000 });
+  await expect(page.getByText("结束样本").locator("..")).toContainText("5");
+  await page.getByRole("button", { name: "生成 AI 平衡建议" }).click();
+  await expect(page.locator(".version-summary .alert")).toContainText("AI_BALANCE_EVALUATION", { timeout: 30_000 });
+
+  const browserDownload = page.waitForEvent("download");
+  await page.getByRole("button", { name: "导出离线原型包" }).click();
+  const exportedFile = await browserDownload;
+  await expect(page.getByText(/导出完成/)).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新下载原型包" })).toBeEnabled();
+  expect(exportedFile.suggestedFilename()).toMatch(/^prototype-v2-.*\.zip$/);
+  const downloadedPath = await exportedFile.path();
+  expect(downloadedPath).toBeTruthy();
+  const browserArchive = await fs.readFile(downloadedPath);
+  expect(browserArchive.subarray(0, 4).toString("hex")).toBe("504b0304");
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await expect(page.getByRole("heading", { name: "原型版本与调参" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "重新下载原型包" })).toBeVisible();
+  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+  expect(overflow).toBeLessThanOrEqual(0);
+
+  const packageFiles = unzip(browserArchive);
   expect([...packageFiles.keys()]).toEqual(expect.arrayContaining(["demo/index.html", "demo/game-config.js", "demo/runtime.js", "manifest.json"]));
   const offlineRoot = await fs.mkdtemp(path.join(os.tmpdir(), "v3-prototype-"));
   try {
@@ -161,16 +187,4 @@ test("V3 main chain generates, tunes, evaluates and exports a self-contained pac
   } finally {
     await fs.rm(offlineRoot, { recursive: true, force: true });
   }
-
-  await page.addInitScript(({ token }) => sessionStorage.setItem("gameflow.session", token), { token });
-  await page.goto(`/projects/${project.projectUuid}/versions`);
-  await expect(page.getByRole("heading", { name: "原型版本与调参" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /版本 2/ })).toBeVisible();
-  await expect(page.locator(".game-canvas")).toHaveAttribute("data-runtime-ready", "true", { timeout: 20_000 });
-  await expect(page.getByText("结束样本").locator(".." )).toContainText("5");
-
-  await page.setViewportSize({ width: 375, height: 812 });
-  await expect(page.getByRole("heading", { name: "原型版本与调参" })).toBeVisible();
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
-  expect(overflow).toBeLessThanOrEqual(0);
 });

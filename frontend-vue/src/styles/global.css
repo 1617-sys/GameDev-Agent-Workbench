@@ -47,7 +47,7 @@ h1, h2, h3, strong { letter-spacing: 0; }
 .icon-button:hover { background: rgba(103, 117, 142, .12); }
 
 .overline { color: var(--primary); font-size: 12px; font-weight: 800; letter-spacing: .08em; margin-bottom: 8px; }
-.page-stack { display: grid; gap: 24px; max-width: 1440px; margin: 0 auto; }
+.page-stack { display: grid; gap: 24px; max-width: 1440px; min-width: 0; margin: 0 auto; }
 .page-heading h1 { font-size: 30px; line-height: 1.2; margin-bottom: 8px; }
 .page-heading h2 { font-size: 26px; margin-bottom: 8px; }
 .page-heading p:not(.overline) { color: var(--muted); margin-bottom: 0; }
@@ -227,7 +227,8 @@ h1, h2, h3, strong { letter-spacing: 0; }
 .version-card > span { align-items: center; display: flex; justify-content: space-between; }.version-card > span small { color: var(--primary); }
 .version-card > small { color: var(--muted); }
 .version-main { display: grid; gap: 22px; min-width: 0; }
-.version-summary, .tuning-panel, .compare-panel { background: white; border: 1px solid var(--line); border-radius: 8px; padding: 22px; }
+.version-summary, .tuning-panel, .compare-panel { background: white; border: 1px solid var(--line); border-radius: 8px; min-width: 0; padding: 22px; }
+.version-summary .alert, .version-summary .resource-warning { min-width: 0; overflow-wrap: anywhere; }
 .version-summary > header { align-items: flex-start; display: flex; justify-content: space-between; }.version-summary h2 { margin: 0; }
 .version-parameters { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); margin: 22px 0; }
 .version-parameters > div { background: #f7f8fa; border-radius: 6px; display: grid; gap: 5px; padding: 12px; }.version-parameters dt { color: var(--muted); font-size: 11px; }.version-parameters dd { font-weight: 800; margin: 0; }
@@ -265,7 +266,7 @@ h1, h2, h3, strong { letter-spacing: 0; }
   .project-row { grid-template-columns: minmax(0, 1fr) auto; padding: 16px; }
   .project-row > span, .project-row > time { display: none; }
   .studio-layout { grid-template-columns: 1fr; }
-  .prototype-layout { grid-template-columns: 1fr; }.version-sidebar { display: flex; overflow-x: auto; }.version-card { flex: 0 0 190px; }
+  .prototype-layout { grid-template-columns: minmax(0, 1fr); }.version-sidebar { display: flex; max-width: 100%; overflow-x: auto; }.version-card { flex: 0 0 190px; }
   .studio-aside { grid-template-columns: 1fr 1fr; }
   .game-stage { grid-template-columns: 1fr; }.game-hud { grid-template-columns: 1fr; }.game-hud > span, .game-hud > .hud-message, .game-hud > .runtime-actions, .game-hud > .resource-warning { grid-column: 1 / -1; }
 }

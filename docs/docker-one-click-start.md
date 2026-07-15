@@ -114,3 +114,24 @@ npm run test:e2e:main
 ```
 
 该命令连接 `http://127.0.0.1:5173` 与 `http://127.0.0.1:8080`，真实执行 Brief、AI 生成、两个不可变版本、试玩聚合、平衡建议和 ZIP 导出。等待使用持久化 WorkflowRun 状态轮询，不用固定长 sleep。若端口被覆盖，可设置 `E2E_FRONTEND_BASE_URL` 和 `E2E_API_BASE_URL`。
+
+## 前端单独升级与回滚
+
+升级前保留当前前端镜像标签，然后只构建和替换前端服务：
+
+```powershell
+docker image tag gamedevagentworkbench-frontend-vue:latest gamedevagentworkbench-frontend-vue:rollback
+docker compose build frontend-vue
+docker compose up -d --no-deps frontend-vue
+docker compose ps frontend-vue
+```
+
+若新前端验收失败，可恢复保留的镜像；该操作不会降级 Flyway V32，也不会触碰数据库 volume：
+
+```powershell
+docker image tag gamedevagentworkbench-frontend-vue:rollback gamedevagentworkbench-frontend-vue:latest
+docker compose up -d --no-deps --no-build --force-recreate frontend-vue
+docker compose ps frontend-vue
+```
+
+如果镜像标签已不可用，则在独立 Git worktree 检出上一个已验收提交并重新构建前端，避免覆盖当前工作区。回滚后重新执行 `npm run test:e2e:main`；不得为前端回滚执行 `docker compose down -v` 或数据库 migration 降级。

@@ -41,9 +41,10 @@
             <div><dt>平均受击</dt><dd>{{ decimal(metrics.averageHitCount) }}</dd></div><div><dt>失败</dt><dd>{{ failureTotal(metrics) }}</dd></div>
           </dl>
           <button class="button ghost" type="button" :disabled="!metrics?.sufficientForAi || suggesting" @click="requestSuggestion">{{ suggesting ? "正在评测…" : "生成 AI 平衡建议" }}</button>
-          <button class="button primary" type="button" :disabled="exporting || !suggestion" @click="exportPackage">{{ exporting ? "正在组装…" : "导出离线原型包" }}</button>
+          <button class="button primary" type="button" :disabled="exporting || !suggestion" @click="exportPackage">{{ exportButtonLabel }}</button>
           <button v-if="exportJob?.status === 'FAILED'" class="button ghost" type="button" :disabled="exporting" @click="retryExport">重试同一冻结输入</button>
-          <p v-if="exportJob" class="resource-warning">导出 {{ exportJob.status }} · 尝试 {{ exportJob.attemptCount }} · {{ exportJob.packageDigest || exportJob.errorCode || "等待生成" }}</p>
+          <p v-if="exportJob" class="resource-warning">{{ exportStatusText }}</p>
+          <p v-else-if="!suggestion" class="resource-warning">生成当前版本的平衡建议后可导出离线原型包。</p>
           <p v-if="metrics && !metrics.sufficientForAi" class="resource-warning">至少需要 5 个已结束会话，当前建议不会夸大少量样本。</p>
           <p v-if="suggestion" class="alert"><strong>{{ suggestion.source }}</strong> · 样本 {{ suggestion.sampleSize }}：{{ suggestion.recommendation }}</p>
         </section>
@@ -88,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from "vue";
 import { useRoute } from "vue-router";
 import { AlertCircle, ArrowLeft, GitCompareArrows, Layers3, LoaderCircle, Play, RefreshCw, Save, SlidersHorizontal } from "@lucide/vue";
 import { prototypesApi } from "../../shared/api/prototypes";
@@ -96,13 +97,15 @@ import { telemetryApi } from "../../shared/api/telemetry";
 import { exportsApi, saveExport } from "../../shared/api/exports";
 import { createIdempotencyKey } from "../../shared/presentation/submission";
 import { sha256Hex, validateGameConfig } from "../demo/runtime/gameConfig";
+import { formatPackageSize, waitForExportTerminal } from "./exportState";
 import GamePreview from "../demo/GamePreview.vue";
 
 const route = useRoute();
 const projectUuid = computed(() => String(route.params.projectUuid));
 const versions = ref([]); const selected = ref(null); const loading = ref(false); const saving = ref(false); const comparing = ref(false);
 const metrics = ref(null); const metricComparison = ref(null); const suggestion = ref(null); const suggesting = ref(false);
-const exportJob=ref(null); const exporting=ref(false);
+const exportJob = ref(null); const exportActivity = ref("IDLE");
+let exportEpoch = 0; let exportController = null;
 const error = ref(""); const tab = ref("play"); const comparison = ref(null); const compareLeft = ref(""); const compareRight = ref("");
 const tuning = reactive({ timeLimitSeconds: 90, playerSpeed: 220, playerMaxHealth: 3, targetCollectibles: 1, enemyCount: 0, enemySpeeds: {} });
 const selectedConfig = computed(() => {
@@ -111,8 +114,18 @@ const selectedConfig = computed(() => {
     && sha256Hex(selected.value.gameConfig) === selected.value.configDigest ? result.config : null;
 });
 const enemyEntries = computed(() => Object.entries(selected.value?.parameters?.enemySpeeds || {}).map(([id, speed]) => ({ id, speed })));
+const exporting = computed(() => exportActivity.value !== "IDLE");
+const exportButtonLabel = computed(() => ({ CREATING: "正在创建…", POLLING: "正在组装…", DOWNLOADING: "正在下载…", RETRYING: "正在重试…" })[exportActivity.value]
+  || (exportJob.value?.status === "COMPLETED" ? "重新下载原型包" : "导出离线原型包"));
+const exportStatusText = computed(() => {
+  const job = exportJob.value; if (!job) return "";
+  if (job.status === "FAILED") return `导出失败 · 尝试 ${job.attemptCount} · ${exportErrorLabel(job.errorCode)}`;
+  if (job.status === "PENDING") return `导出处理中 · 尝试 ${job.attemptCount}`;
+  return `导出完成 · ${formatPackageSize(job.packageSize)} · SHA-256 ${job.packageDigest}`;
+});
 
 onMounted(loadVersions);
+onBeforeUnmount(cancelExportFlow);
 async function loadVersions() {
   loading.value = true; error.value = "";
   try {
@@ -124,6 +137,7 @@ async function loadVersions() {
   finally { loading.value = false; }
 }
 async function selectVersion(uuid) {
+  cancelExportFlow();
   try { selected.value = await prototypesApi.get(projectUuid.value, uuid); metrics.value = await telemetryApi.metrics(projectUuid.value, uuid); suggestion.value=null; exportJob.value=null; resetTuning(); }
   catch (cause) { error.value = cause.message || "无法读取版本详情"; }
 }
@@ -152,7 +166,56 @@ function formatTime(value) { return value ? new Intl.DateTimeFormat("zh-CN", { m
 function parameterLabel(key) { return ({ timeLimitSeconds: "时限", playerSpeed: "玩家速度", playerMaxHealth: "生命", targetCollectibles: "收集目标", enemyCount: "敌人数", enemySpeeds: "敌人速度" })[key] || key; }
 function displayValue(value) { return typeof value === "object" ? JSON.stringify(value) : String(value ?? "--"); }
 async function requestSuggestion(){suggesting.value=true;error.value="";try{suggestion.value=await telemetryApi.suggest(projectUuid.value,selected.value.versionUuid,createIdempotencyKey());}catch(cause){error.value=cause.message||"平衡评测失败";}finally{suggesting.value=false;}}
-async function exportPackage(){exporting.value=true;error.value="";try{exportJob.value=await exportsApi.create(projectUuid.value,selected.value.versionUuid,createIdempotencyKey());if(exportJob.value.status==="COMPLETED")saveExport(await exportsApi.download(projectUuid.value,exportJob.value.jobUuid));}catch(cause){error.value=cause.message||"原型包导出失败";}finally{exporting.value=false;}}
-async function retryExport(){exporting.value=true;error.value="";try{exportJob.value=await exportsApi.retry(projectUuid.value,exportJob.value.jobUuid);if(exportJob.value.status==="COMPLETED")saveExport(await exportsApi.download(projectUuid.value,exportJob.value.jobUuid));}catch(cause){error.value=cause.message||"导出重试失败";}finally{exporting.value=false;}}
+async function exportPackage() {
+  if (exporting.value || !selected.value) return;
+  if (exportJob.value?.status === "COMPLETED") { await downloadExport(exportJob.value); return; }
+  await runExport(
+    () => exportsApi.create(projectUuid.value, selected.value.versionUuid, createIdempotencyKey()),
+    "CREATING"
+  );
+}
+async function retryExport() {
+  if (exporting.value || exportJob.value?.status !== "FAILED") return;
+  await runExport(() => exportsApi.retry(projectUuid.value, exportJob.value.jobUuid), "RETRYING");
+}
+async function runExport(start, activity) {
+  cancelExportFlow(false);
+  const epoch = exportEpoch; const versionUuid = selected.value.versionUuid;
+  exportController = new AbortController(); exportActivity.value = activity; error.value = "";
+  try {
+    let job = await start();
+    if (!isCurrentExport(epoch, versionUuid)) return;
+    exportJob.value = job;
+    if (job.status === "PENDING") exportActivity.value = "POLLING";
+    job = await waitForExportTerminal(job, {
+      signal: exportController.signal,
+      load: (jobUuid) => exportsApi.get(projectUuid.value, jobUuid)
+    });
+    if (!isCurrentExport(epoch, versionUuid)) return;
+    exportJob.value = job;
+    if (job.status === "COMPLETED") await downloadExport(job, epoch, versionUuid);
+  } catch (cause) {
+    if (cause.name !== "AbortError" && isCurrentExport(epoch, versionUuid)) error.value = cause.message || "原型包导出失败";
+  } finally {
+    if (isCurrentExport(epoch, versionUuid)) exportActivity.value = "IDLE";
+  }
+}
+async function downloadExport(job, epoch = exportEpoch, versionUuid = selected.value?.versionUuid) {
+  exportActivity.value = "DOWNLOADING"; error.value = "";
+  try {
+    const file = await exportsApi.download(projectUuid.value, job.jobUuid, job.packageName);
+    if (isCurrentExport(epoch, versionUuid)) saveExport(file);
+  } catch (cause) {
+    if (isCurrentExport(epoch, versionUuid)) error.value = cause.message || "原型包下载失败";
+  } finally {
+    if (isCurrentExport(epoch, versionUuid)) exportActivity.value = "IDLE";
+  }
+}
+function cancelExportFlow(resetActivity = true) {
+  exportEpoch += 1; exportController?.abort(); exportController = null;
+  if (resetActivity) exportActivity.value = "IDLE";
+}
+function isCurrentExport(epoch, versionUuid) { return epoch === exportEpoch && selected.value?.versionUuid === versionUuid; }
+function exportErrorLabel(code) { return ({ EXPORT_INPUT_INCOMPLETE: "导出输入不完整", EXPORT_SECURITY_REJECTED: "安全校验未通过", EXPORT_RETRY_EXHAUSTED: "重试次数已耗尽", EXPORT_BUILD_FAILED: "原型包组装失败" })[code] || code || "未知错误"; }
 function percent(value){return `${Math.round(Number(value||0)*100)}%`;} function duration(value){return `${Math.round(Number(value||0)/1000)} 秒`;} function decimal(value){return Number(value||0).toFixed(1);} function failureTotal(value){return Object.values(value?.failures||{}).reduce((sum,n)=>sum+Number(n||0),0);}
 </script>
