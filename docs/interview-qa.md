@@ -1,111 +1,91 @@
 # 面试问答：GameDev Agent Workbench
 
-回答原则：先说业务问题，再说取舍、失败边界和证据。凡是当前报告为 `BLOCKED` 的内容，不回答成“已经在生产验证”。
+回答原则：先说真实业务问题，再说设计取舍、失败边界和证据。不要用“多 Agent、RAG、分布式”等名词替代具体实现。
 
-## 1. 这个项目不是普通模型调用 Demo 的地方在哪里？
+## 1. 这个项目到底做什么？
 
-它把模型调用放进了用户/项目权限、版本化工作流、异步消息、持久化状态、RAG 来源、评测门禁和可恢复 UI 中。模型输出只是 `AgentRun` 的一部分；最终还要关联 Step、Metric、RetrievalRecord、EvaluationReport 和 Artifact。架构见[系统架构](architecture/system-architecture.md)，领域和 Runner 证据见[R1](reports/R1-workflow-domain-report.md)、[R2](reports/R2-workflow-runner-report.md)。
+它是面向单一 `arcade_collect` 玩法的 LLM 可玩原型与平衡实验平台。用户提交 Brief，系统通过固定四步 LLM Workflow 生成概念、核心循环、任务和 GameConfig；配置通过契约门禁后进入固定 Phaser Runtime，并形成不可变版本、试玩遥测、平衡建议、版本比较和离线导出。
 
-反面边界：当前 R7 主链路被 `50302` 阻断，所以不能声称整个异步闭环已经通过发布验收。
+它不是通用游戏代码生成器。当前可变的是受白名单约束的地图、实体、数值和表现参数，不是任意游戏机制。
 
-## 2. 为什么业务状态放 Java，Agent 放 Python？
+## 2. 为什么它不只是一个模型调用 Demo？
 
-Java 侧需要稳定处理鉴权、事务、状态机、幂等、Outbox、查询和审计；Python 侧更适合维护模型 SDK、Pydantic 输入输出和 RAG 上下文。跨服务协议让“业务成功”与“模型响应”分开：Python 返回显式 status/mock/RAG provenance，Java 决定是否写 Metric、Evaluation 和 Artifact。
+模型输出只是一段中间事实。系统还处理用户/项目权限、幂等提交、Outbox、消息消费、Step 状态、Prompt/输入快照、Schema/Rule 门禁、Artifact、不可变版本、遥测复算、SSE 恢复和确定性导出。
 
-没有把状态也放 Python，是为了避免两个服务同时成为 WorkflowRun 的事实源。代码入口是[`PythonAgentClient.java`](../backend-java/src/main/java/com/example/gameworkbench/client/PythonAgentClient.java)和[`python-agent/app`](../python-agent/app)。
+真正亮点是把不确定模型调用纳入可恢复、可追溯、可验证的业务链路，而不是调用了多少个模型。
 
-## 3. 一次异步提交如何保证短事务和幂等？
+## 3. 为什么 Java 管状态，Python 管模型？
 
-`POST /api/v1/projects/{projectUuid}/workflow-runs` 要求 `Idempotency-Key`。提交事务内创建 WorkflowRun 和 Outbox intent，模型调用不在 HTTP 事务内；重复键应读取同一业务事实。之后 Outbox Publisher 通过 RabbitMQ confirm 更新投递结果。
+Java 负责鉴权、事务、状态机、幂等、消息、查询和审计，作为 WorkflowRun 的唯一事实源；Python 负责 Prompt 渲染、模型 Provider、RAG 上下文和输出解析。这样模型响应和业务成功不会混为一谈。
 
-为什么不用“HTTP 请求里直接跑完”：模型延迟和失败会占用连接，客户端重试还会扩大重复执行窗口。实现入口见[`AsyncWorkflowSubmissionServiceImpl.java`](../backend-java/src/main/java/com/example/gameworkbench/service/impl/AsyncWorkflowSubmissionServiceImpl.java)和[`OutboxPublisher.java`](../backend-java/src/main/java/com/example/gameworkbench/service/impl/OutboxPublisher.java)。当前 R7 的 Redis gate 缺陷发生在创建 durable run 之前，已如实记录在[E2E 报告](reports/R7-main-workflow-e2e-report.md)。
+跨服务协议仍需改进：Java→Python 客户端应补连接池、connect/read timeout、有限重试与熔断；Python 需要 structured output、JSON repair/retry、token/cost 回传和真实 provider contract test。
 
-## 4. 为什么既需要数据库幂等，也需要 Redis 锁？
+## 4. RabbitMQ + Outbox 解决了什么？
 
-数据库唯一约束/状态版本保护“最终只能有一个有效业务事实”；Redis 锁保护高成本执行窗口，减少并发模型调用。两者不能互相替代：锁会过期或暂时不可用，数据库才是 durable correctness；数据库唯一约束也不能阻止两个 worker 在提交前同时发起昂贵外部调用。
+提交事务只写 WorkflowRun 和 Outbox intent，不跨越耗时模型 I/O。Publisher confirm 后投递，Consumer 通过持久化 claim、attempt 和终态判断处理重复消息；成功事实落库后才 ACK。
 
-失败策略是 fail-closed、owner token 原子释放，错误 owner 不得删除其他锁。相关验证见[R0 报告](reports/R0-baseline-report.md)和[R7 故障报告](reports/R7-fault-injection-recovery-report.md)。
+这提供的是 at-least-once 投递下的业务幂等，不是 exactly-once。Redis 锁减少昂贵重复调用，数据库约束和状态版本才是正确性底线。需要能解释 publish confirm 成功但 DB 更新失败、Consumer 重入和 Artifact 去重等失败窗口。
 
-## 5. RabbitMQ 重复投递时怎样避免重复成功？
+## 5. SSE 为什么不能作为事实源？
 
-Consumer 先取得持久化 execution claim，再执行冻结工作流；成功 Step、AgentRun、Metric 和 Artifact 通过持久化关联判断，不只看消息是否重复。落库后重复投递应读取终态并 ACK；落库前失败则不应提前 ACK。
+SSE 只负责低延迟通知。服务端快照、持久化 sequence 和 allowedActions 才是事实；客户端忽略重复/旧事件，发现序号缺口就重新拉快照。浏览器断线不会取消后台工作流。
 
-为什么不用“收到即 ACK”：进程在业务提交前崩溃会静默丢任务。为什么不用“永不 ACK”：会制造无限重投。设计入口见[`WorkflowMessageConsumer.java`](../backend-java/src/main/java/com/example/gameworkbench/messaging/WorkflowMessageConsumer.java)。完整重复投递 gate 当前尚未跑通，不能回答成已通过压力验证。
+## 6. 为什么模型输出不能直接运行？
 
-## 6. MySQL 中哪些事实必须一起写？
+模型只能生成 GameConfig 数据，不能生成并执行 JavaScript、HTML 或远程资源。配置先经过结构、字段白名单、数值边界、资源 manifest、业务规则和 Runtime capability 校验，成功后才创建可玩 Artifact/PrototypeVersion。
 
-提交阶段的 WorkflowRun 与 Outbox intent 必须在同一短事务；执行阶段按 Step 边界持久化状态、Agent 关联、Metric/Evaluation/Artifact，避免跨模型 I/O 的长事务。WorkflowRun 还冻结 definition 和 PromptVersion 标识，保证历史可解释。
+这样牺牲通用性，换取安全、确定性和可复现性。
 
-为什么不用跨 Java/Python/MQ 的分布式事务：成本和耦合过高，而且外部模型本身无法参与数据库原子提交；这里选择本地事务、Outbox、幂等 Consumer 与恢复扫描。迁移见[`db/migration`](../backend-java/src/main/resources/db/migration)。
+## 7. RAG 当前到底实现到了什么程度？
 
-## 7. 服务重启后如何恢复？
+已实现：项目级文档/Chunk 生命周期、项目隔离、RAG-on/off/empty/unavailable/mock 状态、候选上下文协议、`used_references` 回传，以及 RetrievalRecord 对 document/chunk/version/rank/score 的持久化 provenance。
 
-恢复扫描按持久化状态、heartbeat、attempt 和 audit 判断哪些 Run 可以重新排队，不能把未知状态直接改为成功。Outbox 保留 publish attempt，Consumer 通过 durable claim/终态判断是否继续。运维人员先恢复依赖，再使用 Run/Step/Outbox/Audit 查询，不手工篡改终态。
+未实现：真实语义质量。当前 `FakeEmbeddingProvider` 只是 8 维字符哈希；`InMemoryVectorStore` 不计算余弦相似度，命中 score 统一为 1，且进程重启丢失。因此它只能称 RAG 协议和检索证据桩，不能称生产级向量检索。
 
-实现见[`WorkflowRecoveryService.java`](../backend-java/src/main/java/com/example/gameworkbench/service/impl/WorkflowRecoveryService.java)，操作边界见[Operations Runbook](operations-runbook.md)。当前故障报告指出 Python retry 拓扑与 MySQL 瞬断仍缺完整验证。
+## 8. 准备如何证明 RAG 确实有价值？
 
-## 8. SSE 为什么不能代替持久化事件？
+先替换为真实 embedding 和持久向量后端，再建立 30～100 条固定样本，标注期望 chunk 和生成约束。检索侧报告 Recall@K、MRR/nDCG、空检索率和跨项目错误命中；生成侧同条件比较 RAG-on/off 的约束满足率、Schema/Rule 通过率、人工或 judge 分数、延迟、token 和成本。
 
-SSE 是展示通道，不是事实源。服务端先返回 snapshot，再按持久化 sequence 回放事件；客户端用 `Last-Event-ID` 和本地 sequence 去重，发现缺口则重新拉 snapshot。浏览器断线不改变后端执行。
+所有 cohort 必须固定 PromptVersion、provider/model、文档快照和检索版本。没有这个实验，不宣称 RAG 提升质量。
 
-为什么不用轮询：轮询难以表达顺序和低延迟增量；为什么不只用内存 emitter：刷新或服务重启会丢历史。证据见[R4 报告](reports/R4-run-center-report.md)。
+## 9. 如何防止知识文档 Prompt Injection？
 
-## 9. RAG 引用如何证明是“实际使用”而不是重新检索出来的装饰？
+检索内容必须明确标记为不可信参考，不能覆盖系统约束，也不能进入 SQL、模板或代码执行路径。GameConfig 最终仍经过 Java 权威门禁。升级真实 RAG 时还需加入文档来源策略、内容扫描、引用允许列表和针对指令注入的固定攻击样本。
 
-Java 在调用前生成带 project/document/version/rank/score 的有界候选；Python 成功响应返回 `used_references`；Java 只把这组实际引用写入 RetrievalRecord。Run 详情读取持久化记录，不在展示时重新检索。
+## 10. 为什么不继续增加多个 Runtime？
 
-RAG-off、空候选、检索不可用和 mock 分开持久化。证据见[R6 报告](reports/R6-rag-knowledge-report.md)和[`RagEvidenceController.java`](../backend-java/src/main/java/com/example/gameworkbench/controller/RagEvidenceController.java)。
+每增加一个玩法都要扩展 Schema、生成 Prompt、Runtime、遥测语义、调参白名单和测试矩阵。当前用户价值最薄弱的地方不是模板数量，而是外部试玩、数据解释和建议验证。
 
-## 10. 如何避免检索内容注入系统指令？
+因此下一阶段优先把单玩法做深：公开分享 token、匿名遥测、样本进度、建议依据、一键派生候选和 A/B 对比。只有这条链路稳定后，第二 Runtime 才能证明扩展架构，而不是复制半成品。
 
-检索文本被标成不可信参考材料，受 topK、分数和字符预算约束；它只进入普通数据字段，不能覆盖系统约束，也不作为 SQL、模板或代码执行。前端按文本转义显示，GameConfig 只接受 JSON 对象契约。
+## 11. 当前最严重的工程债是什么？
 
-当前限制是 PDF 解析、索引 job 恢复和生产向量实现未达发布契约，见[R6 阻断项](reports/R6-rag-knowledge-report.md#阻断项与已知风险)。
+按优先级：
 
-## 11. 为什么评测分 Schema、Rule、Runtime 三层？
+1. fake/in-memory RAG 容易造成能力名实不符；
+2. 源码乱码和单行压缩类损害可维护性；
+3. Java→Python 外部调用缺少完整 timeout/连接池/熔断边界；
+4. 缺少统一 CI、lint、coverage 和依赖锁；
+5. 新旧同步/异步 API 双轨增加认知和维护成本；
+6. 公开 Demo 无法让外部测试者回传匿名遥测；
+7. Phaser chunk 体积较大，完整 Compose E2E 不在默认测试中持续证明。
 
-Schema 回答“结构是否可解析”，Rule 回答“业务语义是否满足约束”，Runtime 回答“浏览器是否真的能启动并达到 readiness”。只做 JSON Schema 会漏掉坐标/规则冲突，只做浏览器 smoke 又难定位结构错误。
+继续增加表或中间件不能修复这些问题。
 
-Artifact eligibility 不能因为模型返回 JSON 就自动为真。当前 Schema/Rule 已有持久化路径，但浏览器 Runtime 证据回写仍不完整，因此 R5 保持 BLOCKED。见[R5 报告](reports/R5-prompt-evaluation-metrics-report.md)。
+## 12. AI 在项目里做了什么，你承担什么责任？
 
-## 12. mock 指标为什么不能和真实 Provider 混算？
+AI 可以辅助代码检索、候选设计、实现、测试和文档整理；个人责任应按真实参与说明，包括需求拆解、边界决策、状态机/事务/权限审查、diff 审查、验证执行、失败归属和最终提交。
 
-mock 延迟、token 和成本不代表外部模型，混算会制造错误的质量/容量结论。AgentRun 和 Metric 保存 mock provenance，analytics 默认排除 mock；RAG 对照还要求 Prompt、Provider/model、文档快照和检索版本一致。
+“AI 辅助”不等于项目没有个人价值；真正需要证明的是你能否解释设计、发现错误、拒绝超范围实现并用测试验证结论。
 
-当前没有可发布的真实性能 P95 或模型效果数据；[性能报告](reports/R7-concurrency-performance-baseline-report.md)在 preflight 阶段即 BLOCKED。
+## 13. 当前测试能证明什么，不能证明什么？
 
-## 13. 可观测性如何控制高基数与敏感信息？
+本地验证中 Java 182 项测试通过、Python 21 项通过、前端 32 项单测与生产构建通过。它们能证明大量合同和组件逻辑具有回归保护。
 
-trace/run/step/agent/message ID 放日志上下文用于关联，不作为 metrics 标签；metrics 只使用 allow-list 的低基数标签。日志记录类型、长度、状态和安全错误码，不记录完整 Prompt、文档正文或 Provider 原始响应。health、readiness 和 Prometheus 暴露分别控制。
+它们不能自动证明真实 LLM 质量、完整 Docker 依赖链、生产吞吐或线上 SLA。本次 Review 环境 Docker daemon 未运行，因此没有重跑 Compose E2E；V3 历史发布验收必须附当时环境限定阅读。
 
-Compose drill 的健康、trace 传播、低基数与危险管理端点检查通过，但成功/失败/恢复 Run 关联因 R3 阻断未完成。见[R7 可观测报告](reports/R7-observability-operations-report.md)。
+## 14. 下一阶段的完成定义是什么？
 
-## 14. 安全边界最容易被忽略的地方是什么？
+用户能把某个冻结版本分享给外部测试者；匿名会话安全回传；系统展示样本量和关键漏斗；建议说明证据与不确定性；用户一键派生 DRAFT 候选并进行 A/B 对比。同时 RAG 使用持久化真实向量检索，并有固定数据集证明检索质量和 RAG-on/off 影响。
 
-不仅是登录接口，还包括 SSE 订阅、取消/重试、Artifact UUID、Metric、Document、Vector metadata、RetrievalRecord 和上传存储路径。服务间也需要认证，生产 profile 必须关闭 Demo/Swagger 等开发能力。
-
-R7-06 修复了 Redis 反序列化 allow-list、Java-Python 内部认证、前端依赖补丁和 Java 生产端点关闭；但 Docker 双用户集成、完整 CVE/image scan 与 Python 生产 mock 关闭仍 BLOCKED。见[安全审计](reports/R7-security-release-audit.md)。
-
-## 15. 你如何验证，而不是只说“代码看起来正确”？
-
-先固定任务契约和非目标，再分层运行 unit、browser、Compose/Testcontainers、性能、fault、observability、security、demo Harness。每次记录候选 SHA、退出码、环境资格、关联 ID 和脱敏证据；环境 skip 不算通过，失败证据不覆盖。
-
-快速入口是 `.\tools\verify.ps1 -Profile quick`，完整导航见[报告索引](reports/README.md)。最重要的例子是 R7 没有用单元测试通过来掩盖 `50302`：所有依赖该链路的报告仍为 BLOCKED。
-
-## 16. AI 在项目里做了什么，你审查了什么？
-
-可按实际参与说明：人负责定义契约、业务边界、风险接受和最终提交；AI 辅助代码检索、候选实现、测试生成、报告整理和 diff 检查。审查重点是修改范围、状态机/事务、权限隔离、失败路径、敏感信息、测试是否真实执行，以及文案是否超出证据。
-
-为什么不说“全部纯手写”：这会隐藏真实协作过程。为什么也不说“AI 自动完成”：最终责任仍属于提交者。项目规范见[AI 协作开发规范](AI_COLLABORATION.md)。
-
-## 17. 当前最优先修什么，为什么？
-
-先回到 R3 修复 Redis rate-limit/Lua 提交门，并补真实 Docker 集成回归。它发生在 durable WorkflowRun 创建之前，阻断 E2E、性能、RabbitMQ/Python 故障、可观测关联和 Demo。之后按报告顺序补 R5 Runtime/Prompt 生命周期、R6 PDF/索引恢复、R7 安全扫描与全 gate 重跑。
-
-不应该先优化 UI 或包装性能数字，因为那不能解锁核心证据链。
-
-## 18. 如果面试官问“为什么不用现成工作流平台/向量数据库”？
-
-当前目标是展示状态、幂等、证据与边界如何落到业务代码；固定四步工作流和进程内 fake vector 足以做确定性开发验证。引入大型工作流平台或真实向量服务会增加运维变量，不能自动解决项目隔离、引用 provenance 或评测口径。
-
-但这不是否定它们：当需要跨主机调度、长周期补偿、持久化向量容量或真实语义检索时，应以接口和报告为基线替换实现，并重新跑隔离、恢复、质量与成本 gate。
+详细工作包见[B 路线与 RAG 升级路线图](roadmap-balance-lab-rag.md)。

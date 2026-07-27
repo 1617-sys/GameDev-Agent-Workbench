@@ -1,61 +1,74 @@
 # 3–5 分钟项目讲解提纲
 
-## 0:00–0:35：问题与目标
+## 0:00–0:35：一句话定位
 
-“这是一个 AI 游戏工作流工程，不是单次模型调用页面。我要解决的是：重复提交怎样不重复执行、模型输出怎样形成可追溯产物、RAG 引用怎样证明实际使用、浏览器断线怎样恢复、失败怎样留下证据。”
+“这是一个面向单一 `arcade_collect` 玩法的 LLM 可玩原型与平衡实验平台。它不生成任意游戏代码，而是把 Brief 编译成严格 GameConfig，通过固定 Phaser Runtime 试玩，再把版本、遥测、建议和导出串成可审计闭环。”
 
-打开根 [README](../README.md) 第一屏，说明 V3 单机原型闭环已经通过发布验收，同时明确它不是生产高可用或容量承诺。
+主动说明边界：当前是固定四步 LLM Workflow，不是自主多 Agent；RAG 的协议和引用证据存在，但语义检索实现仍是 fake/in-memory 基线。
 
-## 0:35–1:20：架构与主链路
+## 0:35–1:15：用户闭环
 
-打开[架构图](architecture/system-architecture.md)：
+演示以下主线：
 
-- Vue 负责提交、Run Center、SSE、知识证据和 Phaser。
-- Java 是事实源，负责 JWT/项目归属、短事务、Outbox、Consumer、Runner、评测与查询。
-- Python 只承接 Agent/RAG 协议和显式 mock/Provider 调用。
-- MySQL 保存 durable facts，Redis 保护高成本窗口，RabbitMQ 解耦提交与执行。
+```text
+创建项目与填写 Brief
+→ 提交异步生成
+→ 查看四步运行状态
+→ 校验 GameConfig 并试玩
+→ 创建不可变调参版本
+→ 采集并由服务端复算试玩指标
+→ 生成平衡建议
+→ 比较版本并导出离线包
+```
 
-强调提交事务不跨模型 I/O，WorkflowRun 冻结定义/Prompt 版本，重复消息按持久化事实去重。
+强调最终可玩物是受白名单约束的数据，不执行模型生成的代码。当前公开 Demo 还不能让外部测试者贡献匿名遥测，这是下一阶段首先要补的产品断点。
 
-## 1:20–2:10：两个工程亮点
+## 1:15–2:05：两个最强工程亮点
 
 亮点一：**可靠执行边界**。
 
-“HTTP 只创建 Run + Outbox；publish confirm 后投递；Consumer claim 后执行；Step、Agent、Metric、Artifact 关联持久化。Redis 锁是成本保护，数据库幂等才是正确性底线。”
+“HTTP 事务只创建幂等 WorkflowRun 和 Outbox；RabbitMQ Consumer 领取执行；数据库状态和唯一约束是正确性底线，Redis 锁只保护昂贵执行窗口；失败通过分类、重试、heartbeat 和恢复审计留下证据。”
 
-亮点二：**RAG 与评测证据**。
+亮点二：**不确定输出到确定产物**。
 
-“展示层不重新检索。Python 返回实际 used references，Java 写 RetrievalRecord；RAG-off/empty/failure/mock 分开。GameConfig 要经过 Schema、Rule、Runtime 证据才能成为可玩 Artifact。”
+“每次运行冻结 Workflow、Prompt、输入和 RAG 状态。GameConfig 经过 Schema、业务规则和 Runtime capability 门禁，成功后创建不可变 PrototypeVersion。试玩事件绑定准确版本，调参永远派生子版本，导出使用冻结输入并记录摘要。”
 
-## 2:10–3:00：验证方式
+## 2:05–2:50：RAG 怎么讲才可信
 
-打开[报告索引](reports/README.md)：
+“我已经实现项目级文档生命周期、Chunk、RAG-on/off 状态、实际 `used_references` 回传和 RetrievalRecord provenance，因此能证明某次运行声明使用了哪些文档版本。但当前 embedding 是 8 维确定性 fake，进程内 vector store 不计算真实语义相似度，所以它是检索协议桩，不是生产级 RAG。”
 
-- quick 验证 Java、Python compile、Vue build 和 Compose config。
-- integration/e2e 检查真实依赖、UI、DB 与 SSE 关联。
-- performance/fault/observability/security/demo 各有独立 Harness、超时、清理和脱敏证据。
-- 环境 skip 不算发布 PASS，失败 evidence 不覆盖。
+然后说明升级路径：真实 embedding + pgvector/Qdrant、正确 PDF 提取、持久化索引任务、固定评测集，以及 RAG-on/off 的检索质量、约束满足率、延迟、token 和成本对照。
 
-可引用已通过的单元/浏览器数量，但必须附报告和环境限定；不引用不存在的性能 P95。
+不要说“RAG 已提升模型效果”，除非未来评测报告给出同条件数据。
 
-## 3:00–3:40：失败边界与诚实结论
+## 2:50–3:35：为什么不扩三个 Runtime
 
-“R7 暴露了一个共同阻断：健康 Redis 下，rate-limit/Lua 提交门仍返回 `50302`，发生在 durable Run 创建之前。因此 E2E、性能、RabbitMQ/Python 故障和 Demo 不能继续。我没有绕过 gate 或直接改数据库，而是把 R3 归属、退出码和零下游事实写进报告。”
+“当前最有价值的不是模板数量，而是版本化实验事实链。增加多个半成品 Runtime 会同时扩大 Schema、运行时、遥测和测试矩阵，却不能证明用户价值。因此下一阶段选择把单玩法做成真正的平衡实验台：公开分享试玩、匿名遥测、样本进度、建议依据、一键候选版本和 A/B 对比。”
 
-补充 R5 Runtime/Prompt 生命周期、R6 PDF/索引恢复、R7 安全扫描仍有缺口。下一步先修 R3 并重跑所有受影响 gate，而不是先包装 UI 或数字。
+这不是降低目标，而是把项目从功能展示推进到可验证实验系统。
 
-## 3:40–4:20：AI 协作与个人责任
+## 3:35–4:15：验证与诚实边界
 
-“开发采用人定义契约、AI 辅助探索/实现/测试、Harness 和人工审查裁决的方式。我负责按实际参与范围说明：需求拆解、架构取舍、AI diff 审查、事务/状态机/权限边界、失败归属、验证和文档沉淀。AI 生成不等于自动验收，最终 commit 责任仍在人。”
+可引用当前本地验证：
 
-## 可选追问入口
+- Java 182 项测试通过，1 项跳过；
+- Python 21 项测试通过；
+- 前端 32 项单测通过；
+- 前端生产构建通过，但 Phaser chunk 仍有体积警告；
+- V3 历史 Compose 主链路验收通过；本次 Review 环境因 Docker daemon 未运行，没有重跑完整 Compose E2E。
 
-- 为什么不用分布式事务？见[面试问答第 6 题](interview-qa.md#6-mysql-中哪些事实必须一起写)。
-- 重复消息如何处理？见[第 5 题](interview-qa.md#5-rabbitmq-重复投递时怎样避免重复成功)。
-- RAG 引用如何可信？见[第 9 题](interview-qa.md#9-rag-引用如何证明是实际使用而不是重新检索出来的装饰)。
-- AI 做了什么？见[第 16 题](interview-qa.md#16-ai-在项目里做了什么你审查了什么)。
-# V3 补充讲解：从可玩 Artifact 到可复现原型包
+明确区分单元测试、历史报告和本次实际运行，不把环境 skip 写成成功。
 
-V3 把原有“生成一个可玩配置”推进为可审计的小闭环：Java 对 GameConfig 2.0 做权威校验并创建不可变 PrototypeVersion；Phaser 只消费已授权的 `arcade_collect` 配置；试玩事件绑定版本，由服务端复算指标；调参创建子版本而不覆盖历史；平衡建议绑定配置摘要与聚合快照。
+## 4:15–4:45：求职落点
 
-发布端不重新调用模型，而是在首次请求时冻结版本、Artifact、资源 manifest 和试玩快照。ZIP 使用排序路径、版本创建时间、UTF-8/LF 和逐文件 SHA-256，所以同一冻结输入可复现；失败重试读取同一冻结输入，不会悄悄混入最新数据。这个设计的重点不是“多做一个下载按钮”，而是让演示、评测与交付共享同一条可追溯事实链。
+“这个项目目前最能证明的是 Java 侧可靠 LLM Workflow：幂等、Outbox、消息消费、恢复、SSE、契约校验、版本冻结和可观测性。AI 侧我会保守描述为 OpenAI-compatible LLM 接入、结构化产物和 RAG 协议；真实语义检索和质量评测是下一阶段工作。”
+
+推荐标题：**LLM 驱动的可玩原型工作流与平衡实验平台**。
+
+## 高风险追问入口
+
+- 为什么 RabbitMQ + Outbox 仍然是 at-least-once？见[面试问答](interview-qa.md#4-rabbitmq--outbox-解决了什么)。
+- 为什么当前不能称生产级 RAG？见[面试问答](interview-qa.md#7-rag-当前到底实现到了什么程度)。
+- 如何证明 RAG 有价值？见[面试问答](interview-qa.md#8-准备如何证明-rag-确实有价值)。
+- 为什么坚持单玩法？见[面试问答](interview-qa.md#10-为什么不继续增加多个-runtime)。
+- AI 辅助开发中个人贡献是什么？见[面试问答](interview-qa.md#12-ai-在项目里做了什么你承担什么责任)。
