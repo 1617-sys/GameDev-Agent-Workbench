@@ -1,0 +1,71 @@
+{
+  "protocolVersion": "simulation/1.0",
+  "episodeId": "episode-demo-0001",
+  "step": 12,
+  "requestedAction": {
+    "type": "MOVE_RIGHT"
+  },
+  "appliedAction": {
+    "type": "MOVE_RIGHT"
+  },
+  "accepted": true,
+  "advanced": true,
+  "previousStateHash": "34a504640e73492c10032f799b7c4c37749070da9d29fdd99b0f4f347e48f595",
+  "stateHash": "b6502417f5d0b38fa3d89eb85ff9b1d674fe4f0901eef9c2eb881b9fd8ddf7c2",
+  "status": "RUNNING",
+  "terminationReason": null,
+  "scoreDelta": 0,
+  "events": [],
+  "error": null,
+  "observation": {
+    "protocolVersion": "simulation/1.0",
+    "episodeId": "episode-demo-0001",
+    "kind": "PERSONA",
+    "visionRadiusPx": 240,
+    "step": 12,
+    "attempt": 1,
+    "elapsedMs": 600,
+    "remainingMs": 89400,
+    "stateHash": "b6502417f5d0b38fa3d89eb85ff9b1d674fe4f0901eef9c2eb881b9fd8ddf7c2",
+    "status": "RUNNING",
+    "terminationReason": null,
+    "player": {
+      "position": { "x": 228, "y": 96 },
+      "velocity": { "x": 220, "y": 0 },
+      "health": 3,
+      "maxHealth": 3,
+      "invulnerable": false
+    },
+    "progress": {
+      "collected": 0,
+      "target": 2,
+      "score": 0,
+      "exitUnlocked": false,
+      "restartCount": 0
+    },
+    "visibleEntities": [
+      {
+        "type": "collectible",
+        "id": "item-1",
+        "position": { "x": 260, "y": 140 },
+        "relative": { "dx": 32, "dy": 44 },
+        "radius": 9
+      },
+      {
+        "type": "obstacle",
+        "id": "wall-1",
+        "position": { "x": 360, "y": 180 },
+        "relative": { "dx": 132, "dy": 84 },
+        "width": 160,
+        "height": 24
+      }
+    ],
+    "lastAction": {
+      "type": "MOVE_RIGHT",
+      "accepted": true,
+      "code": null,
+      "scoreDelta": 0,
+      "events": []
+    }
+  }
+}
