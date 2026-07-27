@@ -46,7 +46,7 @@ function sourceFiles(directory) {
 
 test("keeps the simulation module independent from UI, engine, DOM and transport dependencies", () => {
   const source = sourceFiles(simulationDirectory).map((path) => readFileSync(path, "utf8")).join("\n");
-  assert.doesNotMatch(source, /\b(?:Phaser|window|document|Vue|fetch|XMLHttpRequest|WebSocket|Date|performance|setTimeout|setInterval)\b/);
+  assert.doesNotMatch(source, /\b(?:Phaser|window|document|Vue|fetch|XMLHttpRequest|WebSocket|Date|performance|setTimeout|setInterval)\b|Math\.random/);
   assert.equal(TICK_MS, 50);
   assert.equal(sha256Hex("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad");
 });

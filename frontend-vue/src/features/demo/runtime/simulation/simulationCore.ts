@@ -1,4 +1,5 @@
-import { hashCanonical } from "./hash.ts";
+import { canonicalStringify, hashCanonical } from "./hash.ts";
+import { seededEnemyDirections } from "./prng.ts";
 import {
   SIMULATION_PROTOCOL_VERSION,
   TICK_MS,
@@ -85,20 +86,6 @@ function toPx(value: number): number {
 
 function compareId(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
-}
-
-function seededDirections(seed: number, count: number): Array<-1 | 1> {
-  let value = seed >>> 0;
-  const directions: Array<-1 | 1> = [];
-  for (let index = 0; index < count; index += 1) {
-    value = (value + 0x6d2b79f5) >>> 0;
-    let mixed = value;
-    mixed = Math.imul(mixed ^ (mixed >>> 15), mixed | 1);
-    mixed ^= mixed + Math.imul(mixed ^ (mixed >>> 7), mixed | 61);
-    const random = ((mixed ^ (mixed >>> 14)) >>> 0) / 4294967296;
-    directions.push(random < 0.5 ? -1 : 1);
-  }
-  return directions;
 }
 
 function circleCircle(left: { position: { xMp: number; yMp: number }; radiusMp: number }, right: { position: { xMp: number; yMp: number }; radiusMp: number }): boolean {
@@ -223,6 +210,10 @@ export class SimulationCore {
     return hashCanonical(this.#state);
   }
 
+  canonicalSnapshot(): string {
+    return canonicalStringify(this.#state);
+  }
+
   observe(): Readonly<Observation> {
     return readonlyCopy(this.#observation(this.stateHash(), this.#lastAction));
   }
@@ -272,7 +263,7 @@ export class SimulationCore {
   protected beforeFinalize(): void {}
 
   #initialState(attempt: number, step: number, restartCount: number): SimulationState {
-    const directions = seededDirections(this.#options.seed, this.#rules.enemies.length);
+    const directions = seededEnemyDirections(this.#options.seed, this.#rules.enemies.length);
     const enemies = this.#rules.enemies.map((entry, index) => {
       const direction = directions[index];
       return {
