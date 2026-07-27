@@ -1,0 +1,53 @@
+{
+  "episodeProtocolVersion": "episode/1.0",
+  "batchId": "0b7d85ee-f9b5-4725-a3d6-a4796ca39df0",
+  "clientBatchKey": "candidate-3-fixed-seeds",
+  "requestFingerprint": "ab5a869aa6e125cf70635cc8c25b8f90aef605c712d351a16115a4a50f706ee8",
+  "status": "PARTIAL_SUCCESS",
+  "counts": {
+    "total": 3,
+    "queued": 0,
+    "running": 0,
+    "completed": 1,
+    "failed": 1,
+    "rejected": 1,
+    "cancelled": 0
+  },
+  "items": [
+    {
+      "clientEpisodeKey": "baseline-seed-20260715",
+      "episodeId": "8cb9f682-3216-4e9a-a8ff-2998056e3722",
+      "executionStatus": "COMPLETED",
+      "resultRef": "episodes/8cb9f682-3216-4e9a-a8ff-2998056e3722/result",
+      "error": null
+    },
+    {
+      "clientEpisodeKey": "cautious-player-seed-41",
+      "episodeId": "783e3741-1134-437d-b5c5-2928bd3f35bc",
+      "executionStatus": "FAILED",
+      "resultRef": "episodes/783e3741-1134-437d-b5c5-2928bd3f35bc/result",
+      "error": {
+        "phase": "DEPENDENCY",
+        "code": "MODEL_TIMEOUT",
+        "message": "Model provider did not return an action before the configured deadline",
+        "retryable": true,
+        "failedSequence": 1
+      }
+    },
+    {
+      "clientEpisodeKey": "stale-config-seed-42",
+      "episodeId": "c64601fd-e3c2-450c-abd9-4c667e5a7f36",
+      "executionStatus": "REJECTED",
+      "resultRef": "episodes/c64601fd-e3c2-450c-abd9-4c667e5a7f36/result",
+      "error": {
+        "phase": "VALIDATION",
+        "code": "BINDING_MISMATCH",
+        "message": "PrototypeVersion and GameConfig digest do not match",
+        "retryable": false,
+        "failedSequence": null
+      }
+    }
+  ],
+  "createdAt": "2026-07-27T13:00:00Z",
+  "completedAt": "2026-07-27T13:00:30.050Z"
+}
