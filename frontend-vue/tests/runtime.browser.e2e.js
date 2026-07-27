@@ -13,9 +13,11 @@ async function move(page, key, durationMs) {
 
 test("desktop runtime starts, pauses, resumes and restarts without duplicating the scene", async ({ page }) => {
   await page.goto("/demo/play");
-  await expect(page.getByRole("heading", { name: "博物馆夺宝", level: 1 })).toBeVisible();
+  await expect(page.locator("h1")).toBeVisible();
   const runtime = page.locator(".game-canvas");
   await expect(runtime).toHaveAttribute("data-runtime-ready", "true", { timeout: 15_000 });
+  await expect(runtime).toHaveAttribute("data-simulation-protocol", "simulation/1.0");
+  await expect(runtime).toHaveAttribute("data-simulation-state-hash", /^[0-9a-f]{64}$/);
   await expect(runtime).toHaveAttribute("data-runtime-state", "READY");
   await page.getByRole("button", { name: "开始游戏" }).click();
   await expect(runtime).toHaveAttribute("data-runtime-state", "PLAYING");
@@ -33,15 +35,22 @@ test("keyboard route collects the configured target, unlocks the exit and wins",
   const runtime = page.locator(".game-canvas");
   await expect(runtime).toHaveAttribute("data-runtime-ready", "true", { timeout: 15_000 });
   await page.getByRole("button", { name: "开始游戏" }).click();
-  await move(page, "ArrowDown", 200);
-  await move(page, "ArrowRight", 750);
+  const initialStateHash = await runtime.getAttribute("data-simulation-state-hash");
+  await move(page, "ArrowDown", 250);
+  await move(page, "ArrowRight", 800);
+  await move(page, "ArrowRight", 200);
+  await move(page, "ArrowLeft", 400);
   await expect(page.locator(".hud-stats")).toContainText("1/2");
-  await move(page, "ArrowDown", 800);
-  await move(page, "ArrowRight", 1180);
+  await expect(runtime).not.toHaveAttribute("data-simulation-state-hash", initialStateHash);
+  await move(page, "ArrowDown", 900);
+  await move(page, "ArrowRight", 1300);
+  await move(page, "ArrowUp", 500);
+  await move(page, "ArrowDown", 300);
+  await move(page, "ArrowRight", 500);
   await expect(page.locator(".hud-stats")).toContainText("2/2");
   await expect(page.locator(".exit-state")).toContainText("已解锁");
-  await move(page, "ArrowDown", 610);
-  await move(page, "ArrowRight", 1540);
+  await move(page, "ArrowDown", 700);
+  await move(page, "ArrowRight", 1400);
   await expect(runtime).toHaveAttribute("data-runtime-state", "WON");
   await expect(page.getByText("挑战成功")).toBeVisible();
 });

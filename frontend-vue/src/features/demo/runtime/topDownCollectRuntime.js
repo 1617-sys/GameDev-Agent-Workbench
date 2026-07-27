@@ -1,6 +1,10 @@
 import Phaser from "phaser";
 import { normalizeGameConfig } from "./gameConfig";
-import { ArcadeCollectStateMachine, RUNTIME_STATES } from "./runtimeState";
+import {
+  RuntimeSimulationAdapter,
+  SIMULATION_PROTOCOL_VERSION,
+  TICK_MS
+} from "./simulation/index.ts";
 import {
   RUNTIME_RESOURCE_MANIFEST,
   configuredImageKeys,
@@ -26,9 +30,10 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.onTelemetry = callbacks.onTelemetry || (() => {});
     this.autoStart = Boolean(data.autoStart);
     this.externalDirections = new Set();
+    this.externalDirectionOrder = [];
     this.assetWarnings = new Set();
     this.lastHudSecond = null;
-    this.machine = new ArcadeCollectStateMachine(this.gameConfig);
+    this.adapter = new RuntimeSimulationAdapter(this.gameConfig);
   }
 
   preload() {
@@ -52,12 +57,6 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.createEnemies(config.entities.enemies, config.behaviors.enemyPatrols, palette);
     this.createPlayer({ ...config.player, ...config.world.spawn }, palette);
 
-    this.physics.add.collider(this.player, this.obstacles);
-    this.physics.add.collider(this.enemies, this.obstacles, (enemy) => this.reverseEnemy(enemy));
-    this.physics.add.overlap(this.player, this.items, (_, item) => this.collectItem(item));
-    this.physics.add.overlap(this.player, this.enemies, (_, enemy) => this.hitPlayer(enemy));
-    this.physics.add.overlap(this.player, this.exitZone, () => this.tryWin());
-
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys("W,A,S,D");
     this.keyHandlers = {
@@ -79,8 +78,12 @@ class ArcadeCollectScene extends Phaser.Scene {
       obstacleCount: this.obstacles.getLength(),
       itemCount: this.items.getLength(),
       enemyCount: this.enemies.getLength(),
+      protocolVersion: SIMULATION_PROTOCOL_VERSION,
+      tickMs: TICK_MS,
+      ...this.adapter.simulationOptions(),
       warnings: [...this.assetWarnings]
     });
+    this.projectSnapshot(this.adapter.snapshot());
     if (this.autoStart) this.startGame();
     else this.pushHud("准备就绪，开始后倒计时才会启动。");
   }
@@ -159,10 +162,8 @@ class ArcadeCollectScene extends Phaser.Scene {
       const guard = this.physics.add.sprite(entry.x, entry.y, textureKeyFor(entry.spriteKey));
       guard.setDisplaySize(entry.size * 1.45, entry.size * 1.45).setTint(color(palette.enemy, "#FB7185"));
       guard.setData("id", entry.id);
-      guard.setData("origin", patrol.axis === "x" ? entry.x : entry.y);
-      guard.setData("axis", patrol.axis).setData("range", patrol.distance).setData("speed", entry.speed);
-      guard.setData("direction", this.machine.state.enemyDirections[entry.id]);
-      guard.setCollideWorldBounds(true).setDepth(3);
+      guard.setDepth(3);
+      guard.body.enable = false;
       this.enemies.add(guard);
       const path = this.add.graphics().lineStyle(2, color(palette.enemy, "#FB7185"), 0.18);
       if (patrol.axis === "x") path.lineBetween(entry.x - patrol.distance, entry.y, entry.x + patrol.distance, entry.y);
@@ -173,157 +174,137 @@ class ArcadeCollectScene extends Phaser.Scene {
   createPlayer(player, palette) {
     this.player = this.physics.add.sprite(player.x, player.y, textureKeyFor(player.spriteKey));
     this.player.setDisplaySize(player.size * 1.45, player.size * 1.45).setTint(color(palette.player, "#5EEAD4"));
-    this.player.setCollideWorldBounds(true).setDepth(4);
-    this.player.body.setCircle(Math.min(this.player.width, this.player.height) * 0.36);
+    this.player.setDepth(4);
+    this.player.body.enable = false;
     this.playerGlow = this.add.circle(this.player.x, this.player.y, player.size, color(palette.player, "#5EEAD4"), 0.1).setDepth(2);
   }
 
   update(_time, delta) {
-    if (!this.player || this.machine.state.status !== RUNTIME_STATES.PLAYING) return;
-    const previousStatus = this.machine.state.status;
-    this.machine.tick(delta);
-    if (this.machine.state.status !== previousStatus) {
-      this.finishRuntime();
-      return;
+    if (!this.player || this.adapter.status() !== "PLAYING") return;
+    for (const result of this.adapter.advance(delta, this.inputAction())) this.consumeStepResult(result);
+  }
+
+  inputAction() {
+    const external = [...this.externalDirectionOrder].reverse().find((direction) => this.externalDirections.has(direction));
+    const keyboard = [
+      ["up", this.cursors.up.isDown || this.keys.W.isDown],
+      ["down", this.cursors.down.isDown || this.keys.S.isDown],
+      ["left", this.cursors.left.isDown || this.keys.A.isDown],
+      ["right", this.cursors.right.isDown || this.keys.D.isDown]
+    ].find(([, active]) => active)?.[0];
+    const direction = external || keyboard;
+    return { type: direction ? `MOVE_${direction.toUpperCase()}` : "WAIT" };
+  }
+
+  projectSnapshot(state) {
+    const playerX = state.player.position.xMp / 1000;
+    const playerY = state.player.position.yMp / 1000;
+    this.player.setPosition(playerX, playerY);
+    this.playerGlow.setPosition(playerX, playerY);
+    const velocity = state.player.velocity;
+    if (velocity.xMpPerSecond || velocity.yMpPerSecond) {
+      this.player.rotation = Math.atan2(velocity.yMpPerSecond, velocity.xMpPerSecond) + Math.PI / 2;
     }
-    const second = Math.ceil(this.machine.state.remainingMs / 1000);
-    if (second !== this.lastHudSecond) {
-      this.lastHudSecond = second;
-      this.pushHud();
-    }
-    this.movePlayer();
-    this.enemies.children.iterate((enemy) => {
-      if (!enemy?.active) return;
-      const current = enemy.getData("axis") === "x" ? enemy.x : enemy.y;
-      if (Math.abs(current - enemy.getData("origin")) >= enemy.getData("range")) this.reverseEnemy(enemy);
+    this.player.setAlpha(state.elapsedMs < state.player.invulnerableUntilMs ? 0.42 : 1);
+
+    const enemies = new Map(state.enemies.map((enemy) => [enemy.id, enemy]));
+    this.enemies.children.iterate((sprite) => {
+      const enemy = sprite && enemies.get(sprite.getData("id"));
+      if (enemy) sprite.setPosition(enemy.position.xMp / 1000, enemy.position.yMp / 1000);
     });
-  }
-
-  movePlayer() {
-    const speed = this.gameConfig.player.speed;
-    const left = this.cursors.left.isDown || this.keys.A.isDown || this.externalDirections.has("left");
-    const right = this.cursors.right.isDown || this.keys.D.isDown || this.externalDirections.has("right");
-    const up = this.cursors.up.isDown || this.keys.W.isDown || this.externalDirections.has("up");
-    const down = this.cursors.down.isDown || this.keys.S.isDown || this.externalDirections.has("down");
-    this.player.body.setVelocity((right ? speed : 0) - (left ? speed : 0), (down ? speed : 0) - (up ? speed : 0));
-    if (this.player.body.velocity.lengthSq() > 0) {
-      this.player.body.velocity.normalize().scale(speed);
-      this.player.rotation = Math.atan2(this.player.body.velocity.y, this.player.body.velocity.x) + Math.PI / 2;
-    }
-    this.playerGlow.setPosition(this.player.x, this.player.y);
-  }
-
-  setEnemyVelocity(enemy) {
-    const velocity = enemy.getData("speed") * enemy.getData("direction");
-    enemy.body.setVelocity(0);
-    if (enemy.getData("axis") === "y") enemy.body.setVelocityY(velocity);
-    else enemy.body.setVelocityX(velocity);
-  }
-
-  reverseEnemy(enemy) {
-    if (!enemy?.active || this.machine.state.status !== RUNTIME_STATES.PLAYING) return;
-    enemy.setData("direction", enemy.getData("direction") * -1);
-    this.setEnemyVelocity(enemy);
+    const collectibles = new Map(state.collectibles.map((item) => [item.id, item]));
+    this.items.children.iterate((sprite) => {
+      const item = sprite && collectibles.get(sprite.getData("id"));
+      if (item) sprite.setActive(item.active).setVisible(item.active);
+    });
+    this.exitVisual.setAlpha(state.exitUnlocked ? 0.96 : 0.36);
+    this.exitLabel.setText(state.exitUnlocked ? this.gameConfig.entities.exit.label : "已锁定");
   }
 
   startGame() {
-    if (!this.machine.start()) return false;
+    if (!this.adapter.start()) return false;
     if (!this.autoStart) this.onTelemetry("SESSION_STARTED", 0, {});
-    this.physics.resume();
-    this.enemies.children.iterate((enemy) => enemy?.active && this.setEnemyVelocity(enemy));
     this.pushHud("游戏开始，收集目标并前往出口。");
     return true;
   }
 
   togglePause() {
-    if (this.machine.pause()) {
-      this.physics.pause();
-      this.pushHud("游戏已暂停。");
-      return true;
-    }
-    if (this.machine.resume()) {
-      this.physics.resume();
-      this.pushHud("继续游戏。");
-      return true;
-    }
-    return false;
+    const before = this.adapter.status();
+    if (!this.adapter.togglePause()) return false;
+    this.pushHud(before === "PLAYING" ? "游戏已暂停。" : "继续游戏。");
+    return true;
   }
 
   primaryAction() {
-    if (this.machine.state.status === RUNTIME_STATES.READY) return this.startGame();
-    if (this.machine.state.status === RUNTIME_STATES.PAUSED) return this.togglePause();
-    if ([RUNTIME_STATES.WON, RUNTIME_STATES.LOST].includes(this.machine.state.status)) return this.restartGame();
+    if (this.adapter.status() === "READY") return this.startGame();
+    if (this.adapter.status() === "PAUSED") return this.togglePause();
+    if (["WON", "LOST"].includes(this.adapter.status())) return this.restartGame();
     return false;
   }
 
   restartGame() {
-    if (this.machine.state.status !== RUNTIME_STATES.READY) this.onTelemetry("SESSION_RESTARTED", this.machine.state.elapsedMs, {});
-    this.scene.restart({ autoStart: true });
+    if (this.adapter.status() === "READY") {
+      if (!this.adapter.start()) return false;
+      this.pushHud("游戏已重新开始。");
+      return true;
+    }
+    const restart = this.adapter.restart();
+    if (restart.result) this.consumeStepResult(restart.result, restart.elapsedMs);
+    else if (restart.recreated) this.onTelemetry("SESSION_RESTARTED", restart.elapsedMs, {});
+    this.projectSnapshot(this.adapter.snapshot());
+    this.pushHud("游戏已重新开始。");
     return true;
   }
 
   setDirection(direction, active) {
     if (!['left', 'right', 'up', 'down'].includes(direction)) return;
-    if (active) this.externalDirections.add(direction);
-    else this.externalDirections.delete(direction);
-  }
-
-  collectItem(item) {
-    const itemId = item.getData("id");
-    if (!item.active || !this.machine.collect(itemId)) return;
-    this.onTelemetry("ITEM_COLLECTED", this.machine.state.elapsedMs, { itemId });
-    const label = item.getData("label");
-    item.disableBody(true, true);
-    playManifestSound(this.gameConfig.presentation.audio.collect, this.onWarning);
-    if (this.machine.state.exitUnlocked) this.unlockExit();
-    this.pushHud(`已取得${label}，得分 +${this.gameConfig.entities.collectibles.find((entry) => entry.id === itemId).score}。`);
-  }
-
-  hitPlayer(enemy) {
-    if (!this.machine.hit()) return;
-    this.onTelemetry("PLAYER_HIT", this.machine.state.elapsedMs, { enemyId: enemy.getData("id") });
-    playManifestSound(this.gameConfig.presentation.audio.hit, this.onWarning);
-    this.player.setAlpha(0.42);
-    this.time.delayedCall(this.gameConfig.player.hitInvulnerabilityMs, () => this.player?.active && this.player.setAlpha(1));
-    this.cameras.main.shake(160, 0.008);
-    if (this.machine.state.status === RUNTIME_STATES.LOST) this.finishRuntime();
-    else this.pushHud(`受到伤害，剩余生命 ${this.machine.state.health}。`);
-  }
-
-  unlockExit() {
-    this.exitVisual.setAlpha(0.96);
-    this.exitLabel.setText(this.gameConfig.entities.exit.label);
-    this.cameras.main.flash(180, 34, 197, 94, false);
-  }
-
-  tryWin() {
-    if (this.machine.state.status !== RUNTIME_STATES.PLAYING) return;
-    if (!this.machine.state.exitUnlocked) {
-      this.pushHud(`出口尚未解锁，还差 ${this.machine.state.total - this.machine.state.collected} 个目标。`);
-      return;
-    }
-    if (this.machine.reachExit()) this.finishRuntime();
-  }
-
-  finishRuntime() {
-    this.physics.pause();
-    this.player?.body?.setVelocity(0);
-    if (this.machine.state.status === RUNTIME_STATES.WON) {
-      this.onTelemetry("GAME_WON", this.machine.state.elapsedMs, {});
-      playManifestSound(this.gameConfig.presentation.audio.win, this.onWarning);
-      this.cameras.main.flash(300, 34, 197, 94);
-      this.pushHud(`通关成功，胜利奖励 +${this.gameConfig.balance.winBonus}。`);
+    if (active) {
+      this.externalDirections.add(direction);
+      this.externalDirectionOrder = this.externalDirectionOrder.filter((value) => value !== direction);
+      this.externalDirectionOrder.push(direction);
     } else {
-      this.onTelemetry("GAME_LOST", this.machine.state.elapsedMs, { reason: this.machine.state.outcomeReason });
-      playManifestSound(this.gameConfig.presentation.audio.lose, this.onWarning);
-      this.cameras.main.shake(220, 0.012);
-      const message = this.machine.state.outcomeReason === "TIME_EXPIRED" ? "时间耗尽，挑战失败。" : "生命耗尽，挑战失败。";
+      this.externalDirections.delete(direction);
+      this.externalDirectionOrder = this.externalDirectionOrder.filter((value) => value !== direction);
+    }
+  }
+
+  consumeStepResult(result, restartElapsedMs = null) {
+    const state = this.adapter.snapshot();
+    this.projectSnapshot(state);
+    let message = "";
+    for (const event of result.events) {
+      const elapsedMs = event.type === "SESSION_RESTARTED" && restartElapsedMs !== null ? restartElapsedMs : state.elapsedMs;
+      this.onTelemetry(event.type, elapsedMs, event.payload);
+      if (event.type === "ITEM_COLLECTED") {
+        const item = this.gameConfig.entities.collectibles.find((entry) => entry.id === event.payload.itemId);
+        playManifestSound(this.gameConfig.presentation.audio.collect, this.onWarning);
+        message = `已取得${item?.label || event.payload.itemId}，得分 +${item?.score || result.scoreDelta}。`;
+        if (state.exitUnlocked) this.cameras.main.flash(180, 34, 197, 94, false);
+      } else if (event.type === "PLAYER_HIT") {
+        playManifestSound(this.gameConfig.presentation.audio.hit, this.onWarning);
+        this.cameras.main.shake(160, 0.008);
+        message = `受到伤害，剩余生命 ${state.player.health}。`;
+      } else if (event.type === "GAME_WON") {
+        playManifestSound(this.gameConfig.presentation.audio.win, this.onWarning);
+        this.cameras.main.flash(300, 34, 197, 94);
+        message = `通关成功，胜利奖励 +${this.gameConfig.balance.winBonus}。`;
+      } else if (event.type === "GAME_LOST") {
+        playManifestSound(this.gameConfig.presentation.audio.lose, this.onWarning);
+        this.cameras.main.shake(220, 0.012);
+        message = event.payload.reason === "TIME_EXPIRED" ? "时间耗尽，挑战失败。" : "生命耗尽，挑战失败。";
+      } else if (event.type === "SESSION_RESTARTED") {
+        message = "游戏已重新开始。";
+      }
+    }
+    const second = Math.ceil(state.remainingMs / 1000);
+    if (message || second !== this.lastHudSecond || state.status === "TERMINATED") {
+      this.lastHudSecond = second;
       this.pushHud(message);
     }
   }
 
   pushHud(message = "") {
-    const state = this.machine.snapshot();
+    const state = this.adapter.hudState();
     const payload = {
       title: this.gameConfig.metadata.title,
       objective: this.gameConfig.presentation.ui.objective,
@@ -333,6 +314,11 @@ class ArcadeCollectScene extends Phaser.Scene {
       message
     };
     this.onHud(payload);
+    const parent = this.game.canvas?.parentElement;
+    if (parent) {
+      parent.dataset.simulationProtocol = SIMULATION_PROTOCOL_VERSION;
+      parent.dataset.simulationStateHash = state.stateHash;
+    }
     if (message) this.onMessage(message);
   }
 
@@ -342,6 +328,7 @@ class ArcadeCollectScene extends Phaser.Scene {
     this.input.keyboard.off("keydown-R", this.keyHandlers?.restart);
     this.load.off(Phaser.Loader.Events.FILE_LOAD_ERROR, this.handleLoadError, this);
     this.externalDirections.clear();
+    this.externalDirectionOrder = [];
   }
 }
 
@@ -370,6 +357,8 @@ export function mountGeneratedGame(container, rawConfig, callbacks = {}) {
     togglePause: () => scene()?.togglePause(),
     restart: () => scene()?.restartGame(),
     setDirection: (direction, active) => scene()?.setDirection(direction, active),
+    getReplayTrace: () => scene()?.adapter.replayTrace(),
+    getSimulationOptions: () => scene()?.adapter.simulationOptions(),
     destroy: () => game.destroy(true)
   };
 }
