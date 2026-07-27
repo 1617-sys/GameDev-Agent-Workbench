@@ -19,6 +19,7 @@ public enum ErrorCode {
     FORBIDDEN_ARTIFACT_ACCESS(40301, "Forbidden artifact access", "Artifact detail"),
     FORBIDDEN_PROTOTYPE_VERSION_ACCESS(40301, "Forbidden prototype version access", "Prototype version"),
     FORBIDDEN_PLAYTEST_ACCESS(40301, "Forbidden playtest session access", "Playtest telemetry"),
+    FORBIDDEN_EPISODE_ACCESS(40301, "Forbidden machine Episode access", "Machine Episode"),
 
     DEMO_WORKFLOW_ALREADY_RUNNING(40901, "Demo workflow is already running", "Demo stream duplicate submission"),
     IDEMPOTENCY_KEY_INVALID(40005, "Idempotency-Key is required and must use 1-128 URL-safe characters", "Async workflow submit"),
@@ -38,6 +39,9 @@ public enum ErrorCode {
     EXPORT_NOT_READY(40907, "Prototype export is not ready for download", "Prototype export"),
     EXPORT_RETRY_EXHAUSTED(40908, "Prototype export retry limit is exhausted", "Prototype export"),
     EXPORT_SECURITY_REJECTED(40009, "Prototype export failed security validation", "Prototype export"),
+    EPISODE_INVALID(40010, "Machine Episode result violates the frozen contract", "Machine Episode"),
+    EPISODE_BINDING_MISMATCH(40909, "PrototypeVersion and config digest do not match", "Machine Episode"),
+    EPISODE_IDEMPOTENCY_CONFLICT(40910, "Episode idempotency key conflicts with persisted results", "Machine Episode"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
@@ -47,6 +51,7 @@ public enum ErrorCode {
     PROTOTYPE_VERSION_NOT_FOUND(40401, "Prototype version not found", "Prototype version"),
     PLAYTEST_SESSION_NOT_FOUND(40401, "Playtest session not found", "Playtest telemetry"),
     PROTOTYPE_EXPORT_NOT_FOUND(40401, "Prototype export not found", "Prototype export"),
+    EPISODE_NOT_FOUND(40401, "Machine Episode or batch not found", "Machine Episode"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 
