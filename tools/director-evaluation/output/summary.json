@@ -1,0 +1,65 @@
+{
+  "protocolVersion": "director-evaluation/1.0",
+  "datasetVersion": "fixed-goals-3c.1",
+  "commit": "7f9f900172f730c000ff8e46f475bcf046da142b",
+  "provider": {
+    "kind": "mock",
+    "provider": "deterministic-fixture",
+    "model": "director-fixture",
+    "version": "3c.1"
+  },
+  "rag": false,
+  "budget": {
+    "maxCandidates": 3,
+    "maxEpisodes": 9,
+    "maxRounds": 4,
+    "maxToolCalls": 12
+  },
+  "flags": {
+    "mock": true,
+    "comparableToRealModel": false,
+    "sufficientSample": false
+  },
+  "arms": {
+    "workflow": {
+      "sampleSize": 6,
+      "goalAndGuardrailRate": 0.3333333333333333,
+      "illegalToolCallRate": 0,
+      "invalidCandidates": 0,
+      "duplicateCandidates": 0,
+      "averageRounds": 1,
+      "averageEpisodes": 9,
+      "averageLatencyMs": 812.5,
+      "averageTokens": 0,
+      "averageCostMicros": 0,
+      "recoverySuccessRate": null,
+      "approval": {
+        "approved": 2,
+        "rejected": 3,
+        "modified": 1
+      },
+      "traceabilityRate": 1
+    },
+    "director": {
+      "sampleSize": 6,
+      "goalAndGuardrailRate": 0.6666666666666666,
+      "illegalToolCallRate": 0.0625,
+      "invalidCandidates": 1,
+      "duplicateCandidates": 1,
+      "averageRounds": 2.6666666666666665,
+      "averageEpisodes": 8.5,
+      "averageLatencyMs": 1433.3333333333333,
+      "averageTokens": 1198.3333333333333,
+      "averageCostMicros": 1533.3333333333333,
+      "recoverySuccessRate": 0.6666666666666666,
+      "approval": {
+        "approved": 3,
+        "rejected": 2,
+        "modified": 1
+      },
+      "traceabilityRate": 1
+    }
+  },
+  "conclusion": "In the deterministic mock fixture, Director improves simultaneous goal/guardrail completion but costs more rounds, latency, tokens and money, and still has an illegal-call and recovery failure. Because evidence is mock and N=6 per arm, no real-model superiority claim is supported; Upgrade 4 should run the same matrix with a separately labelled real provider and larger sample.",
+  "inputDigest": "cf71e731912d8aae79103650e7e0fe2da9d3e02df284f40bd9bc492d220e27ea"
+}

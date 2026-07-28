@@ -1,0 +1,940 @@
+{
+  "fixture": {
+    "protocolVersion": "director-e2e/1.0",
+    "directorProtocolVersion": "director/1.0",
+    "fixtureVersion": "fake-director-3c.1",
+    "input": {
+      "goal": {
+        "metric": "NOVICE_COMPLETION_RATE",
+        "minimum": 0.7,
+        "guardrail": "EXPERT_COMPLETION_TIME_DELTA<=0.1"
+      },
+      "budget": {
+        "maxRounds": 4,
+        "maxToolCalls": 12,
+        "maxCandidates": 3,
+        "maxEpisodes": 9,
+        "maxFailures": 3
+      }
+    },
+    "scenarios": [
+      "normal-to-waiting-approval",
+      "approve",
+      "reject",
+      "python-timeout-retry",
+      "player-run-partial-failure",
+      "restart-after-tool-before-checkpoint",
+      "duplicate-message",
+      "duplicate-approval",
+      "budget-exhaustion",
+      "cancel",
+      "cross-project-attack"
+    ]
+  },
+  "scenarioResults": [
+    {
+      "name": "normal-to-waiting-approval",
+      "status": "PASS"
+    },
+    {
+      "name": "approve",
+      "status": "PASS"
+    },
+    {
+      "name": "reject",
+      "status": "PASS"
+    },
+    {
+      "name": "python-timeout-retry",
+      "status": "PASS"
+    },
+    {
+      "name": "player-run-partial-failure",
+      "status": "PASS"
+    },
+    {
+      "name": "restart-after-tool-before-checkpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate-message",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate-approval",
+      "status": "PASS"
+    },
+    {
+      "name": "budget-exhaustion",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-project-attack",
+      "status": "PASS"
+    }
+  ],
+  "database": {
+    "directorRuns": [
+      {
+        "runUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "project": "project-a",
+        "idempotencyKey": "normal",
+        "status": "WAITING_APPROVAL",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://92db7e09-b973-43d2-8792-23215244f4f6"
+      },
+      {
+        "runUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "project": "project-a",
+        "idempotencyKey": "approve",
+        "status": "SUCCEEDED",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://a8783df8-c3a3-4482-8042-d68ee41683bf"
+      },
+      {
+        "runUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "project": "project-a",
+        "idempotencyKey": "reject",
+        "status": "FAILED",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://59c0d472-cbcb-49a8-844f-e63ab11194ff"
+      },
+      {
+        "runUuid": "97a86e56-b0c9-4ad7-8f0d-0cf604982b1d",
+        "project": "project-a",
+        "idempotencyKey": "timeout",
+        "status": "PENDING",
+        "stateVersion": 0,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 0,
+          "toolCalls": 2,
+          "candidates": 0,
+          "episodes": 0,
+          "failures": 1
+        },
+        "checkpoint": 0
+      },
+      {
+        "runUuid": "8c081326-bd94-44b6-816d-ab4724d1e69e",
+        "project": "project-a",
+        "idempotencyKey": "partial",
+        "status": "FAILED",
+        "stateVersion": 0,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 0,
+          "toolCalls": 0,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 0,
+        "errorCode": "PLAYER_RUN_PARTIAL_FAILURE"
+      },
+      {
+        "runUuid": "4eaa86db-f3f6-44a2-83a5-605beb86a356",
+        "project": "project-a",
+        "idempotencyKey": "restart",
+        "status": "PENDING",
+        "stateVersion": 0,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 0,
+          "toolCalls": 1,
+          "candidates": 1,
+          "episodes": 0,
+          "failures": 0
+        },
+        "checkpoint": 1
+      },
+      {
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "project": "project-a",
+        "idempotencyKey": "duplicate-message",
+        "status": "WAITING_APPROVAL",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://63a50e4c-5279-4a7a-84f4-570f771e898d"
+      },
+      {
+        "runUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "project": "project-a",
+        "idempotencyKey": "duplicate-approval",
+        "status": "SUCCEEDED",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://53863035-8141-45ab-815d-2903be57a94c"
+      },
+      {
+        "runUuid": "1b8a77b6-6010-452e-8fda-bb6f2269444f",
+        "project": "project-a",
+        "idempotencyKey": "budget",
+        "status": "FAILED",
+        "stateVersion": 0,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 1,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 0,
+          "toolCalls": 1,
+          "candidates": 0,
+          "episodes": 0,
+          "failures": 0
+        },
+        "checkpoint": 0,
+        "errorCode": "BUDGET_EXHAUSTED_TOOL_CALLS"
+      },
+      {
+        "runUuid": "5b73d66a-193a-405e-84b2-c4fdfe28f79f",
+        "project": "project-a",
+        "idempotencyKey": "cancel",
+        "status": "CANCELED",
+        "stateVersion": 0,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 0,
+          "toolCalls": 0,
+          "candidates": 0,
+          "episodes": 0,
+          "failures": 0
+        },
+        "checkpoint": 0
+      },
+      {
+        "runUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "project": "project-a",
+        "idempotencyKey": "ownership",
+        "status": "WAITING_APPROVAL",
+        "stateVersion": 4,
+        "goalDigest": "f6d9babb54ab2b81a0c1d667f106e90b4e0982c927a0bf5e245213a3bb8aa542",
+        "budget": {
+          "maxRounds": 4,
+          "maxToolCalls": 12,
+          "maxCandidates": 3,
+          "maxEpisodes": 9,
+          "maxFailures": 3
+        },
+        "usage": {
+          "rounds": 1,
+          "toolCalls": 3,
+          "candidates": 1,
+          "episodes": 3,
+          "failures": 0
+        },
+        "checkpoint": 1,
+        "waitingApprovalRef": "approval://6028ef17-9146-4900-8341-80dea5a60d4c"
+      }
+    ],
+    "decisions": [
+      {
+        "decisionUuid": "ad6ead9e-207d-4c4c-8085-dc087259a15c",
+        "runUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "00c68055-5f83-42d5-8caa-0b399985cfcd",
+        "runUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "068996de-6a10-4f27-8e2f-54d23220d4d0",
+        "runUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "862fb64c-cc92-4f8f-8cfe-95435b28c202",
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "862fb64c-cc92-4f8f-8cfe-95435b28c202",
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "6a68883b-692e-4d4a-8a5a-84534e6093f0",
+        "runUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      },
+      {
+        "decisionUuid": "df47987c-f9f5-42b4-8151-a8843980a171",
+        "runUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "round": 1,
+        "kind": "CALL_TOOL",
+        "digest": "c74cbc7a79c8e05c8cbc2b73afebae04f0553d4440c93b8519d1b5e564ae3360"
+      }
+    ],
+    "toolCalls": [
+      {
+        "callUuid": "95351e5d-f63c-4e92-81a8-da869a1ac44a",
+        "runUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "0b8fdb9f-8b0d-4564-8abe-91131c6529cc",
+        "runUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "34efb18e-f4ea-40af-8971-e1e43c997c31",
+        "runUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "d93fc656-c1ab-4267-8392-5aee36af5014",
+        "runUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "4155b149-57dd-4795-81e9-b041e55be2ec",
+        "runUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "81d1e3c4-2557-4428-8a40-4875afd2a75f",
+        "runUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "3616cd6e-20b8-4b49-8426-cb825d7ff2a9",
+        "runUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "62ff8b25-fbdf-42ba-86f1-cc32aea0fabc",
+        "runUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "30c044cd-df71-4a93-8fb1-a04e2c0845bb",
+        "runUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "41becb32-0294-4aad-8871-da572f175a5f",
+        "runUuid": "97a86e56-b0c9-4ad7-8f0d-0cf604982b1d",
+        "name": "PYTHON_DIRECTOR",
+        "version": "fixture/1",
+        "idempotencyKey": "python-attempt-1",
+        "status": "FAILED",
+        "inputDigest": "5d3995df517442878e23da9ade7dd9277a2f01361736ba1feace794a947d3073",
+        "outputDigest": null,
+        "retryCount": 0,
+        "errorCode": "FIXTURE_FAILURE"
+      },
+      {
+        "callUuid": "44b4df94-8f9b-4da5-875c-4e063c327a64",
+        "runUuid": "97a86e56-b0c9-4ad7-8f0d-0cf604982b1d",
+        "name": "PYTHON_DIRECTOR",
+        "version": "fixture/1",
+        "idempotencyKey": "python-attempt-2",
+        "status": "SUCCEEDED",
+        "inputDigest": "fb03a80c9f9b904b4dad8fb683c24df86aeef62fd4d8c7c3b27e4b8f6b0cb7d7",
+        "outputDigest": "bbfeed9c185d691c106c4029ad559e48d63c8f4bbd00656722914f06cd46ea98",
+        "retryCount": 1,
+        "errorCode": null
+      },
+      {
+        "callUuid": "a12af78e-fd6e-4f61-8d8e-6dab41ca3034",
+        "runUuid": "4eaa86db-f3f6-44a2-83a5-605beb86a356",
+        "name": "GENERATE_DRAFT",
+        "version": "fixture/1",
+        "idempotencyKey": "draft-key",
+        "status": "SUCCEEDED",
+        "inputDigest": "05300a06dba8e8461bec201dfee4021c77b9a65ef5fb3ab08c592baeb05c8e67",
+        "outputDigest": "c95cae599e007bb73506ab3750cb5c946ce3856fb593ed0b6b4307a3e13688aa",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "33b0fdad-9cfe-410f-890a-0542f1e8be07",
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "4ce5e7ac-8301-4bf4-8aad-3dce19181811",
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "f1b65903-e88d-4412-865a-b9c32f9ac599",
+        "runUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "500b0c14-9786-4f64-846e-93a767004c9e",
+        "runUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "8bd9df6e-4354-4c6d-8c18-132bebecd6b3",
+        "runUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "52f2ac40-a8c6-4077-867f-d39e456ef910",
+        "runUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "8f9a0e55-bb90-4167-8a66-b61791bfbfb9",
+        "runUuid": "1b8a77b6-6010-452e-8fda-bb6f2269444f",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "one",
+        "status": "SUCCEEDED",
+        "inputDigest": "a0847ed3e0b4f4a280f2c121f65cee34cc3ab1531478e0047966675e99238445",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "7569cebf-dfbc-442e-8e27-0e6e918cef11",
+        "runUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "name": "LOAD_BASELINE",
+        "version": "fixture/1",
+        "idempotencyKey": "baseline",
+        "status": "SUCCEEDED",
+        "inputDigest": "68969be73ce6296273a6361a8ec4ef95090dc866ef5cb0f80428605bc6e4c47c",
+        "outputDigest": "3f34b7b6aa18c29c7259152ba56543c69d6fbcb8fcbaec0a3f8e55c3f1688cb1",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "23661aab-2371-429d-8ecf-e83ac4d57122",
+        "runUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "name": "RUN_PLAYER_EXPERIMENT",
+        "version": "fixture/1",
+        "idempotencyKey": "experiment-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "c2bcc6f4aece360e41d25a4839fdcffc5867962b7e8f148af8c38493ec6caed6",
+        "outputDigest": "bb049ed0695adf8cbc14be17a432a30aeb93f960f5d97bc5c0e65ee122318358",
+        "retryCount": 0,
+        "errorCode": null
+      },
+      {
+        "callUuid": "81e6492b-05d5-4310-87ed-be314b1ea240",
+        "runUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "name": "COMPARE_CANDIDATES",
+        "version": "fixture/1",
+        "idempotencyKey": "compare-1",
+        "status": "SUCCEEDED",
+        "inputDigest": "5e26b236e22209bb421dc2dd78530d5ecd3ee46db4cc6a46650d79b281f4ea3a",
+        "outputDigest": "f668c986079ed79d06ff66bf6e404aa3a29c1db5e54f43e73130bde284092e84",
+        "retryCount": 0,
+        "errorCode": null
+      }
+    ],
+    "prototypeVersions": [
+      {
+        "versionUuid": "92db7e09-b973-43d2-8792-23215244f4f6",
+        "directorRunUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "DRAFT",
+        "configDigest": "fe3ad8b6d296ae0466ac32320942488f41b40adf7efe5aa37265b5945839273b",
+        "playerRunUuid": "0eb836f2-2116-4e96-8b66-780e07e79798"
+      },
+      {
+        "versionUuid": "a8783df8-c3a3-4482-8042-d68ee41683bf",
+        "directorRunUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "APPROVED",
+        "configDigest": "c4a779e6d2e08ee9678d84d4a3032f0883936c5ff25991b0599d5223cd245fe9",
+        "playerRunUuid": "51f81e37-e154-4bcd-83c9-0faf3898068e"
+      },
+      {
+        "versionUuid": "59c0d472-cbcb-49a8-844f-e63ab11194ff",
+        "directorRunUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "REJECTED",
+        "configDigest": "c4999831e74ed3e95d3e0e9462c24b6b5b0caa62295452dfb26f037e7370ce4c",
+        "playerRunUuid": "0aee7114-c89e-49f0-8630-7360e03e23bd"
+      },
+      {
+        "versionUuid": "1ade0217-0d77-4a07-8a19-7376b5dc264e",
+        "directorRunUuid": "8c081326-bd94-44b6-816d-ab4724d1e69e",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "DRAFT",
+        "configDigest": "cd9a49557f43c2ea896ed36e1016622e1b3c66e400199bcf867cd69a29afe3a4",
+        "playerRunUuid": "731f97a0-7e64-483f-8317-7d0483e84b42"
+      },
+      {
+        "versionUuid": "fee14c7c-5b6e-4003-8f2f-dd2722ba0b9d",
+        "directorRunUuid": "4eaa86db-f3f6-44a2-83a5-605beb86a356",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "DRAFT",
+        "configDigest": "e76dcaee54673b2b72df7c99cefe54f2257b976d052bf8ecd6698f2ec42b54d2"
+      },
+      {
+        "versionUuid": "63a50e4c-5279-4a7a-84f4-570f771e898d",
+        "directorRunUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "DRAFT",
+        "configDigest": "5284f2c36a49ccee766f4860c06837c883860af076fc820a0574a32f076d629b",
+        "playerRunUuid": "56b47bc6-f070-4c79-84c4-4f648860aa96"
+      },
+      {
+        "versionUuid": "53863035-8141-45ab-815d-2903be57a94c",
+        "directorRunUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "APPROVED",
+        "configDigest": "83a5d844836b7df2fbf0e200518b2f4593e4217acbeeb908404d1101f2d166c5",
+        "playerRunUuid": "cbd1908a-3a26-4b2d-86d8-2c3cef0d7fb7"
+      },
+      {
+        "versionUuid": "6028ef17-9146-4900-8341-80dea5a60d4c",
+        "directorRunUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "DRAFT",
+        "configDigest": "8141029627da77557616025fe0717ad65449367b085c3b7cd7d435ecc77c84f2",
+        "playerRunUuid": "00e85c8e-5cbc-45b5-809e-2d15bfdc61c7"
+      }
+    ],
+    "playerRuns": [
+      {
+        "playerRunUuid": "0eb836f2-2116-4e96-8b66-780e07e79798",
+        "directorRunUuid": "7f13b31e-e4bf-4c80-831b-ba75b1e19f97",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      },
+      {
+        "playerRunUuid": "51f81e37-e154-4bcd-83c9-0faf3898068e",
+        "directorRunUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      },
+      {
+        "playerRunUuid": "0aee7114-c89e-49f0-8630-7360e03e23bd",
+        "directorRunUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      },
+      {
+        "playerRunUuid": "731f97a0-7e64-483f-8317-7d0483e84b42",
+        "directorRunUuid": "8c081326-bd94-44b6-816d-ab4724d1e69e",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "PARTIAL"
+      },
+      {
+        "playerRunUuid": "56b47bc6-f070-4c79-84c4-4f648860aa96",
+        "directorRunUuid": "368a96a6-d03b-4054-8496-e2d74cdc48e5",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      },
+      {
+        "playerRunUuid": "cbd1908a-3a26-4b2d-86d8-2c3cef0d7fb7",
+        "directorRunUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      },
+      {
+        "playerRunUuid": "00e85c8e-5cbc-45b5-809e-2d15bfdc61c7",
+        "directorRunUuid": "fac12491-da2a-4aa7-841e-8619dccd9fe5",
+        "project": "project-a",
+        "ordinal": 1,
+        "status": "SUCCEEDED"
+      }
+    ],
+    "episodes": [
+      {
+        "episodeUuid": "2d412b07-7549-4fc5-87dd-f3471862bf5f",
+        "playerRunUuid": "0eb836f2-2116-4e96-8b66-780e07e79798",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "0a564a83-77bb-45fa-860e-4697f2046fca",
+        "playerRunUuid": "0eb836f2-2116-4e96-8b66-780e07e79798",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "1b897dc8-7e96-4b11-84e4-8c107e1219ea",
+        "playerRunUuid": "0eb836f2-2116-4e96-8b66-780e07e79798",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "fd578504-d383-41b1-82d4-411968a58585",
+        "playerRunUuid": "51f81e37-e154-4bcd-83c9-0faf3898068e",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "10c24220-f0e7-4f6a-854b-dde2bfe48275",
+        "playerRunUuid": "51f81e37-e154-4bcd-83c9-0faf3898068e",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "56ef68c3-8859-41e1-8e2a-364a8a668f67",
+        "playerRunUuid": "51f81e37-e154-4bcd-83c9-0faf3898068e",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "8ef2a0b7-ec3c-4291-8ffa-85f9e2b62372",
+        "playerRunUuid": "0aee7114-c89e-49f0-8630-7360e03e23bd",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "17a0e830-28f4-4b78-8e02-08492c752b74",
+        "playerRunUuid": "0aee7114-c89e-49f0-8630-7360e03e23bd",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "1c69220a-2811-4c48-8c11-9737852027b0",
+        "playerRunUuid": "0aee7114-c89e-49f0-8630-7360e03e23bd",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "cad2dec3-07d2-44a1-808b-906c0a39ea02",
+        "playerRunUuid": "731f97a0-7e64-483f-8317-7d0483e84b42",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "dc194990-07ba-4b95-806b-e1574267d578",
+        "playerRunUuid": "731f97a0-7e64-483f-8317-7d0483e84b42",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "aec0ffc5-6a2c-4640-8b93-843662c6fc2f",
+        "playerRunUuid": "731f97a0-7e64-483f-8317-7d0483e84b42",
+        "project": "project-a",
+        "status": "FAILED"
+      },
+      {
+        "episodeUuid": "d11053a7-6467-4fa6-8f27-7bf014eb5f4f",
+        "playerRunUuid": "56b47bc6-f070-4c79-84c4-4f648860aa96",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "81e56dce-142d-4af7-879d-f244bd806740",
+        "playerRunUuid": "56b47bc6-f070-4c79-84c4-4f648860aa96",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "a3a647f5-2974-4878-8989-a07ff1e77bbc",
+        "playerRunUuid": "56b47bc6-f070-4c79-84c4-4f648860aa96",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "25fbc4b7-b2c9-4287-8247-3bce1f626812",
+        "playerRunUuid": "cbd1908a-3a26-4b2d-86d8-2c3cef0d7fb7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "d29a7db7-c22c-48f0-820e-4416d500d5ec",
+        "playerRunUuid": "cbd1908a-3a26-4b2d-86d8-2c3cef0d7fb7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "70cb3dbf-c774-4d84-8ec2-840e51d1843f",
+        "playerRunUuid": "cbd1908a-3a26-4b2d-86d8-2c3cef0d7fb7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "a72eb085-3f8a-4920-881f-2ef1424b5e6c",
+        "playerRunUuid": "00e85c8e-5cbc-45b5-809e-2d15bfdc61c7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "d559baf9-e327-4f90-8b56-a3c87b1227c4",
+        "playerRunUuid": "00e85c8e-5cbc-45b5-809e-2d15bfdc61c7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      },
+      {
+        "episodeUuid": "3566369c-26db-4602-8fa1-f4a5b3369a92",
+        "playerRunUuid": "00e85c8e-5cbc-45b5-809e-2d15bfdc61c7",
+        "project": "project-a",
+        "status": "SUCCEEDED"
+      }
+    ],
+    "approvals": [
+      {
+        "approvalUuid": "e1569035-9eaa-45d3-8a71-cfcaaa7597eb",
+        "project": "project-a",
+        "versionUuid": "a8783df8-c3a3-4482-8042-d68ee41683bf",
+        "directorRunUuid": "6a2c5d0a-bc0e-4ae4-8b94-2775e87a41fe",
+        "decision": "APPROVED",
+        "idempotencyKey": "approve-key"
+      },
+      {
+        "approvalUuid": "174e8388-54e8-4347-8c7a-9b03d6756092",
+        "project": "project-a",
+        "versionUuid": "59c0d472-cbcb-49a8-844f-e63ab11194ff",
+        "directorRunUuid": "319ea2e5-658b-42fc-8bb1-2dfda9c4dec4",
+        "decision": "REJECTED",
+        "idempotencyKey": "reject-key"
+      },
+      {
+        "approvalUuid": "23de910d-ee58-4cf6-8f06-85ce2a2d9154",
+        "project": "project-a",
+        "versionUuid": "53863035-8141-45ab-815d-2903be57a94c",
+        "directorRunUuid": "6db309f8-be57-4477-88d0-f431f165f1dc",
+        "decision": "APPROVED",
+        "idempotencyKey": "same-approval"
+      }
+    ]
+  }
+}

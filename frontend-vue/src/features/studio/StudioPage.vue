@@ -5,6 +5,7 @@
       <p class="overline">GAME STUDIO</p>
       <h1>{{ project?.name || "游戏创作台" }}</h1>
       <p>{{ project?.description || "正在读取项目信息…" }}</p>
+      <RouterLink class="button ghost" :to="`/projects/${route.params.projectUuid}/director`"><Route :size="16" />Director 实验</RouterLink>
       <RouterLink class="button ghost" :to="`/projects/${route.params.projectUuid}/versions`"><GitCompareArrows :size="16" />版本与调参</RouterLink>
     </header>
 
@@ -68,7 +69,7 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Clock3, ExternalLink, GitCompareArrows, LoaderCircle, RefreshCw, ShieldCheck, Sparkles, WandSparkles } from "@lucide/vue";
+import { ArrowLeft, Clock3, ExternalLink, GitCompareArrows, LoaderCircle, RefreshCw, Route, ShieldCheck, Sparkles, WandSparkles } from "@lucide/vue";
 import { projectsApi } from "../../shared/api/projects";
 import { workflowsApi } from "../../shared/api/workflows";
 import { prepareSubmission } from "../../shared/presentation/submission";

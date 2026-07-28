@@ -14,6 +14,7 @@
     "test:runtime": "playwright test tests/runtime.browser.e2e.js",
     "test:e2e": "playwright test",
     "test:e2e:main": "playwright test --config playwright.v3.config.js",
+    "test:e2e:director": "playwright test --config playwright.director.config.js",
     "simulation-service": "node src/features/demo/runtime/simulation-service/server.ts"
   },
   "dependencies": {
