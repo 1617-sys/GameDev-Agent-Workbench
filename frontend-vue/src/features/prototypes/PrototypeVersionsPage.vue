@@ -35,6 +35,7 @@
             <div><dt>父版本</dt><dd>{{ parentNumber(selected.parentVersionUuid) }}</dd></div>
           </dl>
           <details><summary>追溯信息</summary><code>{{ selected.versionUuid }}</code><code>{{ selected.configDigest }}</code><code>{{ selected.runtimeCapabilityVersion }}</code></details>
+          <RouterLink class="button ghost" :to="`/projects/${projectUuid}/versions/${selected.versionUuid}/episodes`">查看 Player Runs 与 Episode 证据</RouterLink>
           <dl v-if="metrics" class="version-parameters telemetry-metrics">
             <div><dt>结束样本</dt><dd>{{ metrics.sampleSize }}</dd></div><div><dt>通关率</dt><dd>{{ percent(metrics.winRate) }}</dd></div>
             <div><dt>平均耗时</dt><dd>{{ duration(metrics.averageDurationMs) }}</dd></div><div><dt>平均得分</dt><dd>{{ metrics.averageScore }}</dd></div>

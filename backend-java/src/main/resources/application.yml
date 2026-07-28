@@ -53,6 +53,10 @@ app:
   python:
     base-url: ${PYTHON_AGENT_BASE_URL:http://127.0.0.1:8000}
     internal-token: ${PYTHON_AGENT_INTERNAL_TOKEN}
+  player:
+    model: ${PLAYER_MODEL:${LLM_MODEL:deepseek-chat}}
+    http-timeout-ms: ${PLAYER_API_TIMEOUT_MS:120000}
+    recovery-delay-ms: ${PLAYER_RUN_RECOVERY_DELAY_MS:30000}
   workflow-rate-limit:
     policy-version: ${WORKFLOW_RATE_LIMIT_POLICY_VERSION:v1}
     max-submissions-per-window: ${WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS:5}

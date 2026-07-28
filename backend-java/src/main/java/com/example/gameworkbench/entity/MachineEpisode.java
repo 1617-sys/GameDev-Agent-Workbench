@@ -31,6 +31,11 @@ public class MachineEpisode {
     private String personaId;
     private String personaVersion;
     private String personaDigest;
+    private String modelJson;
+    private String usageJson;
+    private String auditJson;
+    private String timingJson;
+    private String errorJson;
     private String metricVersion;
     private String executionStatus;
     private String terminationReason;

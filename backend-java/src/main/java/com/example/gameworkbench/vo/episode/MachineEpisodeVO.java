@@ -20,6 +20,11 @@ public class MachineEpisodeVO {
     String policyVersion;
     String personaId;
     String personaVersion;
+    JsonNode model;
+    JsonNode usage;
+    JsonNode audit;
+    JsonNode timing;
+    JsonNode error;
     String metricVersion;
     String executionStatus;
     String terminationReason;

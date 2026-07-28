@@ -36,6 +36,7 @@ import com.example.gameworkbench.service.MachineEpisodeService;
 import com.example.gameworkbench.vo.episode.MachineEpisodeAggregateVO;
 import com.example.gameworkbench.vo.episode.MachineEpisodeBatchVO;
 import com.example.gameworkbench.vo.episode.MachineEpisodeVO;
+import com.example.gameworkbench.vo.episode.MachineEpisodeStepPageVO;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +109,8 @@ public class MachineEpisodeServiceImpl implements MachineEpisodeService {
         return episodeVO(episode, batch.getBatchUuid(), true);
     }
 
+    @Override public MachineEpisodeVO getEpisodeSummary(Long userId,String projectUuid,String episodeUuid){GameProject project=ownedProject(userId,projectUuid);MachineEpisode episode=episodes.selectByUuid(episodeUuid);if(episode==null)throw new BusinessException(ErrorCode.EPISODE_NOT_FOUND);requireProject(project.getId(),episode.getProjectId());MachineEpisodeBatch batch=batches.selectById(episode.getBatchId());return episodeVO(episode,batch.getBatchUuid(),false);}
+
     @Override
     public MachineEpisodeAggregateVO aggregate(Long userId, String projectUuid, String prototypeVersionUuid) {
         GameProject project = ownedProject(userId, projectUuid);
@@ -132,6 +135,14 @@ public class MachineEpisodeServiceImpl implements MachineEpisodeService {
                 .averageActionCount(actions).terminationReasons(Map.copyOf(reasons))
                 .episodeResultRefs(values.stream().map(value -> "episodes/" + value.getEpisodeUuid() + "/result").toList())
                 .build();
+    }
+
+    @Override public MachineEpisodeStepPageVO getSteps(Long userId,String projectUuid,String episodeUuid,int page,int size){
+        GameProject project=ownedProject(userId,projectUuid);MachineEpisode episode=episodes.selectByUuid(episodeUuid);
+        if(episode==null)throw new BusinessException(ErrorCode.EPISODE_NOT_FOUND);requireProject(project.getId(),episode.getProjectId());
+        int safePage=Math.max(0,page),safeSize=Math.max(1,Math.min(100,size));
+        List<JsonNode> items=steps.selectPage(episode.getId(),safePage*safeSize,safeSize).stream().map(value->read(value.getStepJson())).toList();
+        return MachineEpisodeStepPageVO.builder().episodeId(episodeUuid).page(safePage).size(safeSize).total(steps.countEpisodeSteps(episode.getId())).items(items).build();
     }
 
     private void validateBatch(PersistMachineEpisodeBatchRequest request, Long projectId) {
@@ -177,6 +188,7 @@ public class MachineEpisodeServiceImpl implements MachineEpisodeService {
                 .seed(input.getSeed()).maxSteps(input.getMaxSteps()).observationPolicyJson(write(input.getObservationPolicy()))
                 .policyId(input.getPolicyId()).policyVersion(input.getPolicyVersion()).policyDigest(input.getPolicyDigest())
                 .personaId(input.getPersonaId()).personaVersion(input.getPersonaVersion()).personaDigest(input.getPersonaDigest())
+                .modelJson(write(input.getModel())).usageJson(write(input.getUsage())).auditJson(write(input.getAudit())).timingJson(write(input.getTiming())).errorJson(write(input.getError()))
                 .metricVersion(input.getMetricVersion()).executionStatus(input.getExecutionStatus())
                 .terminationReason(input.getTerminationReason()).outcome(input.getOutcome()).stepCount(input.getStepCount())
                 .acceptedActionCount(input.getAcceptedActionCount()).invalidActionCount(input.getInvalidActionCount())
@@ -218,6 +230,7 @@ public class MachineEpisodeServiceImpl implements MachineEpisodeService {
                 .seed(episode.getSeed()).maxSteps(episode.getMaxSteps()).policyId(episode.getPolicyId())
                 .policyVersion(episode.getPolicyVersion()).personaId(episode.getPersonaId())
                 .personaVersion(episode.getPersonaVersion()).metricVersion(episode.getMetricVersion())
+                .model(readNullable(episode.getModelJson())).usage(readNullable(episode.getUsageJson())).audit(readNullable(episode.getAuditJson())).timing(readNullable(episode.getTimingJson())).error(readNullable(episode.getErrorJson()))
                 .executionStatus(episode.getExecutionStatus()).terminationReason(episode.getTerminationReason())
                 .outcome(episode.getOutcome()).stepCount(episode.getStepCount())
                 .acceptedActionCount(episode.getAcceptedActionCount()).invalidActionCount(episode.getInvalidActionCount())
@@ -269,6 +282,7 @@ public class MachineEpisodeServiceImpl implements MachineEpisodeService {
     private void invalid() { throw new BusinessException(ErrorCode.EPISODE_INVALID); }
     private String write(Object value) { try { return json.writeValueAsString(value); } catch (Exception exception) { throw new IllegalStateException(exception); } }
     private JsonNode read(String value) { try { return json.readTree(value); } catch (Exception exception) { throw new IllegalStateException(exception); } }
+    private JsonNode readNullable(String value) { return value == null ? null : read(value); }
     private String digest(String value) { try { return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value.getBytes(StandardCharsets.UTF_8))); } catch (Exception exception) { throw new IllegalStateException(exception); } }
     private String canonical(JsonNode node) {
         if (node.isArray()) {

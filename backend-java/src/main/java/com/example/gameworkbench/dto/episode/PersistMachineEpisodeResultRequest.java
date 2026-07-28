@@ -27,6 +27,11 @@ public class PersistMachineEpisodeResultRequest {
     @NotBlank @Size(max = 80) private String personaId;
     @NotBlank @Size(max = 40) private String personaVersion;
     @NotBlank @Pattern(regexp = "[0-9a-f]{64}") private String personaDigest;
+    private JsonNode model;
+    private JsonNode usage;
+    private JsonNode audit;
+    private JsonNode timing;
+    private JsonNode error;
     @NotBlank @Pattern(regexp = "score-delta/1\\.0") private String metricVersion;
     @NotBlank @Pattern(regexp = "COMPLETED|FAILED|REJECTED|CANCELLED") private String executionStatus;
     @Pattern(regexp = "WON|HEALTH_DEPLETED|TIME_EXPIRED|MAX_STEPS|ERROR") private String terminationReason;

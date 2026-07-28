@@ -42,6 +42,8 @@ public enum ErrorCode {
     EPISODE_INVALID(40010, "Machine Episode result violates the frozen contract", "Machine Episode"),
     EPISODE_BINDING_MISMATCH(40909, "PrototypeVersion and config digest do not match", "Machine Episode"),
     EPISODE_IDEMPOTENCY_CONFLICT(40910, "Episode idempotency key conflicts with persisted results", "Machine Episode"),
+    PLAYER_RUN_INVALID(40011, "Player Run request is not registered or exceeds its budget", "Player Run"),
+    PLAYER_RUN_IDEMPOTENCY_CONFLICT(40911, "Player Run idempotency key conflicts with another request", "Player Run"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
@@ -52,6 +54,7 @@ public enum ErrorCode {
     PLAYTEST_SESSION_NOT_FOUND(40401, "Playtest session not found", "Playtest telemetry"),
     PROTOTYPE_EXPORT_NOT_FOUND(40401, "Prototype export not found", "Prototype export"),
     EPISODE_NOT_FOUND(40401, "Machine Episode or batch not found", "Machine Episode"),
+    PLAYER_RUN_NOT_FOUND(40401, "Player Run not found", "Player Run"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 
