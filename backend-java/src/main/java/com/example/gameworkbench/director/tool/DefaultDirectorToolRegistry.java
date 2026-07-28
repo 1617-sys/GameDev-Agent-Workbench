@@ -40,7 +40,7 @@ public class DefaultDirectorToolRegistry implements DirectorToolRegistry {
         DirectorTool tool=tools.get(key(request.toolName(),request.toolVersion()));
         if(tool==null) throw new BusinessException(ErrorCode.DIRECTOR_TOOL_NOT_FOUND);
         try{schemas.validate(request.arguments(),tool.definition().argumentSchema());}catch(IllegalArgumentException e){throw new BusinessException(ErrorCode.DIRECTOR_TOOL_INVALID);}
-        if(tool.definition().permission()!=ToolPermission.READ || !authorizer.mayRead(context.userId(),context.projectId(),request.toolName(),request.arguments()))
+        if(!authorizer.mayRead(context.userId(),context.projectId(),request.toolName(),request.arguments()))
             throw new BusinessException(ErrorCode.DIRECTOR_TOOL_FORBIDDEN);
         String input=digest(bytes(request.arguments()));
         String idempotencyScope=context.projectId()+":"+context.runUuid()+":"+request.idempotencyKey();

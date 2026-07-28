@@ -20,8 +20,10 @@ public class ProjectDirectorResourceAuthorizer implements DirectorResourceAuthor
         GameProject project=projects.selectById(projectId);if(project==null||!Objects.equals(project.getUserId(),userId))return false;
         return switch(toolName){
             case "GET_PLAYER_RUN_STATUS" -> owned(playerRuns.selectByUuid(arguments.path("playerRunUuid").asText()),projectId);
-            case "GET_PROTOTYPE_VERSION","GET_MACHINE_EPISODE_METRICS" -> owned(versions.selectByUuid(arguments.path("prototypeVersionUuid").asText()),projectId);
-            case "COMPARE_PROTOTYPE_CONFIGS" -> owned(versions.selectByUuid(arguments.path("baselineVersionUuid").asText()),projectId)&&owned(versions.selectByUuid(arguments.path("candidateVersionUuid").asText()),projectId);
+            case "GET_PROTOTYPE_VERSION","GET_MACHINE_EPISODE_METRICS","REQUEST_HUMAN_APPROVAL" -> owned(versions.selectByUuid(arguments.path("prototypeVersionUuid").asText()),projectId);
+            case "CREATE_DRAFT_VERSION","GENERATE_NEIGHBOR_CANDIDATES" -> owned(versions.selectByUuid(arguments.path("parentVersionUuid").asText()),projectId);
+            case "COMPARE_PROTOTYPE_CONFIGS","RUN_PLAYER_EXPERIMENT","COMPARE_CANDIDATE_METRICS" -> owned(versions.selectByUuid(arguments.path("baselineVersionUuid").asText()),projectId)&&owned(versions.selectByUuid(arguments.path("candidateVersionUuid").asText()),projectId);
+            case "GET_EXPERIMENT_STATUS" -> true;
             default -> false;
         };
     }

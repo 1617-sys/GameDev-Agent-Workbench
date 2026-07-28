@@ -50,6 +50,9 @@ public enum ErrorCode {
     DIRECTOR_TOOL_INVALID(40013, "Director tool request violates its registered schema", "Director Tool"),
     DIRECTOR_TOOL_FORBIDDEN(40302, "Director tool cannot access the requested project resource", "Director Tool"),
     DIRECTOR_TOOL_TIMEOUT(50401, "Director tool execution timed out", "Director Tool"),
+    PROTOTYPE_APPROVAL_CONFLICT(40914, "Prototype approval conflicts with its lifecycle or prior decision", "Prototype Approval"),
+    CANDIDATE_GENERATION_INVALID(40014, "Candidate generation request has no bounded valid plan", "Experiment Candidate"),
+    EXPERIMENT_NOT_COMPARABLE(40915, "Experiment samples cannot be compared", "Director Experiment"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),

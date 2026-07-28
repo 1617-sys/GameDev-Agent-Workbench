@@ -351,6 +351,8 @@ public class PrototypeVersionServiceImpl implements PrototypeVersionService {
 
     private PrototypeVersionVO toVO(PrototypeVersion version, AgentArtifact artifact, boolean reused, boolean content) {
         return PrototypeVersionVO.builder().versionUuid(version.getVersionUuid())
+                .lifecycleStatus(version.getLifecycleStatus() == null ? "APPROVED" : version.getLifecycleStatus())
+                .directorRunUuid(version.getDirectorRunUuid()).approvalUpdatedAt(version.getApprovalUpdatedAt())
                 .versionNumber(version.getVersionNumber()).parentVersionUuid(version.getParentVersionUuid())
                 .source(version.getSource()).gameConfigArtifactUuid(version.getGameConfigArtifactUuid())
                 .configDigest(version.getConfigDigest()).runtimeCapabilityVersion(version.getRuntimeCapabilityVersion())

@@ -125,7 +125,7 @@ public class DirectorRunServiceImpl implements DirectorRunService {
         for(String key:required) if(!budget.has(key) || !budget.path(key).canConvertToLong() || budget.path(key).asLong()<0) invalid();
     }
     private String initialCheckpoint(JsonNode goal,JsonNode budget,JsonNode supplied){
-        var checkpoint=json.createObjectNode();checkpoint.set("goal",goal.deepCopy());checkpoint.set("budget",budget.deepCopy());
+        var checkpoint=json.createObjectNode();JsonNode normalizedGoal=goal.deepCopy();if(normalizedGoal instanceof com.fasterxml.jackson.databind.node.ObjectNode object&&!object.has("budget"))object.set("budget",budget.deepCopy());checkpoint.set("goal",normalizedGoal);checkpoint.set("budget",budget.deepCopy());
         checkpoint.set("usage",json.createObjectNode());checkpoint.put("lastCompletedRound",0);checkpoint.set("recentToolResults",json.createArrayNode());
         checkpoint.set("candidates",json.createArrayNode());checkpoint.putNull("pendingApproval");
         if(supplied!=null&&!supplied.isNull())checkpoint.set("facts",supplied.deepCopy());return write(checkpoint);

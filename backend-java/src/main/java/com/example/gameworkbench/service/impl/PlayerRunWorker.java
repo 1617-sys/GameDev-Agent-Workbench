@@ -4,6 +4,8 @@ import java.time.LocalDateTime;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 import com.example.gameworkbench.client.PlayerApiClient;
@@ -15,15 +17,17 @@ import com.example.gameworkbench.service.MachineEpisodeService;
 import com.example.gameworkbench.service.impl.PlayerRunServiceImpl.PlayerRunRequested;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
 
 @Service
-@RequiredArgsConstructor
 public class PlayerRunWorker {
     private final PlayerRunMapper runs;
     private final PlayerApiClient playerApi;
     private final MachineEpisodeService episodes;
     private final ObjectMapper json;
+    private final ApplicationEventPublisher events;
+
+    @Autowired public PlayerRunWorker(PlayerRunMapper runs,PlayerApiClient playerApi,MachineEpisodeService episodes,ObjectMapper json,ApplicationEventPublisher events){this.runs=runs;this.playerApi=playerApi;this.episodes=episodes;this.json=json;this.events=events;}
+    public PlayerRunWorker(PlayerRunMapper runs,PlayerApiClient playerApi,MachineEpisodeService episodes,ObjectMapper json){this(runs,playerApi,episodes,json,event->{});}
 
     @Async
     @TransactionalEventListener(phase=TransactionPhase.AFTER_COMMIT)
@@ -42,7 +46,8 @@ public class PlayerRunWorker {
             java.util.List<PersistMachineEpisodeResultRequest> values=new java.util.ArrayList<>();for(JsonNode result:response.path("results"))values.add(map(result));persist.setEpisodes(values);
             var batch=episodes.persistBatch(run.getUserId(),run.getProjectUuid(),"player-run/"+runUuid,persist);
             runs.complete(runUuid,batch.getStatus(),batch.getBatchId(),LocalDateTime.now());
-        }catch(Exception exception){if(run.getAttempt()<3)runs.retry(runUuid,"PLAYER_EXECUTION_RETRY",safe(exception),LocalDateTime.now());else runs.fail(runUuid,"PLAYER_EXECUTION_FAILED",safe(exception),LocalDateTime.now());}
+            events.publishEvent(new PlayerRunCompleted(runUuid,batch.getStatus()));
+        }catch(Exception exception){if(run.getAttempt()<3)runs.retry(runUuid,"PLAYER_EXECUTION_RETRY",safe(exception),LocalDateTime.now());else{runs.fail(runUuid,"PLAYER_EXECUTION_FAILED",safe(exception),LocalDateTime.now());events.publishEvent(new PlayerRunCompleted(runUuid,"FAILED"));}}
     }
 
     private PersistMachineEpisodeResultRequest map(JsonNode value){

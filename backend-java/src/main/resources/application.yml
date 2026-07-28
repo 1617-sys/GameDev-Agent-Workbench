@@ -57,6 +57,12 @@ app:
     model: ${PLAYER_MODEL:${LLM_MODEL:deepseek-chat}}
     http-timeout-ms: ${PLAYER_API_TIMEOUT_MS:120000}
     recovery-delay-ms: ${PLAYER_RUN_RECOVERY_DELAY_MS:30000}
+  director:
+    decision-timeout-ms: ${DIRECTOR_DECISION_TIMEOUT_MS:30000}
+    recovery-delay-ms: ${DIRECTOR_RECOVERY_DELAY_MS:30000}
+    claim-seconds: ${DIRECTOR_CLAIM_SECONDS:60}
+    max-attempts: ${DIRECTOR_MAX_ATTEMPTS:3}
+    experiment-wakeup-delay-ms: ${DIRECTOR_EXPERIMENT_WAKEUP_DELAY_MS:30000}
   workflow-rate-limit:
     policy-version: ${WORKFLOW_RATE_LIMIT_POLICY_VERSION:v1}
     max-submissions-per-window: ${WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS:5}

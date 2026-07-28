@@ -17,6 +17,9 @@ public class ExperimentCandidate {
     private Long projectId;
     private Integer ordinalNumber;
     private String status;
+    private String generatorVersion;
+    private String inputDigest;
+    private String tuningJson;
     private String prototypeVersionUuid;
     private String playerRunUuid;
     private String machineEpisodeUuid;

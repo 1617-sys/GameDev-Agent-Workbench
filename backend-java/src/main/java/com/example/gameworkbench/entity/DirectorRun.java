@@ -25,6 +25,10 @@ public class DirectorRun {
     private String checkpointJson;
     private String waitingApprovalRef;
     private String errorCode;
+    private String traceId;
+    private String claimToken;
+    private LocalDateTime claimUntil;
+    private Integer executionAttempt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime completedAt;

@@ -35,4 +35,10 @@ public interface PrototypeVersionMapper extends BaseMapper<PrototypeVersion> {
 
     @Select("select * from prototype_version where project_id=#{projectId} order by version_number desc limit 1")
     PrototypeVersion selectLatest(@Param("projectId") Long projectId);
+
+    @Update("update prototype_version set lifecycle_status=#{target},approval_updated_at=#{now} where version_uuid=#{uuid} and project_id=#{projectId} and lifecycle_status=#{expected}")
+    int updateLifecycle(@Param("uuid") String uuid,@Param("projectId") Long projectId,@Param("expected") String expected,
+            @Param("target") String target,@Param("now") java.time.LocalDateTime now);
+    @Update("update prototype_version set lifecycle_status='DRAFT',director_run_uuid=#{runUuid},approval_updated_at=#{now} where version_uuid=#{uuid} and project_id=#{projectId} and lifecycle_status='APPROVED'")
+    int markDraft(@Param("uuid")String uuid,@Param("projectId")Long projectId,@Param("runUuid")String runUuid,@Param("now")java.time.LocalDateTime now);
 }

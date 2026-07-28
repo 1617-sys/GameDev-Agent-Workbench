@@ -13,6 +13,9 @@ public class PrototypeVersionVO {
     Integer versionNumber;
     String parentVersionUuid;
     String source;
+    String lifecycleStatus;
+    String directorRunUuid;
+    LocalDateTime approvalUpdatedAt;
     String gameConfigArtifactUuid;
     String configDigest;
     String runtimeCapabilityVersion;

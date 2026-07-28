@@ -24,6 +24,9 @@ public class PrototypeVersion {
     private Integer versionNumber;
     private String parentVersionUuid;
     private String source;
+    private String lifecycleStatus;
+    private String directorRunUuid;
+    private LocalDateTime approvalUpdatedAt;
     private String gameConfigArtifactUuid;
     private String configDigest;
     private String runtimeCapabilityVersion;
