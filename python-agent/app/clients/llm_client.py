@@ -1,10 +1,15 @@
 import logging
 import os
 import time
+import json
+import hashlib
+from uuid import uuid4
 from dataclasses import dataclass
 from typing import Any
 
 import httpx
+
+from app.prompts.player import build_player_messages
 
 logger = logging.getLogger("python-agent.llm")
 
@@ -102,3 +107,44 @@ class LLMClient:
             error_type=error_type,
             error_message=error_message,
         )
+
+    async def decide_player_action(self, observation: dict[str, Any]) -> dict[str, Any]:
+        """Call the configured provider for exactly one structured player action."""
+        if not self.base_url or not self.api_key:
+            raise RuntimeError("Player LLM credentials are not configured")
+        started = time.perf_counter()
+        body = {
+            "model": self.model,
+            "messages": build_player_messages(observation),
+            "temperature": 0,
+            "response_format": {"type": "json_object"},
+        }
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                response = await client.post(
+                    f"{self.base_url}/v1/chat/completions",
+                    headers={"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"},
+                    json=body,
+                )
+                response.raise_for_status()
+            payload = response.json()
+            content = payload["choices"][0]["message"]["content"]
+            parsed = json.loads(content)
+            usage = payload.get("usage") or {}
+            latency = int((time.perf_counter() - started) * 1000)
+            return {
+                "action": parsed.get("action"),
+                "modelCallId": str(payload.get("id") or uuid4()),
+                "usage": {
+                    "inputTokens": usage.get("prompt_tokens"),
+                    "outputTokens": usage.get("completion_tokens"),
+                    "totalTokens": usage.get("total_tokens"),
+                },
+                "providerLatencyMs": latency,
+                "responseDigest": hashlib.sha256(content.encode()).hexdigest(),
+                "mock": False,
+            }
+        except (httpx.TimeoutException, TimeoutError) as error:
+            raise TimeoutError("Player model request timed out") from error
+        except httpx.HTTPError as error:
+            raise RuntimeError("Player model provider request failed") from error
