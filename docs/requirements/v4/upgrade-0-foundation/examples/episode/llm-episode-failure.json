@@ -1,0 +1,86 @@
+{
+  "episodeProtocolVersion": "episode/1.0",
+  "episodeId": "783e3741-1134-437d-b5c5-2928bd3f35bc",
+  "batchId": "0b7d85ee-f9b5-4725-a3d6-a4796ca39df0",
+  "clientEpisodeKey": "cautious-player-seed-41",
+  "sampleSource": "MACHINE",
+  "prototype": {
+    "projectUuid": "project-demo-001",
+    "prototypeVersionUuid": "version-demo-003",
+    "gameConfigArtifactUuid": "artifact-config-003",
+    "configDigest": "44a127d6c58f5f816eb685f765f190deaa058c83b7d59f69fc98c104795919c4",
+    "gameConfigSchemaVersion": "game-config/2.0",
+    "runtimeCapabilityVersion": "arcade-collect-runtime/1"
+  },
+  "simulation": {
+    "protocolVersion": "simulation/1.0",
+    "coreVersion": "simulation-core/1.0.0+65bf10f",
+    "seed": 41,
+    "maxSteps": 2000,
+    "observationPolicy": {
+      "kind": "PERSONA",
+      "visionRadiusPx": 240
+    }
+  },
+  "policy": {
+    "kind": "LLM",
+    "policyId": "structured-player",
+    "policyVersion": "1.0.0",
+    "policyDigest": "bc2687c878894633363b736614a23f53a56d3ccd7bd0a00696eab3b7a994f8a9"
+  },
+  "persona": {
+    "personaId": "cautious-explorer",
+    "personaVersion": "1.0.0",
+    "personaDigest": "2deebf4add6735ef42d9160d11f08ab7a81e8030cfb886425a91ba9bc54b77bc"
+  },
+  "model": {
+    "provider": "example-provider",
+    "model": "example-player-model",
+    "modelVersion": null,
+    "promptTemplateId": "player-action-json",
+    "promptVersion": "1.0.0"
+  },
+  "metricVersion": "score-delta/1.0",
+  "executionStatus": "FAILED",
+  "terminationReason": null,
+  "outcome": "ERROR",
+  "stepCount": 0,
+  "acceptedActionCount": 0,
+  "invalidActionCount": 0,
+  "finalStateHash": "d3dc78467cbebf311a8b60ad737ed9a6a9318366b70c9023eaf6cf57d684066d",
+  "finalScore": 0,
+  "trajectoryDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+  "steps": [],
+  "usage": {
+    "status": "UNAVAILABLE",
+    "inputTokens": null,
+    "outputTokens": null,
+    "totalTokens": null,
+    "costMicros": null,
+    "currency": null,
+    "providerLatencyMs": 30004,
+    "unavailableReason": "PROVIDER_TIMEOUT_NO_USAGE"
+  },
+  "timing": {
+    "queuedMs": 31,
+    "wallDurationMs": 30019,
+    "simulationDurationMs": 1,
+    "policyDurationMs": 30004
+  },
+  "error": {
+    "phase": "DEPENDENCY",
+    "code": "MODEL_TIMEOUT",
+    "message": "Model provider did not return an action before the configured deadline",
+    "retryable": true,
+    "failedSequence": 1
+  },
+  "audit": {
+    "actorType": "SERVICE",
+    "actorId": "headless-runner",
+    "traceId": "trace-episode-0002",
+    "createdAt": "2026-07-27T13:00:00Z",
+    "startedAt": "2026-07-27T13:00:00.031Z",
+    "endedAt": "2026-07-27T13:00:30.050Z",
+    "resultRef": "episodes/783e3741-1134-437d-b5c5-2928bd3f35bc/result"
+  }
+}

@@ -56,7 +56,7 @@ class SynchronousWorkflowRunnerTest {
     }
 
     @Test
-    void shouldFailWorkflowBeforeArtifactWriteWhenGameConfigEvaluationFails() {
+    void shouldPersistRejectedArtifactEvidenceAndFailWorkflowWhenGameConfigEvaluationFails() {
         WorkflowRunMapper runs = mock(WorkflowRunMapper.class); WorkflowStepRunMapper steps = mock(WorkflowStepRunMapper.class);
         WorkflowRun run = new WorkflowRun(); run.setId(1L); run.setUserId(2L); run.setWorkflowRunUuid("run"); run.setStatus("RUNNING"); run.setSchemaVersion("game-config/1.0"); run.setInputContent("input");
         run.setWorkflowDefinitionSnapshot("{\"steps\":[{\"stepKey\":\"game_config_generate\",\"stepOrder\":1,\"agentType\":\"GAME_CONFIG_GENERATE\",\"artifactType\":\"GAME_CONFIG\",\"dependsOn\":[]}]}");
@@ -65,10 +65,15 @@ class SynchronousWorkflowRunnerTest {
         WorkflowStepExecutor executor = mock(WorkflowStepExecutor.class); when(executor.supports(any())).thenReturn(true);
         when(executor.execute(any(), any())).thenReturn(new StepExecutionResult(new StepOutput("{bad", null, null, null), 1L));
         ArtifactWriter writer = mock(ArtifactWriter.class);
+        when(writer.write(any(), any(), any(), any())).thenAnswer(invocation -> {
+            StepExecutionResult rejected = invocation.getArgument(3);
+            throw new WorkflowEvaluationException(rejected.evaluation().summary());
+        });
         SynchronousWorkflowRunner runner = new SynchronousWorkflowRunner(runs, steps, new WorkflowStepPlanParser(new ObjectMapper()), List.of(executor), writer,
                 List.of(new GameConfigWorkflowEvaluationHook(new ObjectMapper())));
         assertThatThrownBy(() -> runner.run("run", "project", null)).isInstanceOf(WorkflowEvaluationException.class);
-        verify(writer, never()).write(any(), any(), any(), any());
+        verify(writer).write(any(), any(), any(), argThat(result -> !result.evaluation().passed()
+                && "{bad".equals(result.evaluation().normalizedContent())));
         verify(steps, atLeast(2)).updateById(argThat((WorkflowStepRun step) -> "FAILED".equals(step.getStatus()) && step.getValidationSummary().contains("GameConfig validation failed")));
         verify(runs).updateById(run);
     }

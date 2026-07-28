@@ -11,6 +11,7 @@ from app.services.mock_agent import (
     build_requirement_breakdown_result,
 )
 from app.services.langchain_agent import run_game_config_agent, run_langchain_agent
+from app.services.balance_evaluation import run_balance_evaluation
 from app.services.rag_context import render_rag_context
 
 logger = logging.getLogger("python-agent.agent")
@@ -94,4 +95,10 @@ async def task_breakdown(payload: AgentMockRequest, request: Request):
 async def game_config_generate(payload: AgentMockRequest, request: Request):
     logger.info("agent request received agent_type=game-config-generate content_len=%s", len(payload.content))
     result = await run_game_config_agent(payload)
+    return _build_response(request, result, payload)
+
+@router.post("/balance-evaluation", response_model=ApiResponse)
+async def balance_evaluation(payload: AgentMockRequest, request: Request):
+    logger.info("agent request received agent_type=balance-evaluation content_len=%s", len(payload.content))
+    result = await run_balance_evaluation(payload)
     return _build_response(request, result, payload)

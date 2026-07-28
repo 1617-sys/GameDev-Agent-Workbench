@@ -1,8 +1,20 @@
 package com.example.gameworkbench.evaluation;
-import org.springframework.stereotype.Component;
+
 import java.util.Set;
-@Component public class RuntimeCapabilityRegistry {
- public static final String VERSION="phaser-runtime-1";
- public boolean supportsGameType(String gameType){ return Set.of("top_down_collect").contains(gameType); }
- public String version(){ return VERSION; }
+
+import org.springframework.stereotype.Component;
+
+import com.example.gameworkbench.gameconfig.GameConfigContract;
+
+@Component
+public class RuntimeCapabilityRegistry {
+    public static final String VERSION = "arcade-collect-runtime/1";
+
+    public boolean supportsGameType(String gameType) {
+        return Set.of(GameConfigContract.GAME_TYPE).contains(gameType);
+    }
+
+    public String version() {
+        return VERSION;
+    }
 }

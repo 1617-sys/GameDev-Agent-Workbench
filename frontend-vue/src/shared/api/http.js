@@ -20,7 +20,7 @@ export function readToken() {
 }
 
 export async function apiRequest(path, options = {}) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), options.timeoutMs || 15_000);
   try {
@@ -50,8 +50,57 @@ export async function apiRequest(path, options = {}) {
   }
 }
 
+export async function apiDownload(path, options = {}) {
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const { timeoutMs = 30_000, auth = true, fallbackFilename = "prototype.zip", ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const headers = { Accept: "application/zip", ...(options.headers || {}) };
+    const token = auth ? readToken() : "";
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await fetch(`${baseUrl}${path}`, { ...fetchOptions, headers, signal: controller.signal });
+    if (response.status === 401) unauthorizedHandler();
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null);
+      throw new ApiError(payload?.message || `下载失败（HTTP ${response.status}）`, {
+        status: response.status,
+        code: payload?.code || String(response.status)
+      });
+    }
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.toLowerCase().includes("application/zip")) {
+      throw new ApiError("下载响应不是有效的 ZIP 文件", {
+        status: response.status,
+        code: "DOWNLOAD_INVALID_CONTENT"
+      });
+    }
+    return {
+      blob: await response.blob(),
+      filename: downloadFilename(response.headers.get("content-disposition"), fallbackFilename)
+    };
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new ApiError(error.name === "AbortError" ? "下载超时，请稍后重试" : "无法下载文件，请检查服务状态");
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+function downloadFilename(disposition, fallback = "prototype.zip") {
+  const value = disposition || "";
+  const encoded = value.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
+  const plain = value.match(/filename="?([^";]+)"?/i)?.[1];
+  let filename = plain || fallback;
+  if (encoded) {
+    try { filename = decodeURIComponent(encoded); } catch { filename = fallback; }
+  }
+  filename = filename.replace(/[\\/\u0000-\u001f\u007f]/g, "_").trim();
+  return filename && filename.length <= 160 ? filename : "prototype.zip";
+}
+
 export function openEventStream(path, { lastEventId = 0, onEvent, onError } = {}) {
-  const baseUrl = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8080";
+  const baseUrl = import.meta.env?.VITE_API_BASE_URL || "http://127.0.0.1:8080";
   const controller = new AbortController();
   let closed = false;
 

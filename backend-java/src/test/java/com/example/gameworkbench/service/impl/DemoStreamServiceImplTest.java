@@ -72,7 +72,7 @@ class DemoStreamServiceImplTest {
         when(definitions.findActiveDefinition("DEMO_GAME_CONFIG")).thenReturn(WorkflowDefinitionVersion.builder().id(8L)
                 .definitionJson("{\"steps\":[]}").build());
         when(prompts.findActiveByAgentType(anyString())).thenAnswer(invocation -> PromptVersion.builder().id(1L)
-                .versionUuid("version").templateUuid("template").version(1).outputSchemaKey("game-config").outputSchemaVersion("1.0").build());
+                .versionUuid("version").templateUuid("template").version(1).outputSchemaKey("game-config").outputSchemaVersion("2.0").build());
     }
 
     @Test

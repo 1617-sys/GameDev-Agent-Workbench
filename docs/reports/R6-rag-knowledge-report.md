@@ -1,5 +1,7 @@
 # R6 RAG Knowledge Report
 
+> 历史报告说明：本文记录 2026-07-13 的 R6 验收事实，不代表当前仓库已具备生产级语义 RAG。当前 `FakeEmbeddingProvider` 是 8 维字符哈希，`InMemoryVectorStore` 不计算真实相似度、命中 score 固定为 `1.0` 且重启丢失；因此本报告证明的是生命周期、隔离、协议和 provenance，而不是检索质量。当前升级计划见 [B 路线与 RAG 升级路线图](../roadmap-balance-lab-rag.md)。
+
 ## 环境
 
 - 日期：2026-07-13

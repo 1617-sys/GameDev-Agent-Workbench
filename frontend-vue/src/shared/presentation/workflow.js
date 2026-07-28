@@ -24,7 +24,8 @@ export const ARTIFACT_LABELS = {
   TASK_BREAKDOWN_RESULT: "开发计划",
   GAME_CONFIG: "游戏配置",
   GAME_CONFIG_GENERATE_RESULT: "游戏配置",
-  PHASER_GAME_CONFIG: "游戏配置"
+  PHASER_GAME_CONFIG: "游戏配置",
+  RESOURCE_MANIFEST: "资源清单"
 };
 
 export function statusMeta(status) {

@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissionService {
 
     private static final Pattern IDEMPOTENCY_KEY_PATTERN = Pattern.compile("[A-Za-z0-9._:-]{1,128}");
-    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/2.0";
 
     private final GameProjectMapper gameProjectMapper;
     private final WorkflowRunMapper workflowRunMapper;
@@ -91,7 +91,8 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
 
         String promptSnapshot = promptSnapshot(plans);
         String traceId = UUID.randomUUID().toString();
-        WorkflowRun run = pendingRun(userId, project.getId(), workflowKey, idempotencyKey, fingerprint, definition, promptSnapshot, request.getIdea());
+        String briefSnapshot = serialize(prototypeBrief(request));
+        WorkflowRun run = pendingRun(userId, project.getId(), workflowKey, idempotencyKey, fingerprint, definition, promptSnapshot, briefSnapshot);
         List<WorkflowStepRun> stepRuns = pendingSteps(run, plans, request);
         String eventPayload = eventPayload(run, traceId);
         try {
@@ -132,7 +133,7 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
     }
 
     private WorkflowRun pendingRun(Long userId, Long projectId, String workflowKey, String idempotencyKey,
-            String fingerprint, WorkflowDefinitionVersion definition, String promptSnapshot, String idea) {
+            String fingerprint, WorkflowDefinitionVersion definition, String promptSnapshot, String briefSnapshot) {
         LocalDateTime now = LocalDateTime.now();
         return WorkflowRun.builder()
                 .workflowRunUuid(UUID.randomUUID().toString()).projectId(projectId).userId(userId)
@@ -140,12 +141,12 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
                 .workflowDefinitionSnapshot(definition.getDefinitionJson()).promptVersionSnapshot(promptSnapshot)
                 .schemaVersion(GAME_CONFIG_SCHEMA_VERSION).attempt(1).statusVersion(0L)
                 .idempotencyKey(idempotencyKey).requestFingerprint(fingerprint)
-                .status(WorkflowRunStatus.PENDING.name()).inputContent(idea)
+                .status(WorkflowRunStatus.PENDING.name()).inputContent(briefSnapshot)
                 .timeTakenMs(0L).createdAt(now).updatedAt(now).build();
     }
 
     private List<WorkflowStepRun> pendingSteps(WorkflowRun run, List<WorkflowStepPlan> plans, AsyncWorkflowSubmitRequest request) {
-        String inputSnapshot = serialize(Map.of("idea", request.getIdea(), "context", request.getContext() == null ? "" : request.getContext()));
+        String inputSnapshot = serialize(Map.of("prototypeBrief", prototypeBrief(request)));
         LocalDateTime now = LocalDateTime.now();
         return plans.stream().map(plan -> WorkflowStepRun.builder()
                 .stepRunUuid(UUID.randomUUID().toString()).workflowRunUuid(run.getWorkflowRunUuid())
@@ -181,14 +182,25 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
     }
 
     private String fingerprint(String workflowKey, AsyncWorkflowSubmitRequest request) {
-        String canonical = serialize(Map.of("workflowKey", workflowKey, "idea", request.getIdea().trim(),
-                "context", request.getContext() == null ? "" : request.getContext().trim()));
+        String canonical = serialize(Map.of("workflowKey", workflowKey, "prototypeBrief", prototypeBrief(request)));
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(canonical.getBytes(StandardCharsets.UTF_8));
             return java.util.HexFormat.of().formatHex(digest);
         } catch (Exception exception) {
             throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
+    }
+
+    private Map<String, Object> prototypeBrief(AsyncWorkflowSubmitRequest request) {
+        Map<String, Object> brief = new LinkedHashMap<>();
+        brief.put("theme", request.getIdea().trim());
+        brief.put("durationSeconds", request.getDurationSeconds());
+        brief.put("difficulty", request.getDifficulty().trim());
+        brief.put("visualTheme", request.getVisualTheme().trim());
+        String additional = request.getAdditionalRequirements();
+        if ((additional == null || additional.isBlank()) && request.getContext() != null) additional = request.getContext();
+        brief.put("additionalRequirements", additional == null ? "" : additional.trim());
+        return brief;
     }
 
     private String serialize(Object value) {

@@ -1,0 +1,14 @@
+{
+  "protocolVersion": "director-e2e/1.0",
+  "directorProtocolVersion": "director/1.0",
+  "fixtureVersion": "fake-director-3c.1",
+  "input": {
+    "goal": {"metric":"NOVICE_COMPLETION_RATE","minimum":0.7,"guardrail":"EXPERT_COMPLETION_TIME_DELTA<=0.1"},
+    "budget": {"maxRounds":4,"maxToolCalls":12,"maxCandidates":3,"maxEpisodes":9,"maxFailures":3}
+  },
+  "scenarios": [
+    "normal-to-waiting-approval", "approve", "reject", "python-timeout-retry",
+    "player-run-partial-failure", "restart-after-tool-before-checkpoint", "duplicate-message",
+    "duplicate-approval", "budget-exhaustion", "cancel", "cross-project-attack"
+  ]
+}

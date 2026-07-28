@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "schemaVersion": "2.0",
+    "gameType": "arcade_collect",
+    "title": "巡逻越界",
+    "seed": 3
+  },
+  "viewport": { "width": 960, "height": 540, "scaleMode": "fit" },
+  "world": {
+    "width": 960,
+    "height": 540,
+    "spawn": { "x": 96, "y": 96 },
+    "obstacles": []
+  },
+  "player": { "speed": 220, "size": 28, "maxHealth": 1, "hitInvulnerabilityMs": 0, "spriteKey": "player.blue" },
+  "entities": {
+    "collectibles": [
+      { "id": "item-1", "x": 300, "y": 200, "size": 18, "score": 100, "label": "目标", "spriteKey": "collectible.gem" }
+    ],
+    "enemies": [
+      { "id": "enemy-1", "x": 900, "y": 220, "size": 28, "speed": 90, "spriteKey": "enemy.guard" }
+    ],
+    "exit": { "x": 760, "y": 450, "width": 54, "height": 72, "label": "出口", "spriteKey": "exit.door" }
+  },
+  "behaviors": {
+    "enemyPatrols": [
+      { "enemyId": "enemy-1", "axis": "x", "distance": 120 }
+    ],
+    "contact": { "damage": 1 }
+  },
+  "objectives": {
+    "targetCollectibles": 1,
+    "winCondition": "collect_target_then_exit",
+    "loseConditions": ["health_depleted", "time_expired"]
+  },
+  "balance": { "timeLimitSeconds": 90, "winBonus": 500, "difficulty": "normal" },
+  "presentation": {
+    "palette": { "floor": "#14213D", "wall": "#24324A", "player": "#5EEAD4", "item": "#FACC15", "enemy": "#FB7185", "exit": "#22C55E" },
+    "audio": { "collect": "sfx.collect", "hit": "sfx.hit", "win": "sfx.win", "lose": "sfx.lose" },
+    "ui": { "objective": "取得目标并离开。", "controls": "使用方向键移动。" }
+  },
+  "telemetry": {
+    "events": ["SESSION_STARTED", "ITEM_COLLECTED", "PLAYER_HIT", "GAME_WON", "GAME_LOST", "SESSION_RESTARTED", "SESSION_ENDED"]
+  }
+}

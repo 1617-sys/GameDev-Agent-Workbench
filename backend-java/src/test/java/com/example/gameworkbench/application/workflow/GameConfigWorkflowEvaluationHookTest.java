@@ -1,8 +1,9 @@
 package com.example.gameworkbench.application.workflow;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -13,39 +14,67 @@ import com.example.gameworkbench.entity.WorkflowRun;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class GameConfigWorkflowEvaluationHookTest {
-    private final GameConfigWorkflowEvaluationHook hook = new GameConfigWorkflowEvaluationHook(new ObjectMapper());
+    private final ObjectMapper mapper = new ObjectMapper();
+    private final GameConfigWorkflowEvaluationHook hook = new GameConfigWorkflowEvaluationHook(mapper);
     private final WorkflowStepPlan plan = new WorkflowStepPlan("game_config_generate", 4, AgentType.GAME_CONFIG_GENERATE,
             ArtifactType.GAME_CONFIG, List.of());
 
     @Test
-    void validatesAndCanonicalizesSupportedAliases() {
-        WorkflowEvaluationResult result = evaluate("""
-                {"game_config":{"version":"1.0","title":"Demo","game_type":"top_down_collect",
-                "world":{"width":"960","height":540},"player":{"x":1,"y":2},"collectibles":[],"enemies":[],
-                "exit":{"x":3,"y":4},"rules":{},"ui":{}}}
-                """);
-        assertThat(result.passed()).isTrue(); assertThat(result.schemaKey()).isEqualTo("game-config");
-        assertThat(result.schemaVersion()).isEqualTo("1.0");
-        assertThat(result.normalizedContent()).contains("\"gameType\":\"top_down_collect\"").contains("\"items\":[]");
+    void validatesCanonicalV2FromTheSharedFixture() throws Exception {
+        WorkflowEvaluationResult result = evaluate(fixture("valid-minimal.json"), "game-config/2.0");
+        assertThat(result.passed()).isTrue();
+        assertThat(result.schemaKey()).isEqualTo("game-config");
+        assertThat(result.schemaVersion()).isEqualTo("2.0");
+        assertThat(mapper.readTree(result.normalizedContent()).path("metadata").path("gameType").asText())
+                .isEqualTo("arcade_collect");
+        assertThat(result.normalizedContent()).doesNotContain("top_down_collect", "items", "rules", "theme");
     }
 
-    @Test void rejectsInvalidJson() { rejects("{bad", "JSON object"); }
-    @Test void rejectsMissingRequiredStructures() { rejects("{\"version\":\"1.0\",\"title\":\"Demo\",\"gameType\":\"top_down_collect\"}", "missing world"); }
-    @Test void rejectsUnsupportedGameType() { rejects(valid("\"gameType\":\"platformer\""), "unsupported gameType"); }
-    @Test void rejectsInvalidCoordinatesAndArrays() { rejects(valid("\"world\":{\"width\":\"bad\",\"height\":540},\"items\":{}"), "world.width"); }
+    @Test
+    void migratesFrozenLegacyRunsButForbidsLegacyOutputFromNewRuns() throws Exception {
+        WorkflowEvaluationResult migrated = evaluate(fixture("legacy-valid-1.0.json"), "game-config/1.0");
+        assertThat(migrated.schemaVersion()).isEqualTo("2.0");
+        assertThat(migrated.summary()).contains("migrated");
+        assertThat(mapper.readTree(migrated.normalizedContent()))
+                .isEqualTo(mapper.readTree(fixture("legacy-valid-1.0.migrated.json")));
+        WorkflowEvaluationResult rejected = evaluate(fixture("legacy-valid-1.0.json"), "game-config/2.0");
+        assertThat(rejected.passed()).isFalse();
+        assertThat(rejected.summary()).contains("LEGACY_WRITE_NOT_ALLOWED");
+    }
 
-    private WorkflowEvaluationResult evaluate(String content) {
-        WorkflowRun run = new WorkflowRun(); run.setSchemaVersion("game-config/1.0");
+    @Test void rejectsInvalidJson() { rejects("{bad", "INVALID_JSON"); }
+    @Test void rejectsMissingRequiredStructures() throws Exception { rejects(fixture("invalid-missing-entities.json"), "REQUIRED at $.entities"); }
+    @Test void rejectsRemoteResources() throws Exception { rejects(fixture("invalid-remote-resource.json"), "RESOURCE_KEY_NOT_ALLOWED at $.player.spriteKey"); }
+    @Test void rejectsOutOfBoundsPatrols() throws Exception { rejects(fixture("invalid-out-of-bounds-patrol.json"), "WORLD_BOUNDS at $.behaviors.enemyPatrols[0].distance"); }
+
+    @Test
+    void rejectsConfigThatContradictsThePrototypeBrief() throws Exception {
+        WorkflowRun run = new WorkflowRun();
+        run.setSchemaVersion("game-config/2.0");
+        WorkflowEvaluationResult result = hook.evaluate(new WorkflowExecutionContext(run, "project",
+                "{\"durationSeconds\":120,\"difficulty\":\"hard\"}", List.of(plan)), plan,
+                new StepExecutionResult(new StepOutput(fixture("valid-minimal.json"), null, null, null), 1L));
+        assertThat(result.passed()).isFalse();
+        assertThat(result.summary()).contains("BRIEF_DURATION_MISMATCH");
+    }
+
+    private WorkflowEvaluationResult evaluate(String content, String schemaVersion) {
+        WorkflowRun run = new WorkflowRun();
+        run.setSchemaVersion(schemaVersion);
         return hook.evaluate(new WorkflowExecutionContext(run, "project", "input", List.of(plan)), plan,
                 new StepExecutionResult(new StepOutput(content, null, null, null), 1L));
     }
+
     private void rejects(String content, String fragment) {
-        assertThatThrownBy(() -> evaluate(content)).isInstanceOf(WorkflowEvaluationException.class).hasMessageContaining(fragment);
+        WorkflowEvaluationResult result = evaluate(content, "game-config/2.0");
+        assertThat(result.passed()).isFalse();
+        assertThat(result.normalizedContent()).isEqualTo(content);
+        assertThat(result.summary()).contains(fragment);
     }
-    private String valid(String replacement) {
-        String base = "\"version\":\"1.0\",\"title\":\"Demo\",\"gameType\":\"top_down_collect\",\"world\":{\"width\":960,\"height\":540},\"player\":{\"x\":1,\"y\":2},\"items\":[],\"enemies\":[],\"exit\":{\"x\":3,\"y\":4},\"rules\":{},\"ui\":{}";
-        if (replacement.startsWith("\"gameType")) return "{" + base.replace("\"gameType\":\"top_down_collect\"", replacement) + "}";
-        return "{" + base.replace("\"world\":{\"width\":960,\"height\":540},\"player\":{\"x\":1,\"y\":2},\"items\":[]",
-                replacement + ",\"player\":{\"x\":1,\"y\":2}") + "}";
+
+    private String fixture(String name) throws Exception {
+        Path root = Path.of("..", "docs", "requirements", "v3", "examples", "game-config-2.0", name);
+        if (!Files.exists(root)) root = Path.of("docs", "requirements", "v3", "examples", "game-config-2.0", name);
+        return Files.readString(root);
     }
 }

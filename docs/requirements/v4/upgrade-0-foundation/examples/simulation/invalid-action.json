@@ -1,0 +1,66 @@
+{
+  "protocolVersion": "simulation/1.0",
+  "episodeId": "episode-demo-0003",
+  "step": 7,
+  "requestedAction": {
+    "type": "MOVE_NORTH_EAST",
+    "durationMs": 250
+  },
+  "appliedAction": null,
+  "accepted": false,
+  "advanced": false,
+  "previousStateHash": "b0585333ba24fcebdea0d7c497e9b00f7a88d9bc76301be6b3ca5a61a1209a02",
+  "stateHash": "b0585333ba24fcebdea0d7c497e9b00f7a88d9bc76301be6b3ca5a61a1209a02",
+  "status": "RUNNING",
+  "terminationReason": null,
+  "scoreDelta": 0,
+  "events": [],
+  "error": {
+    "code": "INVALID_ACTION",
+    "message": "Action type must be one of MOVE_UP, MOVE_DOWN, MOVE_LEFT, MOVE_RIGHT, WAIT, RESTART and the object must not contain unknown fields",
+    "retriable": false
+  },
+  "observation": {
+    "protocolVersion": "simulation/1.0",
+    "episodeId": "episode-demo-0003",
+    "kind": "PERSONA",
+    "visionRadiusPx": 240,
+    "step": 7,
+    "attempt": 1,
+    "elapsedMs": 350,
+    "remainingMs": 89650,
+    "stateHash": "b0585333ba24fcebdea0d7c497e9b00f7a88d9bc76301be6b3ca5a61a1209a02",
+    "status": "RUNNING",
+    "terminationReason": null,
+    "player": {
+      "position": { "x": 129, "y": 96 },
+      "velocity": { "x": 220, "y": 0 },
+      "health": 3,
+      "maxHealth": 3,
+      "invulnerable": false
+    },
+    "progress": {
+      "collected": 0,
+      "target": 2,
+      "score": 0,
+      "exitUnlocked": false,
+      "restartCount": 0
+    },
+    "visibleEntities": [
+      {
+        "type": "collectible",
+        "id": "item-1",
+        "position": { "x": 260, "y": 140 },
+        "relative": { "dx": 131, "dy": 44 },
+        "radius": 9
+      }
+    ],
+    "lastAction": {
+      "type": "MOVE_NORTH_EAST",
+      "accepted": false,
+      "code": "INVALID_ACTION",
+      "scoreDelta": 0,
+      "events": []
+    }
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "protocolVersion": "simulation/1.0",
+  "episodeId": "episode-demo-0002",
+  "step": 311,
+  "requestedAction": {
+    "type": "MOVE_DOWN"
+  },
+  "appliedAction": {
+    "type": "MOVE_DOWN"
+  },
+  "accepted": true,
+  "advanced": true,
+  "previousStateHash": "5df3d6ad9bc885c10c69f26d0d08f9b690c0f6438bb5e2a5bc8fc4d86dd0522d",
+  "stateHash": "4a078fe70d127f720fecd108d13ef3f3097268d55408e3bcd3fcf39dd41c108f",
+  "status": "TERMINATED",
+  "terminationReason": "WON",
+  "scoreDelta": 500,
+  "events": [
+    {
+      "type": "GAME_WON",
+      "payload": {}
+    }
+  ],
+  "error": null,
+  "observation": {
+    "protocolVersion": "simulation/1.0",
+    "episodeId": "episode-demo-0002",
+    "kind": "FULL",
+    "step": 311,
+    "attempt": 1,
+    "elapsedMs": 15550,
+    "remainingMs": 74450,
+    "stateHash": "4a078fe70d127f720fecd108d13ef3f3097268d55408e3bcd3fcf39dd41c108f",
+    "status": "TERMINATED",
+    "terminationReason": "WON",
+    "player": {
+      "position": { "x": 860, "y": 439 },
+      "velocity": { "x": 0, "y": 0 },
+      "health": 2,
+      "maxHealth": 3,
+      "invulnerable": false
+    },
+    "progress": {
+      "collected": 2,
+      "target": 2,
+      "score": 700,
+      "exitUnlocked": true,
+      "restartCount": 0
+    },
+    "visibleEntities": [
+      {
+        "type": "enemy",
+        "id": "enemy-1",
+        "position": { "x": 620, "y": 260.5 },
+        "relative": { "dx": -240, "dy": -178.5 },
+        "radius": 14,
+        "velocity": { "x": 0, "y": 0 }
+      },
+      {
+        "type": "obstacle",
+        "id": "wall-1",
+        "position": { "x": 360, "y": 180 },
+        "relative": { "dx": -500, "dy": -259 },
+        "width": 160,
+        "height": 24
+      },
+      {
+        "type": "exit",
+        "id": "exit",
+        "position": { "x": 860, "y": 450 },
+        "relative": { "dx": 0, "dy": 11 },
+        "width": 54,
+        "height": 72,
+        "unlocked": true
+      }
+    ],
+    "lastAction": {
+      "type": "MOVE_DOWN",
+      "accepted": true,
+      "code": null,
+      "scoreDelta": 500,
+      "events": ["GAME_WON"]
+    }
+  }
+}

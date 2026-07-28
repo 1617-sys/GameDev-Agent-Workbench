@@ -25,3 +25,21 @@ Demo Stream 的规则：
 隔离 Compose 中 Redis health 正常时，首个工作流提交仍返回 `50302 Workflow submission is temporarily unavailable`。原因是固定窗口 Lua 脚本需要可被 `tonumber` 解析的 TTL 和上限参数；若复用 JSON value serializer 传递这些参数，Redis 会把字符串包装为 JSON，脚本在比较计数时失败，并被统一映射为“限流服务不可用”。
 
 处理方式：为 Lua 的 key/argument 明确使用字符串序列化，并在干净 Docker 环境覆盖“首个提交允许”的回归。该问题属于后端发布阻断，不能由前端重试、回退 workflowKey 或伪造成功状态掩盖。
+
+## Artifact 追溯列升级后，旁路产物也必须填写 sourceAttempt
+
+V3-03 把 `agent_artifact.source_attempt` 收紧为非空后，工作流产物会由统一链路填写该字段，但试玩评测生成的 `BALANCE_SUGGESTION` 属于旁路产物。只在单元测试中 mock Mapper 会漏掉数据库非空约束，直到 Docker 主链路才出现 `DataIntegrityViolationException`。
+
+处理方式：所有创建 `AgentArtifact` 的入口都必须显式填写追溯字段；发布验收必须至少执行一次真实迁移后的数据库写入，不能只依赖 Mapper mock。
+
+## ZIP 路径安全与文件内容扫描必须分开
+
+路径穿越规则适用于 ZIP entry 名称，不适用于 Markdown/JSON 正文。把反斜杠和 `..` 同时用于正文扫描，会误伤 JSON 中的转义换行和正常设计文本；把单词 `token` 一律拦截也会误伤普通说明。
+
+处理方式：entry 路径单独拒绝绝对路径、反斜杠、控制字符和 `..` 路径段；正文只阻止远程 URL、数据库连接串、Bearer 凭据以及带赋值分隔符的 key/password/secret/token。合法转义与普通文字必须有回归测试。
+
+## 确定性 ZIP 不能依赖压缩器默认元数据
+
+即使文件内容相同，条目顺序和时间戳不同也会改变 ZIP 摘要。manifest 自身若同时声明自己的摘要，还会形成无法收敛的自引用。
+
+处理方式：条目按相对路径排序，统一使用 PrototypeVersion `createdAt`，文本统一 UTF-8/LF；manifest 记录除自身以外的文件摘要并明确自排除。失败作业只保存错误和冻结输入，不能发布半包；重试必须读取冻结 JSON，不能查询最新指标或再次调用 AI。

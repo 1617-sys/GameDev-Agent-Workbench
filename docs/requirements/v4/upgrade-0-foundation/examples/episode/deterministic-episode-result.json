@@ -1,0 +1,154 @@
+{
+  "episodeProtocolVersion": "episode/1.0",
+  "episodeId": "8cb9f682-3216-4e9a-a8ff-2998056e3722",
+  "batchId": "0b7d85ee-f9b5-4725-a3d6-a4796ca39df0",
+  "clientEpisodeKey": "baseline-seed-20260715",
+  "sampleSource": "MACHINE",
+  "prototype": {
+    "projectUuid": "project-demo-001",
+    "prototypeVersionUuid": "version-demo-003",
+    "gameConfigArtifactUuid": "artifact-config-003",
+    "configDigest": "44a127d6c58f5f816eb685f765f190deaa058c83b7d59f69fc98c104795919c4",
+    "gameConfigSchemaVersion": "game-config/2.0",
+    "runtimeCapabilityVersion": "arcade-collect-runtime/1"
+  },
+  "simulation": {
+    "protocolVersion": "simulation/1.0",
+    "coreVersion": "simulation-core/1.0.0+65bf10f",
+    "seed": 20260715,
+    "maxSteps": 2000,
+    "observationPolicy": { "kind": "FULL" }
+  },
+  "policy": {
+    "kind": "DETERMINISTIC",
+    "policyId": "shortest-path-baseline",
+    "policyVersion": "1.0.0",
+    "policyDigest": "ce4e5812740c4096d69cb7c6042fc03d3d680289e87bfd7569f987aff176bb38"
+  },
+  "persona": {
+    "personaId": "baseline-neutral",
+    "personaVersion": "1.0.0",
+    "personaDigest": "45a30b5c003f79ea20c2bb8a6667f0c51ed88a34887af1b439613fcca39d3baa"
+  },
+  "model": null,
+  "metricVersion": "score-delta/1.0",
+  "executionStatus": "COMPLETED",
+  "terminationReason": "WON",
+  "outcome": "WON",
+  "stepCount": 1,
+  "acceptedActionCount": 1,
+  "invalidActionCount": 0,
+  "finalStateHash": "4a078fe70d127f720fecd108d13ef3f3097268d55408e3bcd3fcf39dd41c108f",
+  "finalScore": 600,
+  "trajectoryDigest": "847d630dfb71e3d95ffa32694cf7d0f3309e9b5bbe91fa0343d5dcbf998cd1a9",
+  "steps": [
+    {
+      "sequence": 1,
+      "attempt": 1,
+      "simulationStepBefore": 0,
+      "simulationStepAfter": 1,
+      "observation": {
+        "protocolVersion": "simulation/1.0",
+        "episodeId": "8cb9f682-3216-4e9a-a8ff-2998056e3722",
+        "kind": "FULL",
+        "step": 0,
+        "attempt": 1,
+        "elapsedMs": 0,
+        "remainingMs": 90000,
+        "stateHash": "de6f4f1cde106165c8e830528320668b88854632fa9f5a040f068689325fee70",
+        "status": "RUNNING",
+        "terminationReason": null,
+        "player": {
+          "position": { "x": 96, "y": 96 },
+          "velocity": { "x": 0, "y": 0 },
+          "health": 3,
+          "maxHealth": 3,
+          "invulnerable": false
+        },
+        "progress": {
+          "collected": 0,
+          "target": 1,
+          "score": 0,
+          "exitUnlocked": false,
+          "restartCount": 0
+        },
+        "visibleEntities": [
+          {
+            "type": "collectible",
+            "id": "item-1",
+            "position": { "x": 96, "y": 96 },
+            "relative": { "dx": 0, "dy": 0 },
+            "radius": 9
+          },
+          {
+            "type": "exit",
+            "id": "exit",
+            "position": { "x": 96, "y": 96 },
+            "relative": { "dx": 0, "dy": 0 },
+            "width": 54,
+            "height": 72,
+            "unlocked": false
+          }
+        ],
+        "lastAction": {
+          "type": null,
+          "accepted": true,
+          "code": null,
+          "scoreDelta": 0,
+          "events": ["SESSION_STARTED"]
+        }
+      },
+      "observationDigest": "878e438c2c3718001ba4bbac133f956bd1e4de1e2e5e5db8ffa4eb186b084120",
+      "decision": {
+        "requestedAction": { "type": "WAIT" },
+        "policyDurationMs": 2,
+        "modelCallId": null
+      },
+      "transition": {
+        "appliedAction": { "type": "WAIT" },
+        "accepted": true,
+        "advanced": true,
+        "previousStateHash": "de6f4f1cde106165c8e830528320668b88854632fa9f5a040f068689325fee70",
+        "stateHash": "4a078fe70d127f720fecd108d13ef3f3097268d55408e3bcd3fcf39dd41c108f",
+        "scoreDelta": 600,
+        "events": [
+          { "type": "ITEM_COLLECTED", "payload": { "itemId": "item-1" } },
+          { "type": "GAME_WON", "payload": {} }
+        ],
+        "status": "TERMINATED",
+        "terminationReason": "WON",
+        "error": null
+      },
+      "reward": {
+        "version": "score-delta/1.0",
+        "valueMicros": 600000000
+      }
+    }
+  ],
+  "usage": {
+    "status": "NOT_APPLICABLE",
+    "inputTokens": null,
+    "outputTokens": null,
+    "totalTokens": null,
+    "costMicros": null,
+    "currency": null,
+    "providerLatencyMs": null,
+    "unavailableReason": null
+  },
+  "timing": {
+    "queuedMs": 12,
+    "wallDurationMs": 7,
+    "simulationDurationMs": 3,
+    "policyDurationMs": 2
+  },
+  "error": null,
+  "audit": {
+    "actorType": "SERVICE",
+    "actorId": "headless-runner",
+    "traceId": "trace-episode-0001",
+    "createdAt": "2026-07-27T13:00:00Z",
+    "startedAt": "2026-07-27T13:00:00.012Z",
+    "endedAt": "2026-07-27T13:00:00.019Z",
+    "resultRef": "episodes/8cb9f682-3216-4e9a-a8ff-2998056e3722/result"
+  }
+}

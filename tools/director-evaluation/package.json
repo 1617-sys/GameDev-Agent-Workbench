@@ -1,0 +1,1 @@
+{"private":true,"type":"module","scripts":{"evaluate":"node run-director-evaluation.mjs"}}

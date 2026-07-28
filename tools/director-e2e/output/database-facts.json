@@ -1,0 +1,29 @@
+{
+  "counts": {
+    "directorRuns": 11,
+    "decisions": 7,
+    "toolCalls": 22,
+    "prototypeVersions": 8,
+    "playerRuns": 7,
+    "episodes": 21,
+    "approvals": 3
+  },
+  "invariants": {
+    "uniqueDraftPerRunOrdinal": true,
+    "uniquePlayerRunPerRunOrdinal": true,
+    "uniqueEpisodeIds": true,
+    "approvalIdempotency": true,
+    "crossProjectIsolation": true
+  },
+  "terminalStates": {
+    "normal": "WAITING_APPROVAL",
+    "approve": "SUCCEEDED",
+    "reject": "FAILED",
+    "partial": "FAILED",
+    "duplicate-message": "WAITING_APPROVAL",
+    "duplicate-approval": "SUCCEEDED",
+    "budget": "FAILED",
+    "cancel": "CANCELED",
+    "ownership": "WAITING_APPROVAL"
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "protocolVersion": "director-e2e/1.0",
+  "directorProtocolVersion": "director/1.0",
+  "fixtureVersion": "fake-director-3c.1",
+  "providerMode": "deterministic-fake",
+  "rcCommit": "7f9f900172f730c000ff8e46f475bcf046da142b",
+  "inputDigest": "5eb7e007742703f4de5b6378be078a699a3c2f79fefb6bcc999107086fee64fa",
+  "images": [
+    "fixture://fake-director@sha256:2ad56efbbeca22001828de934a5dd3d1f3125d8634168ee224208e9eb90c4d97"
+  ],
+  "scenarios": [
+    {
+      "name": "normal-to-waiting-approval",
+      "status": "PASS"
+    },
+    {
+      "name": "approve",
+      "status": "PASS"
+    },
+    {
+      "name": "reject",
+      "status": "PASS"
+    },
+    {
+      "name": "python-timeout-retry",
+      "status": "PASS"
+    },
+    {
+      "name": "player-run-partial-failure",
+      "status": "PASS"
+    },
+    {
+      "name": "restart-after-tool-before-checkpoint",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate-message",
+      "status": "PASS"
+    },
+    {
+      "name": "duplicate-approval",
+      "status": "PASS"
+    },
+    {
+      "name": "budget-exhaustion",
+      "status": "PASS"
+    },
+    {
+      "name": "cancel",
+      "status": "PASS"
+    },
+    {
+      "name": "cross-project-attack",
+      "status": "PASS"
+    }
+  ],
+  "evidence": {
+    "raw": "raw-evidence.json",
+    "databaseFacts": "database-facts.json"
+  },
+  "limitations": [
+    "Contract/recovery fixture only; no real model quality claim",
+    "JSON persistence fixture substitutes for the production MySQL adapter"
+  ]
+}

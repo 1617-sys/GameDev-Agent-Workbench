@@ -71,6 +71,14 @@ public class WorkflowRunDetailVO {
         private String type;
         private String displayName;
         private String status;
+        private String contentDigest;
+        private String schemaKey;
+        private String schemaVersion;
+        private String validationSummary;
+        private Integer sourceAttempt;
+        private String sourceArtifactUuid;
+        private String runtimeCapabilityVersion;
+        private Boolean runtimeEligible;
         private String url;
         private LocalDateTime createdAt;
     }

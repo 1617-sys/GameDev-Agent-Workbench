@@ -59,3 +59,6 @@
 - [Operations Runbook](../operations-runbook.md)
 - [面试问答](../interview-qa.md)
 - [简历描述](../resume-project-description.md)
+# V3 发布验收
+
+- [V3 轻量原型发布验收](V3-release-acceptance.md)：`arcade_collect` 的生成、试玩、不可变版本、指标、建议和确定性离线导出主链路。

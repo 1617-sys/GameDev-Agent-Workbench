@@ -1,0 +1,134 @@
+{
+  "metadata": {
+    "schemaVersion": "2.0",
+    "gameType": "arcade_collect",
+    "title": "博物馆夺宝",
+    "seed": 20260715
+  },
+  "viewport": {
+    "width": 960,
+    "height": 540,
+    "scaleMode": "fit"
+  },
+  "world": {
+    "width": 960,
+    "height": 540,
+    "spawn": {
+      "x": 96,
+      "y": 96
+    },
+    "obstacles": [
+      {
+        "id": "wall-1",
+        "x": 360,
+        "y": 180,
+        "width": 160,
+        "height": 24,
+        "spriteKey": "obstacle.stone"
+      }
+    ]
+  },
+  "player": {
+    "speed": 220,
+    "size": 28,
+    "maxHealth": 3,
+    "hitInvulnerabilityMs": 1000,
+    "spriteKey": "player.blue"
+  },
+  "entities": {
+    "collectibles": [
+      {
+        "id": "item-1",
+        "x": 260,
+        "y": 140,
+        "size": 18,
+        "score": 100,
+        "label": "青铜藏品",
+        "spriteKey": "collectible.artifact"
+      },
+      {
+        "id": "item-2",
+        "x": 520,
+        "y": 300,
+        "size": 18,
+        "score": 100,
+        "label": "宝石藏品",
+        "spriteKey": "collectible.gem"
+      }
+    ],
+    "enemies": [
+      {
+        "id": "enemy-1",
+        "x": 620,
+        "y": 220,
+        "size": 28,
+        "speed": 90,
+        "spriteKey": "enemy.guard"
+      }
+    ],
+    "exit": {
+      "x": 860,
+      "y": 450,
+      "width": 54,
+      "height": 72,
+      "label": "出口",
+      "spriteKey": "exit.door"
+    }
+  },
+  "behaviors": {
+    "enemyPatrols": [
+      {
+        "enemyId": "enemy-1",
+        "axis": "y",
+        "distance": 120
+      }
+    ],
+    "contact": {
+      "damage": 1
+    }
+  },
+  "objectives": {
+    "targetCollectibles": 2,
+    "winCondition": "collect_target_then_exit",
+    "loseConditions": [
+      "health_depleted",
+      "time_expired"
+    ]
+  },
+  "balance": {
+    "timeLimitSeconds": 90,
+    "winBonus": 500,
+    "difficulty": "normal"
+  },
+  "presentation": {
+    "palette": {
+      "floor": "#14213D",
+      "wall": "#24324A",
+      "player": "#5EEAD4",
+      "item": "#FACC15",
+      "enemy": "#FB7185",
+      "exit": "#22C55E"
+    },
+    "audio": {
+      "collect": "sfx.collect",
+      "hit": "sfx.hit",
+      "win": "sfx.win",
+      "lose": "sfx.lose"
+    },
+    "ui": {
+      "objective": "取得两件藏品，避开守卫并前往出口。",
+      "controls": "使用 WASD、方向键或触摸摇杆移动。"
+    }
+  },
+  "telemetry": {
+    "events": [
+      "SESSION_STARTED",
+      "ITEM_COLLECTED",
+      "PLAYER_HIT",
+      "GAME_WON",
+      "GAME_LOST",
+      "SESSION_RESTARTED",
+      "SESSION_ENDED"
+    ]
+  }
+}

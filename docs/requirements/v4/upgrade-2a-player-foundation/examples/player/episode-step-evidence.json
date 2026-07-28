@@ -1,0 +1,15 @@
+{
+  "sequence": 42,
+  "observationDigest": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+  "decision": {
+    "requestedAction": { "type": "MOVE_RIGHT" },
+    "policyDurationMs": 18,
+    "modelCallId": null,
+    "error": null
+  },
+  "transition": {
+    "accepted": true,
+    "previousStateHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "stateHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+  }
+}

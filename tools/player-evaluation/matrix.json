@@ -1,0 +1,14 @@
+{
+  "protocolVersion": "player-evaluation/1.0",
+  "coreVersion": "simulation-core/1.0.0",
+  "metricVersion": "score-delta/1.0",
+  "seeds": [11, 29, 47, 71, 97],
+  "cohorts": [
+    { "key": "deterministic-neutral", "policyKind": "DETERMINISTIC", "personaId": "baseline-neutral" },
+    { "key": "deterministic-novice", "policyKind": "DETERMINISTIC", "personaId": "NOVICE" },
+    { "key": "deterministic-regular", "policyKind": "DETERMINISTIC", "personaId": "REGULAR" },
+    { "key": "deterministic-expert", "policyKind": "DETERMINISTIC", "personaId": "EXPERT" },
+    { "key": "llm-regular", "policyKind": "LLM", "personaId": "REGULAR", "modelKey": "default" }
+  ],
+  "budgets": { "maxSteps": 2000, "wallTimeoutMs": 120000, "maxModelCalls": 500 }
+}

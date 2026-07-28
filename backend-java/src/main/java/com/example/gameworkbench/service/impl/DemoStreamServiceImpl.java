@@ -54,7 +54,7 @@ public class DemoStreamServiceImpl implements DemoStreamService {
     private static final long SSE_TIMEOUT_MS = 10 * 60 * 1000L;
     private static final long DEMO_LOCK_TTL_SECONDS = 300L;
     private static final String DEMO_WORKFLOW = "DEMO_GAME_CONFIG";
-    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/1.0";
+    private static final String GAME_CONFIG_SCHEMA_VERSION = "game-config/2.0";
 
     @Qualifier("demoStreamExecutor") private final Executor demoStreamExecutor;
     private final WorkflowRunner workflowRunner;

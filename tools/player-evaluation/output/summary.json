@@ -1,0 +1,123 @@
+{
+  "protocolVersion": "player-evaluation/1.0",
+  "runUuid": "13545005-0f5d-4e76-ab11-34f41755d186",
+  "persistedBatchUuid": "a4658835-bb2b-4c08-b212-0ba31af4d1a4",
+  "prototypeVersionUuid": "02a89964-ef7b-4a27-b0bc-14668a1d1d12",
+  "configDigest": "1483a23a55d2abfb7362da90afec039257d4ae783c8291ad8eaf562971f1b872",
+  "sampleSize": 25,
+  "recordedDecisionReplays": [
+    {
+      "verified": true,
+      "stepCount": 95,
+      "finalStateHash": "3cb952f8e6c3b3fc43ccb49f5ed3bcafb97effb6a67e78436e46e55ca0fb1d74",
+      "episodeId": "3f35b94d-b427-458f-8e1c-11ead54281ea"
+    },
+    {
+      "verified": true,
+      "stepCount": 95,
+      "finalStateHash": "90cc23363368d612a9c00abd6bbd1f76fcb44251cd1b1d0b11ccfc28ddbce775",
+      "episodeId": "afc15d28-8e28-475b-ac94-716c62243e67"
+    },
+    {
+      "verified": true,
+      "stepCount": 95,
+      "finalStateHash": "a6c996c81dc2c9ba42eea56b29f1d494060a75464e51aac18dee80763edc1546",
+      "episodeId": "78cc96cf-b447-49f9-bf6e-250ac510ed5c"
+    },
+    {
+      "verified": true,
+      "stepCount": 95,
+      "finalStateHash": "451f72576ee1ce8d093d5558c2119c016cd98507c5adce52917d23a46f47af84",
+      "episodeId": "87d1bdb1-7403-482d-a192-83d0d907e316"
+    },
+    {
+      "verified": true,
+      "stepCount": 95,
+      "finalStateHash": "b680ee9b10b82b99617fe2e2e5f85dbbfb927b7134b21bc4995a07e5b34a0e3b",
+      "episodeId": "8b511164-50dd-4922-93ea-15b633b19268"
+    }
+  ],
+  "cohorts": {
+    "deterministic-neutral": {
+      "sampleSize": 5,
+      "completionRate": 1.0,
+      "p50DurationMs": 703,
+      "p95DurationMs": 719,
+      "meanAcceptedActions": 95,
+      "actionEfficiency": 1.0,
+      "invalidActions": 0,
+      "failureReasons": {},
+      "totalTokens": 0,
+      "costMicros": 0,
+      "providerLatencyP50Ms": null,
+      "providerLatencyP95Ms": null,
+      "mockCount": 0
+    },
+    "deterministic-novice": {
+      "sampleSize": 5,
+      "completionRate": 0.0,
+      "p50DurationMs": 12083,
+      "p95DurationMs": 13289,
+      "meanAcceptedActions": 1800,
+      "actionEfficiency": 1.0,
+      "invalidActions": 0,
+      "failureReasons": {
+        "TIME_EXPIRED": 5
+      },
+      "totalTokens": 0,
+      "costMicros": 0,
+      "providerLatencyP50Ms": null,
+      "providerLatencyP95Ms": null,
+      "mockCount": 0
+    },
+    "deterministic-regular": {
+      "sampleSize": 5,
+      "completionRate": 0.4,
+      "p50DurationMs": 13247,
+      "p95DurationMs": 13355,
+      "meanAcceptedActions": 1158,
+      "actionEfficiency": 1.0,
+      "invalidActions": 0,
+      "failureReasons": {
+        "TIME_EXPIRED": 3
+      },
+      "totalTokens": 0,
+      "costMicros": 0,
+      "providerLatencyP50Ms": null,
+      "providerLatencyP95Ms": null,
+      "mockCount": 0
+    },
+    "deterministic-expert": {
+      "sampleSize": 5,
+      "completionRate": 1.0,
+      "p50DurationMs": 1065,
+      "p95DurationMs": 1128,
+      "meanAcceptedActions": 96.2,
+      "actionEfficiency": 1.0,
+      "invalidActions": 0,
+      "failureReasons": {},
+      "totalTokens": 0,
+      "costMicros": 0,
+      "providerLatencyP50Ms": null,
+      "providerLatencyP95Ms": null,
+      "mockCount": 0
+    },
+    "llm-regular": {
+      "sampleSize": 5,
+      "completionRate": 0.0,
+      "p50DurationMs": 30,
+      "p95DurationMs": 49,
+      "meanAcceptedActions": 0,
+      "actionEfficiency": null,
+      "invalidActions": 0,
+      "failureReasons": {
+        "INVALID_POLICY_OUTPUT": 5
+      },
+      "totalTokens": 0,
+      "costMicros": 0,
+      "providerLatencyP50Ms": null,
+      "providerLatencyP95Ms": null,
+      "mockCount": 0
+    }
+  }
+}
