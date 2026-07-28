@@ -14,6 +14,7 @@ load_dotenv()
 
 from app.routers.agent import router as agent_router
 from app.routers.player import router as player_router
+from app.routers.director import router as director_router
 
 logging.basicConfig(
     level=logging.INFO,
@@ -40,11 +41,12 @@ for handler in logging.getLogger().handlers:
 app = FastAPI(title="GameDev Agent Mock API", version="0.1.0")
 app.include_router(agent_router)
 app.include_router(player_router)
+app.include_router(director_router)
 
 
 @app.middleware("http")
 async def authenticate_internal_requests(request: Request, call_next):
-    if request.url.path.startswith(("/agent/", "/player/")):
+    if request.url.path.startswith(("/agent/", "/player/", "/director/")):
         expected = os.getenv("PYTHON_AGENT_INTERNAL_TOKEN", "")
         supplied = request.headers.get("X-Internal-Token", "")
         if len(expected) < 32 or not secrets.compare_digest(supplied, expected):
@@ -54,7 +56,7 @@ async def authenticate_internal_requests(request: Request, call_next):
 
 @app.middleware("http")
 async def limit_player_request_body(request: Request, call_next):
-    if request.url.path.startswith("/player/"):
+    if request.url.path.startswith(("/player/", "/director/")):
         content_length = request.headers.get("content-length")
         try:
             declared_too_large = content_length is not None and int(content_length) > 2 * 1024 * 1024

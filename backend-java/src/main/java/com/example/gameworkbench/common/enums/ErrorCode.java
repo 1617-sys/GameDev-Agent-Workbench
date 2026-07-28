@@ -44,6 +44,12 @@ public enum ErrorCode {
     EPISODE_IDEMPOTENCY_CONFLICT(40910, "Episode idempotency key conflicts with persisted results", "Machine Episode"),
     PLAYER_RUN_INVALID(40011, "Player Run request is not registered or exceeds its budget", "Player Run"),
     PLAYER_RUN_IDEMPOTENCY_CONFLICT(40911, "Player Run idempotency key conflicts with another request", "Player Run"),
+    DIRECTOR_RUN_INVALID(40012, "Director Run request or transition is invalid", "Director Run"),
+    DIRECTOR_RUN_IDEMPOTENCY_CONFLICT(40912, "Director Run idempotency key conflicts with another request", "Director Run"),
+    DIRECTOR_RUN_CONCURRENT_UPDATE(40913, "Director Run was concurrently updated", "Director Run"),
+    DIRECTOR_TOOL_INVALID(40013, "Director tool request violates its registered schema", "Director Tool"),
+    DIRECTOR_TOOL_FORBIDDEN(40302, "Director tool cannot access the requested project resource", "Director Tool"),
+    DIRECTOR_TOOL_TIMEOUT(50401, "Director tool execution timed out", "Director Tool"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
     PROJECT_NOT_FOUND(40401, "Project not found", "Project or agent run"),
@@ -55,6 +61,8 @@ public enum ErrorCode {
     PROTOTYPE_EXPORT_NOT_FOUND(40401, "Prototype export not found", "Prototype export"),
     EPISODE_NOT_FOUND(40401, "Machine Episode or batch not found", "Machine Episode"),
     PLAYER_RUN_NOT_FOUND(40401, "Player Run not found", "Player Run"),
+    DIRECTOR_RUN_NOT_FOUND(40401, "Director Run not found", "Director Run"),
+    DIRECTOR_TOOL_NOT_FOUND(40401, "Director tool or version is not registered", "Director Tool"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 
