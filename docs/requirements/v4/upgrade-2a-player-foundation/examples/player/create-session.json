@@ -1,0 +1,10 @@
+{
+  "protocolVersion": "simulation/1.0",
+  "episodeId": "00000000-0000-4000-8000-000000000101",
+  "correlationId": "run-000000000101",
+  "configDigest": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "seed": 20260728,
+  "maxSteps": 1200,
+  "observationPolicy": { "kind": "PERSONA", "visionRadiusPx": 320 },
+  "gameConfig": { "contract": "game-config/2.0 object omitted from this compact example" }
+}

@@ -1,0 +1,19 @@
+{
+  "request": {
+    "correlationId": "decision-00000042",
+    "action": { "type": "MOVE_RIGHT" }
+  },
+  "response": {
+    "protocolVersion": "simulation/1.0",
+    "sessionId": "2d610a52-b30c-4d28-9d0e-a123edb49d8f",
+    "stepResult": {
+      "step": 42,
+      "accepted": true,
+      "advanced": true,
+      "status": "RUNNING",
+      "terminationReason": null,
+      "previousStateHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "stateHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  }
+}

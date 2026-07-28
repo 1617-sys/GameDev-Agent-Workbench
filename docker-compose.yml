@@ -76,10 +76,40 @@ services:
       LLM_MODEL: ${LLM_MODEL}
       LLM_ENABLE_MOCK_FALLBACK: ${LLM_ENABLE_MOCK_FALLBACK}
       PYTHON_AGENT_INTERNAL_TOKEN: ${PYTHON_AGENT_INTERNAL_TOKEN:?PYTHON_AGENT_INTERNAL_TOKEN must be set}
+      SIMULATION_SERVICE_BASE_URL: http://simulation-service:8090
+      SIMULATION_SERVICE_INTERNAL_TOKEN: ${SIMULATION_SERVICE_INTERNAL_TOKEN:?SIMULATION_SERVICE_INTERNAL_TOKEN must be set}
+    depends_on:
+      simulation-service:
+        condition: service_healthy
     ports:
       - "127.0.0.1:${PYTHON_AGENT_HOST_PORT:-8000}:8000"
     healthcheck:
       test: ["CMD", "python", "-c", "from urllib.request import urlopen; assert urlopen('http://127.0.0.1:8000/health', timeout=2).getcode() == 200"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    init: true
+    mem_limit: 512m
+    cpus: 1.0
+
+  simulation-service:
+    build:
+      context: ./frontend-vue
+      dockerfile: Dockerfile.simulation-service
+    environment:
+      SIMULATION_SERVICE_INTERNAL_TOKEN: ${SIMULATION_SERVICE_INTERNAL_TOKEN:?SIMULATION_SERVICE_INTERNAL_TOKEN must be set}
+      SIMULATION_SERVICE_PORT: 8090
+      SIMULATION_SESSION_TTL_MS: ${SIMULATION_SESSION_TTL_MS:-300000}
+      SIMULATION_MAX_SESSIONS: ${SIMULATION_MAX_SESSIONS:-100}
+    expose:
+      - "8090"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8090/health').then((response) => process.exit(response.ok ? 0 : 1)).catch(() => process.exit(1))"]
       interval: 5s
       timeout: 3s
       retries: 20
