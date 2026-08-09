@@ -3,7 +3,7 @@
     <aside class="sidebar" :class="{ open: mobileMenuOpen }">
       <div class="sidebar-brand">
         <span class="brand-mark small">GF</span>
-        <div><strong>GameFlow</strong><small>Prototype Studio</small></div>
+        <div><strong>GameFlow</strong><small>Cocos Generation Studio</small></div>
         <button class="icon-button mobile-only" type="button" title="关闭导航" @click="mobileMenuOpen = false"><X :size="18" /></button>
       </div>
 

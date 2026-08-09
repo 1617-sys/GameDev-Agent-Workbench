@@ -52,6 +52,11 @@ public enum ErrorCode {
     DIRECTOR_TOOL_TIMEOUT(50401, "Director tool execution timed out", "Director Tool"),
     PROTOTYPE_APPROVAL_CONFLICT(40914, "Prototype approval conflicts with its lifecycle or prior decision", "Prototype Approval"),
     CANDIDATE_GENERATION_INVALID(40014, "Candidate generation request has no bounded valid plan", "Experiment Candidate"),
+    GAMESPEC_INVALID(40015, "GameSpec does not satisfy the registered contract", "GameSpec compilation"),
+    GENERATION_RUN_IDEMPOTENCY_CONFLICT(40916, "Generation Run idempotency key conflicts with another request", "Generation Run"),
+    COCOS_BUILD_UNAVAILABLE(50303, "Cocos Build Worker is not configured", "Cocos build"),
+    AI_MODEL_UNAVAILABLE(50304, "AI model provider is unavailable or not configured", "Spring AI model call"),
+    AI_MODEL_INVALID_RESPONSE(50204, "AI model returned an invalid structured response", "Spring AI model call"),
     EXPERIMENT_NOT_COMPARABLE(40915, "Experiment samples cannot be compared", "Director Experiment"),
 
     USER_NOT_FOUND(40401, "User not found", "Current user"),
@@ -66,6 +71,7 @@ public enum ErrorCode {
     PLAYER_RUN_NOT_FOUND(40401, "Player Run not found", "Player Run"),
     DIRECTOR_RUN_NOT_FOUND(40401, "Director Run not found", "Director Run"),
     DIRECTOR_TOOL_NOT_FOUND(40401, "Director tool or version is not registered", "Director Tool"),
+    GENERATION_RUN_NOT_FOUND(40401, "Generation Run not found", "Generation Run"),
     PROMPT_TEMPLATE_NOT_FOUND(40401, "Prompt template not found", "Prompt template detail"),
     ACTIVE_PROMPT_TEMPLATE_NOT_FOUND(40402, "Active prompt template not found, please configure a prompt template first", "Agent run prompt template selection"),
 

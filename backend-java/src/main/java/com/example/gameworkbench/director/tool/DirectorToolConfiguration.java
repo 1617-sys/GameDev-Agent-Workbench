@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import com.example.gameworkbench.experiment.PlayerExperimentService;
 import com.example.gameworkbench.experiment.candidate.DeterministicCandidateGenerator;
 import com.example.gameworkbench.prototype.PrototypeDraftService;
+import com.example.gameworkbench.gamespec.ArcadeCollectCapabilityRegistry;
+import com.example.gameworkbench.gamespec.GameSpecCompiler;
 
 @Configuration
 public class DirectorToolConfiguration {
@@ -16,8 +18,10 @@ public class DirectorToolConfiguration {
     @Bean DirectorToolResultStore directorToolResultStore(){return new InMemoryDirectorToolResultStore();}
     @Bean DirectorToolRegistry directorToolRegistry(DirectorReadModelGateway gateway,DirectorResourceAuthorizer authorizer,
             DirectorToolResultStore store,ObjectMapper json,ExecutorService directorToolExecutor,PrototypeDraftService drafts,
-            DeterministicCandidateGenerator generator,PlayerExperimentService experiments){
+            DeterministicCandidateGenerator generator,PlayerExperimentService experiments,
+            ArcadeCollectCapabilityRegistry capabilities,GameSpecCompiler gameSpecCompiler){
         var tools=new ArrayList<>(DefaultDirectorReadTools.create(gateway,json));tools.addAll(ExperimentDirectorTools.create(drafts,generator,experiments,json));
+        tools.addAll(GameSpecDirectorTools.create(capabilities,gameSpecCompiler,json));
         return new DefaultDirectorToolRegistry(tools,authorizer,store,json,directorToolExecutor);
     }
 }

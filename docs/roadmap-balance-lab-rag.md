@@ -1,8 +1,9 @@
 # B 路线：玩法平衡实验台与可验证 RAG 升级路线图
 
-> 状态：PROPOSED，供仓库 Review 和后续任务拆分使用  
+> 状态：SUPERSEDED / 历史路线
 > 产品边界：继续深耕单一 `arcade_collect` Runtime，不以增加多个半成品游戏模板作为近期目标  
-> 核心原则：RAG 保留并升级，但任何“语义检索有效”结论必须有可复现实验支持
+> 后继路线：[V5 Agentic Mini-Game Factory](requirements/v5/README.md)
+> 保留原因：记录 V3 之后对平衡闭环和 RAG 的取舍；其中 RAG 原则继续有效，但不再是当前产品主线。
 
 ## 1. 目标定位
 

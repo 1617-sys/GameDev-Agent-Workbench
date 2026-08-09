@@ -10,6 +10,10 @@ frontend-vue/node_modules/
 frontend-vue/dist/
 frontend-vue/.vite/
 
+# Local Cocos V5 build work and verification outputs.
+tmp/cocos-*/
+tmp/playable-artifacts/
+
 *.log
 .DS_Store
 .env

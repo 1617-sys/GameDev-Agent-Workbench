@@ -1,0 +1,48 @@
+{
+  "archetype": "arcade_collect",
+  "capabilityRegistryVersion": "arcade-collect/1",
+  "entities": [
+    { "id": "crystal-one", "score": 100, "size": 24, "type": "collectible", "x": 300, "y": 160 },
+    { "id": "crystal-two", "score": 100, "size": 24, "type": "collectible", "x": 530, "y": 370 },
+    { "id": "guardian", "patrolAxis": "y", "patrolRange": 150, "size": 36, "speed": 80, "type": "enemy", "x": 480, "y": 270 },
+    { "id": "stone-wall", "size": 96, "type": "obstacle", "x": 670, "y": 210 },
+    { "id": "forest-exit", "size": 72, "type": "exit", "x": 870, "y": 270 }
+  ],
+  "irVersion": "cocos-runtime-ir/1",
+  "metadata": {
+    "description": "Collect every crystal and reach the portal.",
+    "seed": 42,
+    "title": "Forest Collector"
+  },
+  "player": {
+    "health": 3,
+    "movement": "four_way",
+    "radius": 20,
+    "spawn": { "x": 90, "y": 270 },
+    "speed": 180
+  },
+  "presentation": {
+    "animationProfileId": "topdown-character-01",
+    "assetPackId": "forest-adventure-01",
+    "audioProfileId": "forest-light-01",
+    "cameraProfileId": "follow-soft-01",
+    "feedbackProfileId": "arcade-juice-01",
+    "uiSkinId": "forest-hud-01",
+    "visualThemeId": "forest-01"
+  },
+  "rules": [
+    {
+      "if": { "counter": "remainingCollectibles", "equals": 0 },
+      "then": [{ "action": "exit.unlock" }],
+      "when": "collectible.collected"
+    }
+  ],
+  "runtimeShellVersion": "cocos-arcade-collect/1",
+  "sourceDigest": "5646a5455ed8fa0ea10439b8c6a68ef9af3e572d7df13a3234db1f1b3fb06186",
+  "world": {
+    "backgroundColor": "#10251b",
+    "height": 540,
+    "timeLimitSeconds": 90,
+    "width": 960
+  }
+}

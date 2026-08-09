@@ -1,0 +1,45 @@
+{
+  "specVersion": "0.1",
+  "archetype": "arcade_collect",
+  "metadata": {
+    "title": "Forest Collector",
+    "seed": 42,
+    "description": "Collect every crystal and reach the portal."
+  },
+  "world": {
+    "width": 960,
+    "height": 540,
+    "timeLimitSeconds": 90,
+    "backgroundColor": "#10251b"
+  },
+  "player": {
+    "movement": "four_way",
+    "speed": 180,
+    "health": 3,
+    "radius": 20,
+    "spawn": { "x": 90, "y": 270 }
+  },
+  "entities": [
+    { "id": "crystal-one", "type": "collectible", "x": 300, "y": 160, "size": 24, "score": 100 },
+    { "id": "crystal-two", "type": "collectible", "x": 530, "y": 370, "size": 24, "score": 100 },
+    { "id": "guardian", "type": "enemy", "x": 480, "y": 270, "size": 36, "speed": 80, "patrolAxis": "y", "patrolRange": 150 },
+    { "id": "stone-wall", "type": "obstacle", "x": 670, "y": 210, "size": 96 },
+    { "id": "forest-exit", "type": "exit", "x": 870, "y": 270, "size": 72 }
+  ],
+  "rules": [
+    {
+      "when": "collectible.collected",
+      "if": { "counter": "remainingCollectibles", "equals": 0 },
+      "then": [{ "action": "exit.unlock" }]
+    }
+  ],
+  "presentation": {
+    "visualThemeId": "forest-01",
+    "assetPackId": "forest-adventure-01",
+    "animationProfileId": "topdown-character-01",
+    "cameraProfileId": "follow-soft-01",
+    "feedbackProfileId": "arcade-juice-01",
+    "uiSkinId": "forest-hud-01",
+    "audioProfileId": "forest-light-01"
+  }
+}

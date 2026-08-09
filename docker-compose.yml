@@ -42,6 +42,8 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-/}
       TZ: Asia/Shanghai
+    ports:
+      - "127.0.0.1:${RABBITMQ_HOST_PORT:-5673}:5672"
     healthcheck:
       test: ["CMD-SHELL", "rabbitmq-diagnostics -q ping"]
       interval: 5s
@@ -56,6 +58,8 @@ services:
     command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:?REDIS_PASSWORD must be set}"]
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6380}:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -147,6 +151,10 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD:?REDIS_PASSWORD must be set}
       PYTHON_AGENT_BASE_URL: http://python-agent:8000
       PYTHON_AGENT_INTERNAL_TOKEN: ${PYTHON_AGENT_INTERNAL_TOKEN:?PYTHON_AGENT_INTERNAL_TOKEN must be set}
+      APP_AI_PROVIDER: ${APP_AI_PROVIDER:-spring-ai}
+      LLM_API_KEY: ${LLM_API_KEY}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
+      LLM_MODEL: ${LLM_MODEL:-deepseek-chat}
       PLAYER_MODEL: ${LLM_MODEL:-deepseek-chat}
       PLAYER_API_TIMEOUT_MS: ${PLAYER_API_TIMEOUT_MS:-120000}
       PLAYER_RUN_RECOVERY_DELAY_MS: ${PLAYER_RUN_RECOVERY_DELAY_MS:-30000}
