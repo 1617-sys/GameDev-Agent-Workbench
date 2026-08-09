@@ -42,7 +42,7 @@ Java 不是外围 CRUD 装饰，而将成为生成正确性的事实源：
 | 可靠编排 | Spring Boot、MySQL、Redis、RabbitMQ、Outbox、幂等、恢复与审计 |
 | 可复现仿真 | `arcade_collect` Simulation Core、固定步长、seed、state hash、Replay、Headless Runner |
 | Player Agent | 确定性策略、Persona、逐步读取环境反馈的 LLM 策略、轨迹持久化 |
-| Director Agent | LangGraph 决策、Java typed tool registry、预算/权限、候选实验、DRAFT 人工审批 |
+| Director Agent | Spring AI 用户控制 Tool Calling、Java typed tool registry、持久化检查点/预算/权限、候选实验、DRAFT 人工审批；Python LangGraph 仅作显式回滚 |
 | 可玩产物 | V4 为 GameConfig 2.0 驱动的 Phaser Runtime；V5 已有 GameSpec 编译器、Java 控制平面、Cocos Runtime Shell 与本地 Web Mobile 构建链路 |
 | RAG | 已有知识生命周期与 provenance；真实语义检索质量尚未完成和证明 |
 
@@ -117,7 +117,7 @@ python -m pytest -q
 
 ## 已知限制
 
-- V5 当前只支持首个 `arcade_collect` 垂直切片；GameSpec、Java 控制平面、Cocos Runtime Shell 和 Spring AI Spec Author 已实现，但正式 Asset Pack、统一 Gate、Director/Player 切流和生产级 Qdrant RAG 尚未关闭。
+- V5 当前只支持首个 `arcade_collect` 垂直切片；GameSpec、Spring AI 结构化 Spec Author、可恢复 Tool Calling Director、Java 控制平面和 Cocos Runtime Shell 已实现，但正式 Asset Pack、统一 Gate、Player 切流和生产级语义 RAG 尚未关闭。
 - V4 Director 评测为 mock、每组 `N=6`，不能外推真实模型质量、成本或稳定性。
 - Python 稳定性测试曾因 `policyDurationMs` 的墙钟抖动出现偶发失败，动作序列一致；应在后续把确定性决策与观测耗时分离。
 - RAG 当前仍含 fake embedding / 内存检索基线，不能宣称已具备生产级语义检索。

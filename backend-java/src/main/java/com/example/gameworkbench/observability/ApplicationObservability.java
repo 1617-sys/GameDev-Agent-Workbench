@@ -22,7 +22,8 @@ public class ApplicationObservability {
     private static final Set<String> STATUSES = Set.of(
             "PENDING", "QUEUED", "RUNNING", "RETRY_WAIT", "SUCCESS", "FAILED", "TIMEOUT", "CANCELED", "UNKNOWN"
     );
-    private static final Set<String> PROVIDERS = Set.of("mock", "fixture", "openai-compatible", "unknown");
+    private static final Set<String> PROVIDERS = Set.of(
+            "mock", "fixture", "openai-compatible", "spring-ai-openai-compatible", "unknown");
     private static final Set<String> MOCK_STATES = Set.of("TRUE", "FALSE", "UNKNOWN");
     private static final Set<String> MESSAGE_OUTCOMES = Set.of("RECEIVED", "DUPLICATE", "REDELIVERED", "ACKED", "RETRY", "DLQ");
     private static final Set<String> EXECUTION_OUTCOMES = Set.of("SUCCESS", "FAILED");

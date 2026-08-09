@@ -8,7 +8,7 @@
 
 V3 当前系统只支持 `arcade_collect`：模型生成受白名单约束的 GameConfig，固定 Phaser Runtime 负责执行。旧四步“Agent”是冻结定义驱动的串行 LLM Workflow。V4 已新增 Director、类型化工具、逐步 Player、实验与 DRAFT 审批，但其公开对照数据仍是 mock 小样本，不能外推真实模型收益。
 
-V5 不继续把平衡实验或 RAG 作为唯一主线，而引入 GameSpec 作者层 DSL。当前首个切片已实现 GenerationRun、GameSpec 语义/能力/安全校验、Agent Tool Gateway、Cocos 构建编排、产物 manifest、Runtime Shell，以及 Spring AI Spec Author 的 diagnostics 修复循环。Phaser 仅保留为 V4 历史实现；统一发布门禁、Director/Player Spring AI 切流、正式 Asset Pack 和生产级 RAG 仍在后续里程碑。
+V5 不继续把平衡实验或 RAG 作为唯一主线，而引入 GameSpec 作者层 DSL。当前首个切片已实现 GenerationRun、GameSpec 语义/能力/安全校验、Spring AI 结构化 Spec Author 的 diagnostics 修复循环，以及由持久化 Java Worker 控制的 Spring AI Director Tool Calling。模型只选择工具，Java 仍负责检查点、预算、权限、幂等、工具执行和证据落库。Phaser 仅保留为 V4 历史实现；统一发布门禁、Player Spring AI 切流、正式 Asset Pack 和生产级 RAG 仍在后续里程碑。
 
 ### V5 演进架构（首个切片已实现）
 

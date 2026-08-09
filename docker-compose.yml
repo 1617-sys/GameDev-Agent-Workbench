@@ -152,6 +152,8 @@ services:
       PYTHON_AGENT_BASE_URL: http://python-agent:8000
       PYTHON_AGENT_INTERNAL_TOKEN: ${PYTHON_AGENT_INTERNAL_TOKEN:?PYTHON_AGENT_INTERNAL_TOKEN must be set}
       APP_AI_PROVIDER: ${APP_AI_PROVIDER:-spring-ai}
+      DIRECTOR_DECISION_PROVIDER: ${DIRECTOR_DECISION_PROVIDER:-spring-ai}
+      DIRECTOR_MODEL: ${DIRECTOR_MODEL:-deepseek-chat}
       LLM_API_KEY: ${LLM_API_KEY}
       LLM_BASE_URL: ${LLM_BASE_URL:-https://api.deepseek.com}
       LLM_MODEL: ${LLM_MODEL:-deepseek-chat}

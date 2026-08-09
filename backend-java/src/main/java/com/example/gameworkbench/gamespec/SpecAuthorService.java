@@ -22,10 +22,13 @@ public class SpecAuthorService {
         ObjectNode candidate = initialSpec;
         List<SpecAuthorAttempt> attempts = new ArrayList<>();
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-            candidate = model.author(idea, candidate, diagnostics(compilation));
+            SpecAuthorModelResponse authored = model.author(new SpecAuthorModelRequest(
+                    userId, projectUuid, idea, candidate, diagnostics(compilation), attempt));
+            candidate = authored.spec();
             compilation = gameSpecs.compile(userId, projectUuid, candidate);
             boolean accepted = compilation.status() == GameSpecCompilationResult.Status.SUCCEEDED;
-            attempts.add(new SpecAuthorAttempt(attempt, candidate.deepCopy(), compilation.diagnostics(), accepted));
+            attempts.add(new SpecAuthorAttempt(attempt, candidate.deepCopy(), compilation.diagnostics(), accepted,
+                    authored.modelEvidence() == null ? json.createObjectNode() : authored.modelEvidence().deepCopy()));
             if (accepted) return new SpecAuthorResult("SUCCEEDED", compilation.canonicalSpec(), compilation, List.copyOf(attempts));
         }
         return new SpecAuthorResult("FAILED", candidate, compilation, List.copyOf(attempts));

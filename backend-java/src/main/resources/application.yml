@@ -52,6 +52,7 @@ logging:
   level:
     org.apache.ibatis: warn
     com.baomidou.mybatisplus: warn
+    org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvisor: warn
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${spring.application.name} traceId=%X{traceId:-none} workflowRunUuid=%X{workflowRunUuid:-none} stepRunUuid=%X{stepRunUuid:-none} agentRunUuid=%X{agentRunUuid:-none} messageId=%X{messageId:-none} logger=%logger{36} msg=%msg%n"
 
@@ -84,6 +85,8 @@ app:
     http-timeout-ms: ${PLAYER_API_TIMEOUT_MS:120000}
     recovery-delay-ms: ${PLAYER_RUN_RECOVERY_DELAY_MS:30000}
   director:
+    decision-provider: ${DIRECTOR_DECISION_PROVIDER:spring-ai}
+    model: ${DIRECTOR_MODEL:${LLM_MODEL:deepseek-chat}}
     decision-timeout-ms: ${DIRECTOR_DECISION_TIMEOUT_MS:30000}
     recovery-delay-ms: ${DIRECTOR_RECOVERY_DELAY_MS:30000}
     claim-seconds: ${DIRECTOR_CLAIM_SECONDS:60}

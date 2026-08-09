@@ -389,15 +389,15 @@ KnowledgeIndexing / Retrieval
 
 ## 17. Spring AI 迁移验收
 
-- [x] Boot 3.5.x + Spring AI 1.1.8 的依赖树无冲突，现有 Java 测试不回归（227 tests，0 failures，1 个 Docker 条件跳过）。
+- [x] Boot 3.5.x + Spring AI 1.1.8 的依赖树无冲突，现有 Java 测试不回归（232 tests，0 failures，1 个 Docker 条件跳过）。
 - [ ] 所有生产模型调用均通过项目领域端口进入 Spring AI，不再直接使用 Python LangChain、LangGraph 或 `httpx` 调模型。
 - [ ] 同一冻结输入可比较 Python 与 Spring AI 的结构化结果；差异有报告，不能只比较自然语言文本。
 - [x] Spec Author 能生成合法 GameSpec，也能根据 Java diagnostics 在最多三次模型调用预算内修复非法 GameSpec。
-- [ ] Director 的每轮决策、工具参数、结果 digest、token、成本、耗时和终止原因可审计，重启后从持久化快照恢复。
-- [ ] Tool Callback 无法绕过项目归属、状态、schema、幂等、超时和人工审批。
+- [x] Director 使用 Spring AI 用户控制 Tool Calling；每轮只选择一个工具，Java 在执行前持久化决策，并保留工具参数、结果 digest、token、耗时和终止原因，重启后从检查点恢复（provider 未提供价格时成本记为 0，不推算）。
+- [x] Tool Callback 仅适配现有 DirectorToolRegistry，可信 user/project/run/call 上下文由服务端注入；项目归属、schema、幂等、超时和人工审批仍由 Java 领域层执行。
 - [ ] Player 非法动作、模型超时、结构化输出失败和预算耗尽均产生稳定错误，不被记为完成。
 - [ ] 正式 RAG 使用真实 embedding 与 Qdrant，重启后可检索，跨项目数据不能命中。
 - [ ] 生产缺少密钥或 Provider 不可用时 fail closed；mock/recorded 数据不混入真实成功率与成本。
 - [ ] Spring AI 默认切流后完成一次回滚演练；稳定窗口结束前保留 Python 兼容实现，之后再删除。
 
-当前实现状态（2026-08-09）：Spring Boot 3.5.16、Spring AI 1.1.8、OpenAI-compatible ChatClient、领域端口、稳定 AI 错误分类、token/latency/trace/RAG provenance、默认 Spring AI 切流和显式 Python 回滚均已落地。测试配置关闭付费模型和未使用的多模态自动配置；生产缺少 Provider 密钥时不会降级为 mock。M3 Director/Player、M4 Qdrant RAG、shadow comparison、回滚演练与 Python 退役仍按本节未勾选项推进，不能因本次底座完成而宣称整份 V5 PRD 已关闭。
+当前实现状态（2026-08-09）：Spring Boot 3.5.16、Spring AI 1.1.8、OpenAI-compatible ChatClient、GameSpec DTO 结构化校验、compiler diagnostics 有界修复、项目上下文/能力边界/调用证据 Advisor，以及可恢复 Director Tool Calling 已落地。Director 使用用户控制执行模式，Spring AI 返回单个 tool call 后由 Java 状态机落库、校验并执行；测试配置关闭付费模型，生产缺少 ChatModel 时显式失败，不降级为 mock。M3 Player、M4 生产级 RAG、shadow comparison、回滚演练与 Python 退役仍按未勾选项推进。
