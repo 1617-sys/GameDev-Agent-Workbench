@@ -1,4 +1,13 @@
 spring:
+  ai:
+    model:
+      chat: none
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
   datasource:
     url: jdbc:mysql://localhost:3306/gamedev_agent_workbench_test?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: test_user
@@ -21,6 +30,8 @@ spring:
       password:
 
 app:
+  ai:
+    provider: python
   jwt:
     secret: test-only-jwt-secret-at-least-32-bytes
     expire-seconds: 86400

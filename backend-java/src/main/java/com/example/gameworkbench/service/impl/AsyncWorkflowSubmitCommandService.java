@@ -17,7 +17,12 @@ import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 
 import lombok.RequiredArgsConstructor;
 
-/** Performs only the short, durable submit transaction; it does not contact a broker or runner. */
+/**
+ * 负责异步提交的短事务边界。
+ *
+ * <p>WorkflowRun、StepRun、首个运行事件和 OutboxEvent 必须同时提交或同时回滚。
+ * 该类不连接 Broker，也不调用 Runner；消息发布由事务提交后的 Outbox Publisher 完成。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class AsyncWorkflowSubmitCommandService {
@@ -39,6 +44,8 @@ public class AsyncWorkflowSubmitCommandService {
                 workflowRun.getStatus(), workflowRun.getAttempt(), null, traceId);
 
         LocalDateTime now = LocalDateTime.now();
+        // INVARIANT: 业务状态和投递意图处于同一个数据库事务。
+        // 即使进程在事务提交后立即崩溃，调度器仍能从 Outbox 恢复待发布事件。
         outboxEventMapper.insert(OutboxEvent.builder()
                 .eventUuid(UUID.randomUUID().toString())
                 .aggregateType("WORKFLOW_RUN")

@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.example.gameworkbench.client.PythonAgentClient;
+import com.example.gameworkbench.ai.DesignModelGateway;
 import com.example.gameworkbench.client.dto.PythonAgentRequest;
 import com.example.gameworkbench.client.dto.PythonAgentResponse;
 import com.example.gameworkbench.common.enums.AgentRunStatus;
@@ -51,7 +51,7 @@ public class AgentRunServiceImpl implements AgentRunService {
 
     private final AgentRunMapper agentRunMapper;
     private final GameProjectMapper gameProjectMapper;
-    private final PythonAgentClient pythonAgentClient;
+    private final DesignModelGateway designModelGateway;
     private final ObjectMapper objectMapper;
     private final PromptTemplateMapper promptTemplateMapper;
     private final PromptVersionMapper promptVersionMapper;
@@ -170,7 +170,7 @@ public class AgentRunServiceImpl implements AgentRunService {
                     .rag(ragPayload)
                     .build();
 
-            PythonAgentResponse pythonResponse = pythonAgentClient.invoke(request.getAgentType(), pythonRequest);
+            PythonAgentResponse pythonResponse = designModelGateway.invoke(request.getAgentType(), pythonRequest);
             /*
              * 将 Python 服务返回结果序列化为 JSON 字符串，写入运行记录并标记成功。
              */
@@ -210,7 +210,7 @@ public class AgentRunServiceImpl implements AgentRunService {
              * 业务异常处理：记录失败信息并重新抛出，由上层统一处理。
              */
             agentRun.setStatus(AgentRunStatus.FAILED.name());
-            agentRun.setErrorMessage(ErrorCode.PYTHON_RESPONSE_FAILED.getMessage());
+            agentRun.setErrorMessage(exception.getMessage());
             agentRun.setErrorCategory(errorCategory(exception));
             agentRun.setTimeTakenMs(System.currentTimeMillis() - startTime);
             agentRun.setUpdatedAt(LocalDateTime.now());
@@ -498,6 +498,8 @@ public class AgentRunServiceImpl implements AgentRunService {
             case 50201 -> "PROVIDER_TRANSIENT";
             case 50202 -> "PROTOCOL_INVALID";
             case 50203 -> "PROVIDER_REJECTED";
+            case 50204 -> "PROTOCOL_INVALID";
+            case 50304 -> "PROVIDER_TRANSIENT";
             default -> "INTERNAL";
         };
     }

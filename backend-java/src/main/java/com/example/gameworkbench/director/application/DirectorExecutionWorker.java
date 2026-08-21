@@ -31,6 +31,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Director 的可恢复执行循环。
+ *
+ * <p>每轮先使用 stateVersion 和带过期时间的 claim token 取得执行权，再请求模型选择一个
+ * 决策。Java 校验轮次、预算、工具定义和状态迁移，并把 decision、tool call、event 与
+ * checkpoint 持久化；模型不能直接执行工具或修改运行状态。</p>
+ *
+ * <p>after-commit 事件用于低延迟启动，定时扫描负责进程中断后的恢复。WAITING_EXPERIMENT
+ * 和 WAITING_APPROVAL 是显式暂停点，而不是占用线程等待。</p>
+ */
 @Service @RequiredArgsConstructor
 public class DirectorExecutionWorker {
     private final DirectorRunMapper runs;
@@ -56,6 +66,8 @@ public class DirectorExecutionWorker {
             DirectorRun run=runs.selectByUuid(runUuid);
             if(run==null||!("RUNNING".equals(run.getStatus())||recoverableWaiting(run)))return;
             String token=UUID.randomUUID().toString();LocalDateTime now=LocalDateTime.now();
+            // CONCURRENCY: 模型调用前必须先取得带版本的数据库租约。
+            // 多个异步事件或恢复扫描同时触发时，只有一个 Worker 能继续本轮。
             if(runs.claim(runUuid,run.getStateVersion(),token,now.plusSeconds(claimSeconds),now)!=1)return;
             run=runs.selectByUuid(runUuid);
             try{
@@ -64,6 +76,7 @@ public class DirectorExecutionWorker {
                 ObjectNode usage=(ObjectNode)checkpoint.path("usage");if(run.getCreatedAt()!=null)usage.put("wallClockMs",Math.max(0,Duration.between(run.getCreatedAt(),LocalDateTime.now()).toMillis()));String exhausted=exhausted(checkpoint);
                 if(exhausted!=null){runService.transition(run.getUserId(),run.getProjectId(),runUuid,run.getStateVersion(),"FAILED",write(checkpoint),null,"BUDGET_"+exhausted+"_EXHAUSTED");event(run,"BUDGET_EXHAUSTED",exhausted+" budget exhausted");return;}
                 int used=usage.path("rounds").asInt(0);
+                // SECURITY: 模型只返回“选择了什么”，真实工具执行和状态变更仍由 Java 完成。
                 JsonNode decision=director.decide(snapshot(run,checkpoint),trace(run));String kind=decision.path("kind").asText();int round=decision.path("round").asInt();
                 if(round!=used+1)throw new IllegalArgumentException("Director round is not sequential");
                 updateCheckpointForDecision(checkpoint,round,decision);

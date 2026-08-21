@@ -28,7 +28,17 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Service;
 
-/** R3-04 boundary: owns message handling, lock, claim and ACK; the Runner remains transport-agnostic. */
+/**
+ * RabbitMQ 工作流执行消息的消费边界。
+ *
+ * <p>本类负责消息契约校验、重复消息过滤、Redis 快速防重、数据库执行权抢占、
+ * ACK/NACK 和失败路由；{@link WorkflowRunner} 保持与 RabbitMQ 无关。</p>
+ *
+ * <p>系统采用 at-least-once 投递，不承诺 exactly-once。Redis 锁只降低同时执行概率，
+ * 数据库中的 status、attempt 和 statusVersion 条件更新才是持久化执行权来源。</p>
+ *
+ * <p>锁为固定 TTL 且没有续租，因此工作流步骤和外部副作用仍必须具备幂等语义。</p>
+ */
 @Slf4j
 @Service
 @Profile("async")
@@ -90,6 +100,8 @@ public class WorkflowMessageConsumer {
             return;
         }
         if (!lockAcquired) {
+            // 另一消费者已经在处理同一运行。这里 ACK 当前副本，已有持有者或恢复扫描
+            // 负责继续执行，避免重复消息在队列中持续自旋。
             observability.workflowMessage("DUPLICATE");
             ack(channel, deliveryTag);
             return;
@@ -97,6 +109,8 @@ public class WorkflowMessageConsumer {
 
         try {
             if (workflowRunMapper.claimForExecution(run.getWorkflowRunUuid(), message.attempt(), run.getStatusVersion(), LocalDateTime.now()) != 1) {
+                // CONCURRENCY: Redis 不是最终所有权依据。只有数据库条件更新成功的消费者
+                // 才能调用 Runner，从而抵御锁过期、重复投递和多实例竞争。
                 observability.workflowMessage("DUPLICATE");
                 ack(channel, deliveryTag);
                 return;
@@ -162,6 +176,9 @@ public class WorkflowMessageConsumer {
         int nextRetry = (run.getRetryCount() == null ? 0 : run.getRetryCount()) + 1;
         try {
             if (code.retryable() && nextRetry <= retryProperties.maxAttempts()) {
+                // TODO(reliability): Runner 当前会先把常见步骤异常写成 FAILED，而此处 SQL 只接受
+                // RUNNING -> RETRY_WAIT，导致这类异常无法进入延迟重试。应统一由消费边界决定
+                // Run 终态，并增加“首次失败、延迟重试、第二次成功”的集成测试。
                 long delay = retryProperties.delayFor(nextRetry);
                 if (workflowRunMapper.recordRetryableFailure(run.getWorkflowRunUuid(), code.name(), error,
                         now.plusNanos(delay * 1_000_000L), now) != 1) { nackForRedelivery(channel, deliveryTag); return; }
@@ -172,6 +189,9 @@ public class WorkflowMessageConsumer {
                     outbound.getMessageProperties().setHeader("lastErrorCode", code.name());
                     return outbound;
                 });
+                // FAILURE: DB 已进入 RETRY_WAIT 后才直接发送重试消息。当前重试意图没有进入
+                // Outbox；若进程在两步之间崩溃，恢复扫描也不会处理 RETRY_WAIT。
+                // 后续应将 retry intent 事务化，或扫描到期 RETRY_WAIT 并重建消息。
                 observability.workflowRetryOrDlq("RETRY", code.name());
             } else {
                 if (workflowRunMapper.recordTerminalFailure(run.getWorkflowRunUuid(), code.name(), error, now) != 1) { nackForRedelivery(channel, deliveryTag); return; }

@@ -1,6 +1,28 @@
 spring:
   application:
     name: gamedev-agent-workbench
+  ai:
+    model:
+      chat: openai
+      embedding: none
+      image: none
+      moderation: none
+      audio:
+        speech: none
+        transcription: none
+    openai:
+      base-url: ${LLM_BASE_URL:https://api.deepseek.com}
+      api-key: ${LLM_API_KEY}
+      chat:
+        options:
+          model: ${LLM_MODEL:deepseek-chat}
+          temperature: ${LLM_TEMPERATURE:0.7}
+    retry:
+      max-attempts: ${LLM_MAX_ATTEMPTS:3}
+      backoff:
+        initial-interval: ${LLM_RETRY_INITIAL_INTERVAL:500ms}
+        multiplier: 2
+        max-interval: ${LLM_RETRY_MAX_INTERVAL:4s}
   datasource:
     url: ${DB_URL:jdbc:mysql://localhost:3306/gamedev_agent_workbench?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
     username: ${DB_USERNAME:gamedev_app}
@@ -30,6 +52,7 @@ logging:
   level:
     org.apache.ibatis: warn
     com.baomidou.mybatisplus: warn
+    org.springframework.ai.chat.client.advisor.StructuredOutputValidationAdvisor: warn
   pattern:
     console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${spring.application.name} traceId=%X{traceId:-none} workflowRunUuid=%X{workflowRunUuid:-none} stepRunUuid=%X{stepRunUuid:-none} agentRunUuid=%X{agentRunUuid:-none} messageId=%X{messageId:-none} logger=%logger{36} msg=%msg%n"
 
@@ -42,6 +65,10 @@ mybatis-plus:
       id-type: auto
 
 app:
+  ai:
+    provider: ${APP_AI_PROVIDER:spring-ai}
+    model: ${LLM_MODEL:deepseek-chat}
+    temperature: ${LLM_TEMPERATURE:0.7}
   security:
     cors:
       allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
@@ -58,11 +85,19 @@ app:
     http-timeout-ms: ${PLAYER_API_TIMEOUT_MS:120000}
     recovery-delay-ms: ${PLAYER_RUN_RECOVERY_DELAY_MS:30000}
   director:
+    decision-provider: ${DIRECTOR_DECISION_PROVIDER:spring-ai}
+    model: ${DIRECTOR_MODEL:${LLM_MODEL:deepseek-chat}}
     decision-timeout-ms: ${DIRECTOR_DECISION_TIMEOUT_MS:30000}
     recovery-delay-ms: ${DIRECTOR_RECOVERY_DELAY_MS:30000}
     claim-seconds: ${DIRECTOR_CLAIM_SECONDS:60}
     max-attempts: ${DIRECTOR_MAX_ATTEMPTS:3}
     experiment-wakeup-delay-ms: ${DIRECTOR_EXPERIMENT_WAKEUP_DELAY_MS:30000}
+  cocos:
+    executable: ${COCOS_CREATOR_EXECUTABLE:}
+    runtime-project: ${COCOS_RUNTIME_PROJECT:}
+    work-root: ${COCOS_BUILD_WORK_ROOT:${java.io.tmpdir}/gamedev-cocos-builds}
+    artifact-root: ${COCOS_ARTIFACT_ROOT:${java.io.tmpdir}/gamedev-playable-artifacts}
+    success-exit-codes: ${COCOS_SUCCESS_EXIT_CODES:36}
   workflow-rate-limit:
     policy-version: ${WORKFLOW_RATE_LIMIT_POLICY_VERSION:v1}
     max-submissions-per-window: ${WORKFLOW_RATE_LIMIT_MAX_SUBMISSIONS:5}
@@ -119,3 +154,9 @@ management:
       enabled: true
     readinessstate:
       enabled: true
+
+# Model prompts and completions can contain private project material; never export them by default.
+spring.ai.chat.client.observations.log-prompt: false
+spring.ai.chat.client.observations.log-completion: false
+spring.ai.chat.observations.log-prompt: false
+spring.ai.chat.observations.log-completion: false

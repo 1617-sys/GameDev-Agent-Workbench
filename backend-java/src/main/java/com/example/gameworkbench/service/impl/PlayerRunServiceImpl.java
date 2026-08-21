@@ -33,6 +33,13 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Player 批量运行的提交服务。
+ *
+ * <p>提交时把不可变 PrototypeVersion、配置摘要、Persona、策略、seed 和预算冻结为
+ * episode/1.0 请求快照。事务只负责持久化 PlayerRun；after-commit Worker 才调用 Python，
+ * 避免数据库事务覆盖外部网络调用。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class PlayerRunServiceImpl implements PlayerRunService {
@@ -64,6 +71,8 @@ public class PlayerRunServiceImpl implements PlayerRunService {
         if(version==null)throw new BusinessException(ErrorCode.PROTOTYPE_VERSION_NOT_FOUND);
         if(!Objects.equals(project.getId(),version.getProjectId()))throw new BusinessException(ErrorCode.FORBIDDEN_PROTOTYPE_VERSION_ACCESS);
         AgentArtifact artifact=artifacts.selectByArtifactUuid(version.getGameConfigArtifactUuid());
+        // INVARIANT: 自动试玩必须绑定版本创建时的同一份配置内容，不能只相信 artifact UUID。
+        // digest 不一致说明版本证据和实际输入已经脱离，必须拒绝执行。
         if(artifact==null||!Objects.equals(project.getId(),artifact.getProjectId())||!Objects.equals(version.getConfigDigest(),artifact.getContentDigest()))throw new BusinessException(ErrorCode.EPISODE_BINDING_MISMATCH);
         var validated=gameConfigs.process(artifact.getContent());
         if(!validated.valid())throw new BusinessException(ErrorCode.PLAYER_RUN_INVALID);

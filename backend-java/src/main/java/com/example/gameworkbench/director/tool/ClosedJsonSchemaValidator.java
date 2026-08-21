@@ -6,8 +6,8 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import com.fasterxml.jackson.databind.JsonNode;
 
-final class ClosedJsonSchemaValidator {
-    void validate(JsonNode value,JsonNode schema) {
+public final class ClosedJsonSchemaValidator {
+    public void validate(JsonNode value,JsonNode schema) {
         if(schema==null || !schema.isObject()) fail();
         String type=schema.path("type").asText();
         switch(type) {

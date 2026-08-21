@@ -18,6 +18,13 @@ import com.example.gameworkbench.service.impl.PlayerRunServiceImpl.PlayerRunRequ
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * PlayerRun 的异步执行与恢复 Worker。
+ *
+ * <p>Worker 在事务提交事件后竞争数据库 claim，调用 Python Player，并将原始响应先保存，
+ * 再转换为 MachineEpisode 持久化。保存 responseJson 使进程在 episode 入库前退出时可以
+ * 复用已经获得的外部结果，避免重复调用模型和模拟环境。</p>
+ */
 @Service
 public class PlayerRunWorker {
     private final PlayerRunMapper runs;
@@ -40,6 +47,8 @@ public class PlayerRunWorker {
         LocalDateTime now=LocalDateTime.now();if(runs.claim(runUuid,now)!=1)return;
         PlayerRun run=runs.selectByUuid(runUuid);if(run==null)return;
         try{
+            // FAILURE: 外部调用成功后立即持久化完整响应；恢复任务优先复用响应，
+            // 避免因 Java 进程中断而重复消耗 Python/LLM 资源。
             JsonNode response=run.getResponseJson()==null?playerApi.runBatch(read(run.getRequestJson()),run.getTraceId()):read(run.getResponseJson());
             if(run.getResponseJson()==null){runs.saveResponse(runUuid,write(response),LocalDateTime.now());run.setResponseJson(write(response));}
             PersistMachineEpisodeBatchRequest persist=new PersistMachineEpisodeBatchRequest();persist.setEpisodeProtocolVersion("episode/1.0");persist.setClientBatchKey(run.getClientBatchKey());

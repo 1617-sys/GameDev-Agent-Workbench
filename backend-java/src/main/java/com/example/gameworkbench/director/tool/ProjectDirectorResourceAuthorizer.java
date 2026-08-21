@@ -24,6 +24,7 @@ public class ProjectDirectorResourceAuthorizer implements DirectorResourceAuthor
             case "CREATE_DRAFT_VERSION","GENERATE_NEIGHBOR_CANDIDATES" -> owned(versions.selectByUuid(arguments.path("parentVersionUuid").asText()),projectId);
             case "COMPARE_PROTOTYPE_CONFIGS","RUN_PLAYER_EXPERIMENT","COMPARE_CANDIDATE_METRICS" -> owned(versions.selectByUuid(arguments.path("baselineVersionUuid").asText()),projectId)&&owned(versions.selectByUuid(arguments.path("candidateVersionUuid").asText()),projectId);
             case "GET_EXPERIMENT_STATUS" -> true;
+            case "GET_GAMESPEC_CAPABILITIES", "COMPILE_GAME_SPEC" -> true;
             default -> false;
         };
     }

@@ -21,6 +21,12 @@ class ApplicationObservabilityTest {
         metric.setStatus("SUCCESS");
         metric.setLatencyMs(25L);
         observability.modelCallPersisted(metric);
+        ModelCallMetric springAi = new ModelCallMetric();
+        springAi.setProvider("spring-ai-openai-compatible");
+        springAi.setMockState("FALSE");
+        springAi.setStatus("SUCCESS");
+        springAi.setLatencyMs(30L);
+        observability.modelCallPersisted(springAi);
         observability.workflowMessage("received");
         observability.workflowQueueLatency(Duration.ofMillis(12));
         observability.workflowExecution(Duration.ofMillis(8), "success");
@@ -35,6 +41,8 @@ class ApplicationObservabilityTest {
         assertThat(registry.get("gamedev.workflow.events").tag("event", "other").tag("status", "UNKNOWN").counter().count()).isEqualTo(1);
         assertThat(registry.get("gamedev.provider.calls").tag("provider", "other").counter().count()).isEqualTo(1);
         assertThat(registry.get("gamedev.provider.latency").tag("provider", "other").timer().count()).isEqualTo(1);
+        assertThat(registry.get("gamedev.provider.calls").tag("provider", "spring-ai-openai-compatible")
+                .counter().count()).isEqualTo(1);
         assertThat(registry.get("gamedev.workflow.messages").tag("outcome", "RECEIVED").counter().count()).isEqualTo(1);
         assertThat(registry.get("gamedev.workflow.queue.latency").timer().count()).isEqualTo(1);
         assertThat(registry.get("gamedev.workflow.execution").tag("outcome", "SUCCESS").timer().count()).isEqualTo(1);

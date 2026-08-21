@@ -1,5 +1,8 @@
 # GameConfig Contract
 
+> 状态：ACTIVE LEGACY TARGET（V4）
+> V5 关系：GameConfig 2.0 保留为 V4 Phaser Runtime 契约和 `arcade_collect` 确定性评测投影。V5 的作者层输入是 [GameSpec](requirements/v5/game-spec-language.md)，活跃 Runtime 是 [Cocos Creator Target](requirements/v5/cocos-runtime-target.md)。GameConfig 不再是 V5 的可玩产物契约。
+
 GameConfig 是 AI 数据进入 Phaser Runtime 的唯一执行边界。当前正式契约为：
 
 ```text

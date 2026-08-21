@@ -1,9 +1,11 @@
 # Agentic Game Design Lab 产品需求文档
 
-> 文档状态：APPROVED / 进入 Upgrade 0  
+> 文档状态：COMPLETED / SUPERSEDED
 > 目标版本：V4  
 > 产品形态：面向游戏原型的自主试玩、平衡实验与经验记忆平台  
-> 实施原则：保留现有可靠性底座，以可独立验收的纵向切片渐进升级
+> 发布版本：`v4.0.0`
+> 后继文档：[V5 Agentic Mini-Game Factory PRD](v5/game-generation-studio-prd.md)
+> 说明：本文保留 V4 当时的产品决策与验收依据，不再代表当前产品方向。
 
 ## 1. 产品结论
 

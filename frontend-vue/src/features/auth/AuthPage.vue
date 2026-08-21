@@ -4,14 +4,14 @@
       <div class="brand-mark">GF</div>
       <div class="auth-story-copy">
         <p class="overline">GAMEFLOW STUDIO</p>
-        <h1>把游戏想法，变成真正可玩的原型。</h1>
-        <p>从创意拆解到 Phaser Demo，一条工作流完成。</p>
+        <h1>把游戏规格，构建成真正可玩的 Cocos 游戏。</h1>
+        <p>从受约束 GameSpec 到 Web Mobile 游戏包，一条可验证流水线完成。</p>
       </div>
       <div class="workflow-visual" aria-hidden="true">
-        <span class="visual-node complete">概念</span><i></i>
-        <span class="visual-node complete">玩法</span><i></i>
-        <span class="visual-node active">计划</span><i></i>
-        <span class="visual-node">Demo</span>
+        <span class="visual-node complete">规格</span><i></i>
+        <span class="visual-node complete">校验</span><i></i>
+        <span class="visual-node active">构建</span><i></i>
+        <span class="visual-node">游戏包</span>
       </div>
     </section>
 

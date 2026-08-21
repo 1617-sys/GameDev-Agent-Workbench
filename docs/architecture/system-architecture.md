@@ -2,11 +2,31 @@
 
 本文描述当前代码事实和下一阶段边界。历史 R0–R7/V3 报告记录当时环境与验收结果，不自动代表生产能力。
 
+> 版本边界：本文主体描述 V3/V4 稳定架构，并标注 V5 已落地的首个垂直切片。V5 完整目标以 [V5 文档入口](../requirements/v5/README.md) 和 [ADR-001](decisions/ADR-001-java-gamespec-authority.md) 为准；未关闭的 Gate、Director/Player 与 RAG 目标不得被解读为当前能力。
+
 ## 产品边界
 
-当前系统只支持 `arcade_collect`：模型生成受白名单约束的 GameConfig，固定 Phaser Runtime 负责执行。四个“Agent”是冻结定义驱动的串行 LLM Workflow，不具备自主工具调用、规划、反思或 Agent 间协商。
+V3 当前系统只支持 `arcade_collect`：模型生成受白名单约束的 GameConfig，固定 Phaser Runtime 负责执行。旧四步“Agent”是冻结定义驱动的串行 LLM Workflow。V4 已新增 Director、类型化工具、逐步 Player、实验与 DRAFT 审批，但其公开对照数据仍是 mock 小样本，不能外推真实模型收益。
 
-下一阶段继续深化单玩法平衡实验，不优先扩展多个 Runtime；RAG 保留，但从确定性检索桩升级为有质量评测的持久化语义检索。
+V5 不继续把平衡实验或 RAG 作为唯一主线，而引入 GameSpec 作者层 DSL。当前首个切片已实现 GenerationRun、GameSpec 语义/能力/安全校验、Spring AI 结构化 Spec Author 的 diagnostics 修复循环，以及由持久化 Java Worker 控制的 Spring AI Director Tool Calling。模型只选择工具，Java 仍负责检查点、预算、权限、幂等、工具执行和证据落库。Phaser 仅保留为 V4 历史实现；统一发布门禁、Player Spring AI 切流、正式 Asset Pack 和生产级 RAG 仍在后续里程碑。
+
+### V5 演进架构（首个切片已实现）
+
+```mermaid
+flowchart LR
+    U["User Brief"] --> J["Java GenerationRun"]
+    J --> M["Spring AI Spec Author / Python rollback"]
+    M -->|"typed candidate"| T["Java Tool Gateway"]
+    T --> S["GameSpec Semantic Compiler"]
+    S --> I["Cocos Runtime IR + Build Request"]
+    I --> W["Trusted Cocos Build Worker"]
+    W --> A["Local Cocos Web Mobile Package"]
+    A --> G["Simulation / Player / Visual Gates"]
+    G --> J
+    J --> H["Human Approval"]
+```
+
+完整目标的详细约束见 [V5 文档入口](../requirements/v5/README.md)。图中的规格编译、构建与 Spec Author 路径已经落地；Simulation/Player/Visual Gate 和人工审批仍未形成完整不可绕过闭环。
 
 ## 当前组件
 
