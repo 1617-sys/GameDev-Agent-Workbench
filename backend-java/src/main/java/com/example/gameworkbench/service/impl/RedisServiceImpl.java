@@ -9,6 +9,15 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.Collections;
 
+/**
+ * Redis 的最小通用适配层。
+ *
+ * <p>分布式锁使用 SET NX + TTL 获取，并使用 owner token 的 Lua 脚本释放。
+ * owner token 用于避免旧持有者在锁过期并被新任务获取后误删新锁。</p>
+ *
+ * <p>当前锁没有续租机制，因此它只能作为快速防重手段；长任务仍必须依靠数据库
+ * 状态版本和业务幂等约束保护最终一致性。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class RedisServiceImpl implements RedisService {
@@ -53,6 +62,7 @@ public class RedisServiceImpl implements RedisService {
 
     @Override
     public boolean releaseLock(String key, String ownerToken) {
+        // CONCURRENCY: “比较 owner”和“删除”必须在 Redis 内原子完成，不能先 GET 再 DEL。
         Long deleted = redisTemplate.execute(
                 RELEASE_LOCK_SCRIPT,
                 Collections.singletonList(key),

@@ -38,6 +38,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 异步工作流的应用层提交入口。
+ *
+ * <p>这里负责鉴权、项目归属、幂等语义、限流和运行快照的组装，但不会直接调用
+ * RabbitMQ 或执行 Agent。真正的持久化由 {@link AsyncWorkflowSubmitCommandService}
+ * 在一个短事务中完成，避免把数据库事务扩展到外部系统调用。</p>
+ *
+ * <p>幂等键标识一次业务操作，请求指纹则防止客户端使用同一个幂等键提交不同内容。
+ * 数据库唯一约束仍是并发竞争下的最终保证。</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -89,6 +99,8 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
             throw new BusinessException(ErrorCode.SYSTEM_ERROR);
         }
 
+        // INVARIANT: 运行必须绑定提交时的工作流定义和 Prompt 版本。
+        // 后续即使管理员发布新版本，历史运行仍应能够解释和复现。
         String promptSnapshot = promptSnapshot(plans);
         String traceId = UUID.randomUUID().toString();
         String briefSnapshot = serialize(prototypeBrief(request));
@@ -99,6 +111,8 @@ public class AsyncWorkflowSubmissionServiceImpl implements AsyncWorkflowSubmissi
             commandService.create(run, stepRuns, eventPayload, traceId);
             return response(run, false);
         } catch (DuplicateKeyException exception) {
+            // CONCURRENCY: 前面的查询只用于快速重放；两个并发请求仍可能同时未查到记录。
+            // 唯一索引决定胜者，失败方重新读取并按相同指纹返回已有运行。
             WorkflowRun racedRun = findExisting(userId, project.getId(), workflowKey, idempotencyKey);
             if (racedRun == null) {
                 throw exception;

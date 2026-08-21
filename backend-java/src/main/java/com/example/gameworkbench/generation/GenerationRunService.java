@@ -31,6 +31,15 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * V5 生成运行的控制面服务。
+ *
+ * <p>创建阶段会再次编译 GameSpec，并冻结 canonical spec、Runtime IR、Build Request 及摘要；
+ * 构建阶段只能使用这些持久化输入，不能接受客户端临时注入命令或构建参数。</p>
+ *
+ * <p>状态迁移使用 stateVersion 乐观并发控制。当前构建仍在事务方法中同步执行，且没有在
+ * 启动 Cocos 前抢占独立 BUILD_RUNNING 状态，这是需要优先整改的长事务和重复构建风险。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class GenerationRunService {
@@ -49,6 +58,7 @@ public class GenerationRunService {
         if (idempotencyKey == null || !IDEMPOTENCY.matcher(idempotencyKey).matches()) {
             throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
         }
+        // WHY: 对象字段排序后再计算指纹，使字段顺序不同但语义相同的请求能够安全重放。
         String fingerprint = digest(write(sort(spec)));
         GenerationRun existing = runs.selectByIdempotency(userId, project.getId(), idempotencyKey);
         if (existing != null) {
@@ -103,6 +113,8 @@ public class GenerationRunService {
         if (!GenerationRunStatus.BUILDING.name().equals(run.getStatus()) || run.getStateVersion() != expectedVersion) {
             throw new BusinessException(ErrorCode.GAMESPEC_INVALID);
         }
+        // TODO(concurrency): 应先在短事务中乐观抢占构建权，再在事务外执行最长十分钟的
+        // Cocos 进程，最后用短事务写入结果。当前两个并发请求可能重复启动外部构建。
         try {
             CocosBuildResult result = buildWorker.build(readObject(run.getBuildRequestJson()), readObject(run.getRuntimeIrJson()));
             if (result.status() == CocosBuildResult.Status.SUCCEEDED) {

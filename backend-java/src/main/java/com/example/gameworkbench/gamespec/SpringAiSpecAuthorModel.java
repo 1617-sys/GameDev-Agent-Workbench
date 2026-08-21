@@ -28,6 +28,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import static com.example.gameworkbench.observability.DiagnosticContext.TRACE_ID;
 
+/**
+ * 基于 Spring AI 的 GameSpec Author 实现。
+ *
+ * <p>模型只负责生成候选规格。ProjectContextAdvisor、CapabilityBoundaryAdvisor 和结构化输出
+ * Advisor 用于提供上下文并约束响应，但最终接纳权仍属于 Java 编译器。</p>
+ */
 @Component
 @ConditionalOnProperty(name = "app.ai.provider", havingValue = "spring-ai", matchIfMissing = true)
 public final class SpringAiSpecAuthorModel implements SpecAuthorModel {
@@ -85,6 +91,8 @@ public final class SpringAiSpecAuthorModel implements SpecAuthorModel {
                 """.formatted(request.idea(), request.currentSpec() == null ? "none" : request.currentSpec(),
                         request.diagnostics(), example);
         try {
+            // SECURITY: 使用低温度、封闭输出类型和显式能力快照降低越界输出概率。
+            // 这些是软约束，调用方仍必须把结果送回 GameSpecCompiler。
             ChatClientResponse advised = chat.prompt()
                     .system("You are the GameSpec Author. Produce only capabilities supported by the Java compiler.")
                     .user(prompt)

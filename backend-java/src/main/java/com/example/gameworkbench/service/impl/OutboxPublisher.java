@@ -24,7 +24,15 @@ import com.example.gameworkbench.messaging.WorkflowRunMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/** Publishes only committed Outbox events. Broker confirmation is never treated as workflow completion. */
+/**
+ * 将已经提交的 Outbox 事件发布到 RabbitMQ。
+ *
+ * <p>Publisher 先使用数据库租约抢占事件，再发送消息并等待 Broker confirm。confirm 只说明
+ * Broker 接受了消息，不能说明工作流已经执行完成；工作流终态只能由 Consumer/Runner 写入。</p>
+ *
+ * <p>进程在 confirm 前退出时，过期的 PUBLISHING 租约会被回收为 RETRY_PENDING。
+ * 消息可能重复发布，因此 Consumer 和业务步骤必须保持幂等。</p>
+ */
 @Slf4j
 @Service
 @Profile("async")
@@ -95,6 +103,8 @@ public class OutboxPublisher {
         }
         String eventId = correlationData.getId();
         if (ack) {
+            // INVARIANT: 只有持有本次数据库发布租约的实例能够将事件标记为 PUBLISHED。
+            // 随后把 Run 置为 QUEUED，只代表消息可被消费，不代表业务成功。
             OutboxEvent event = outboxEventMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<OutboxEvent>()
                     .eq(OutboxEvent::getEventUuid, eventId));
             LocalDateTime now = LocalDateTime.now();

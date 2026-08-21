@@ -23,6 +23,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * 将 Cocos 输出和生成证据组装为可验证的本地 ZIP 产物。
+ *
+ * <p>组装前会检查路径、符号链接、单文件和总包大小，并扫描常见密钥模式；产物包含
+ * GameSpec、Runtime IR、Build Request、构建记录和逐文件摘要 manifest。</p>
+ *
+ * <p>ZIP 条目排序且时间戳固定，以减少同一输入重复打包时的非确定性。</p>
+ */
 @Component
 public class PlayableArtifactAssembler {
     private static final long MAX_FILE_BYTES = 64L * 1024 * 1024;
@@ -126,6 +134,7 @@ public class PlayableArtifactAssembler {
             zip.setLevel(9);
             for (var file : files.entrySet()) {
                 ZipEntry entry = new ZipEntry(file.getKey());
+                // INVARIANT: 固定 ZIP 时间戳并按路径排序，避免文件系统时间污染 package digest。
                 entry.setTime(0);
                 zip.putNextEntry(entry);
                 zip.write(file.getValue());

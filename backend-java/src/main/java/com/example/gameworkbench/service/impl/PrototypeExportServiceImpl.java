@@ -20,6 +20,12 @@ import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.node.*;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 将不可变原型及其设计、遥测和调优证据冻结为可下载包。
+ *
+ * <p>导出使用 frozenInputJson 固定输入，并在下载前重新校验 package digest。任何缺失的
+ * 来源链、内容摘要不一致或敏感内容都会使整个导出失败，而不是生成部分可信的包。</p>
+ */
 @Service @RequiredArgsConstructor
 public class PrototypeExportServiceImpl implements PrototypeExportService {
  private static final String OPERATION="EXPORT_PROTOTYPE",FORMAT="1.0";

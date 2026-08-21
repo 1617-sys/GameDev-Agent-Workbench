@@ -88,6 +88,12 @@ async def run_episode(
     policy: PlayerPolicy | None = None,
     llm_decide: Callable[[dict[str, Any]], Any] | None = None,
 ) -> dict[str, Any]:
+    """Run one bounded, replayable player episode.
+
+    The environment advances only through explicit observe/step calls. Wall-clock
+    measurements are evidence and timeout controls; they never participate in the
+    deterministic game state or trajectory digest.
+    """
     result = _base_result(request)
     persona, validation_error = validate_registered_request(request)
     if validation_error:
@@ -222,6 +228,7 @@ def _merge_usage(usage: dict[str, Any], decision: Any) -> None:
 
 
 async def run_episode_batch(requests: list[PlayerEpisodeRequest], concurrency: int, **kwargs: Any) -> list[dict[str, Any]]:
+    """Run a batch with caller-bounded concurrency while preserving input order."""
     semaphore = asyncio.Semaphore(concurrency)
     async def execute(item: PlayerEpisodeRequest) -> dict[str, Any]:
         async with semaphore:

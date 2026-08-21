@@ -7,6 +7,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 将模型生成与 Java 编译诊断组合成有界修复循环。
+ *
+ * <p>每轮由模型产生一个候选 GameSpec，再由 {@link GameSpecCompiler} 做权威校验；
+ * 诊断会作为下一轮输入，但模型最多尝试三次，防止无限循环和无界成本。</p>
+ */
 @Service
 @RequiredArgsConstructor
 public class SpecAuthorService {
@@ -16,7 +22,8 @@ public class SpecAuthorService {
     private final ObjectMapper json;
 
     public SpecAuthorResult author(Long userId, String projectUuid, String idea, ObjectNode initialSpec) {
-        // Compile once up front to enforce project ownership before any paid model call.
+        // SECURITY: 在任何付费模型调用之前先校验项目所有权。
+        // 空对象预编译产生的诊断也能为第一轮模型提供明确的修复目标。
         GameSpecCompilationResult compilation = gameSpecs.compile(userId, projectUuid,
                 initialSpec == null ? json.createObjectNode() : initialSpec);
         ObjectNode candidate = initialSpec;

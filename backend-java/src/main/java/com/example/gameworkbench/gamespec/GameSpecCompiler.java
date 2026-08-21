@@ -19,6 +19,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * {@code arcade_collect} GameSpec 的权威语义编译器。
+ *
+ * <p>模型输出只有通过这里的封闭字段、能力白名单、范围和跨字段规则后，才能生成
+ * canonical spec、Runtime IR 和 Build Request。Prompt 和结构化输出只能降低错误概率，
+ * 不能替代本编译器的确定性门禁。</p>
+ *
+ * <p>规范化 JSON 和 SHA-256 摘要用于绑定源规格、运行时 IR 与构建请求。对象字段会排序，
+ * 数组保持原顺序，因为实体和规则顺序可能具有业务含义。</p>
+ */
 @Component
 public final class GameSpecCompiler {
     private static final Pattern ID = Pattern.compile("^[a-z][a-z0-9-]{0,31}$");
@@ -46,10 +56,12 @@ public final class GameSpecCompiler {
         validate(spec, diagnostics);
         if (!diagnostics.isEmpty()) return GameSpecCompilationResult.failed(sorted(diagnostics));
 
+        // INVARIANT: 只有零诊断的规格才能进入编译阶段；模型无法绕过错误继续构建。
         ObjectNode canonical = sortObject(spec);
         String canonicalJson = write(canonical);
         String sourceDigest = digest(canonicalJson);
         ObjectNode runtimeIr = compileRuntimeIr(canonical, sourceDigest);
+        // WHY: digest 在写入 runtimeIrDigest 字段之前计算，避免摘要递归依赖自身。
         String runtimeIrDigest = digest(write(sortObject(runtimeIr)));
         runtimeIr.put("runtimeIrDigest", runtimeIrDigest);
         ObjectNode buildRequest = buildRequest(canonical, sourceDigest, runtimeIrDigest);

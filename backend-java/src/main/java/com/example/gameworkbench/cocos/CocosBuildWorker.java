@@ -25,6 +25,15 @@ import com.example.gameworkbench.common.exception.BusinessException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+/**
+ * 使用固定 Cocos Runtime Shell 生成 Web Mobile 包的本地构建执行器。
+ *
+ * <p>执行器复制受信任的 Runtime Shell 到独立临时工作区，只写入 Java 编译产生的
+ * Runtime IR，并使用固定 CLI 参数启动 Cocos。路径规范化、符号链接拒绝和构建超时
+ * 用于缩小文件系统与进程风险。</p>
+ *
+ * <p>“独立工作区”不是操作系统或容器级安全沙箱；当前实现适合受控的单机开发环境。</p>
+ */
 @Component
 public class CocosBuildWorker {
     private static final String TARGET = "web-mobile";
@@ -66,6 +75,8 @@ public class CocosBuildWorker {
         Path log = workspace.resolve("cocos-build.log");
         try {
             Files.createDirectories(workspace);
+            // SECURITY: 只复制固定 Runtime Shell，并排除缓存、构建结果、依赖和版本库目录。
+            // 用户不能通过 BuildRequest 指定源目录、可执行文件或额外命令行参数。
             copyTree(runtimeProject, project);
             Path generated = project.resolve("assets/resources/generated/runtime-ir.json").normalize();
             requireChild(project, generated);
@@ -76,6 +87,7 @@ public class CocosBuildWorker {
             Process process = new ProcessBuilder(executable.toString(), "--project", project.toString(), "--build", buildOptions)
                     .redirectErrorStream(true).redirectOutput(log.toFile()).start();
             if (!process.waitFor(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
+                // FAILURE: 超时后强制终止子进程，并保留构建日志摘要用于诊断；不信任残留输出。
                 process.destroyForcibly();
                 process.waitFor(10, TimeUnit.SECONDS);
                 return new CocosBuildResult(CocosBuildResult.Status.FAILED, -1, digestFile(log), null, null);

@@ -23,6 +23,12 @@ import com.example.gameworkbench.mapper.PrototypeVersionMapper;
 import com.example.gameworkbench.vo.prototype.PrototypeApprovalVO;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * 不可变原型版本的人工审批边界。
+ *
+ * <p>每个版本只允许一个最终审批事实；幂等键支持客户端安全重放，请求指纹阻止同一键
+ * 表示不同决定。审批成功后会唤醒正在等待该 approvalRef 的 Director。</p>
+ */
 @Service @RequiredArgsConstructor
 public class PrototypeApprovalService {
     private final GameProjectMapper projects;private final PrototypeVersionMapper versions;private final PrototypeApprovalMapper approvals;

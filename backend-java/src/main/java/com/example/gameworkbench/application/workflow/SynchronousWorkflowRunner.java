@@ -17,6 +17,16 @@ import com.example.gameworkbench.mapper.WorkflowRunMapper;
 import com.example.gameworkbench.mapper.WorkflowStepRunMapper;
 import com.example.gameworkbench.service.WorkflowRunEventRecorder;
 
+/**
+ * 基于运行快照串行执行工作流步骤的传输无关 Runner。
+ *
+ * <p>Runner 只理解持久化的 WorkflowRun、步骤依赖、Executor、EvaluationHook 和 ArtifactWriter，
+ * 不感知 HTTP、SSE 或 RabbitMQ。运行使用提交时冻结的 definition snapshot，避免配置变化
+ * 改写历史运行语义。</p>
+ *
+ * <p>已经成功的步骤在恢复时会被复用。每个步骤仍需保证外部副作用幂等，因为进程可能在
+ * 外部调用成功但步骤成功状态落库前退出。</p>
+ */
 @Service
 public class SynchronousWorkflowRunner implements WorkflowRunner {
     private final WorkflowRunMapper workflowRunMapper;
@@ -64,6 +74,8 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
         for (WorkflowStepPlan plan : plans) {
             WorkflowStepRun step = findOrCreate(run, plan);
             if (WorkflowStepRunStatus.SUCCESS.name().equals(step.getStatus())) {
+                // FAILURE: 恢复执行时跳过已成功步骤，并把其输出重新装入上下文。
+                // 这使后续依赖步骤可以继续使用已持久化结果。
                 context.recordCompletedOutput(plan.stepKey(), new StepOutput(step.getOutputSnapshot(), null, null, null));
                 continue;
             }
@@ -91,6 +103,8 @@ public class SynchronousWorkflowRunner implements WorkflowRunner {
                 step.setStatus(WorkflowStepRunStatus.FAILED.name()); step.setErrorMessage(exception.getMessage() == null ? "Workflow step failed" : exception.getMessage());
                 if (exception instanceof WorkflowEvaluationException) step.setValidationSummary(exception.getMessage());
                 step.setFinishedAt(LocalDateTime.now()); requireUpdated(workflowStepRunMapper.updateById(step), "step failure");
+                // TODO(reliability): 这里提前写入 FAILED 会与 MQ Consumer 的 RUNNING -> RETRY_WAIT
+                // 条件迁移冲突。重构时应让上层执行边界依据错误分类决定重试或最终失败。
                 run.setStatus(WorkflowRunStatus.FAILED.name()); requireUpdated(workflowRunMapper.updateById(run), "workflow failure");
                 recordStep(run, step, "FAILED");
                 recordRun(run, "run.terminal", "FAILED");

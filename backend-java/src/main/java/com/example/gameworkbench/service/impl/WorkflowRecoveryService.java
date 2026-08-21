@@ -21,7 +21,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Recreates durable delivery intent only after a versioned database claim. */
+/**
+ * 扫描失去活动信号的工作流，并在取得数据库版本化抢占后重建持久化投递意图。
+ *
+ * <p>恢复对象包括过期的 PENDING、QUEUED 和 RUNNING。恢复事件重新写入 Outbox，
+ * 而不是在扫描线程里直接调用 RabbitMQ，避免再次产生数据库与 Broker 双写窗口。</p>
+ *
+ * <p>当前不会扫描 RETRY_WAIT；Consumer 直接发送延迟重试消息所产生的崩溃窗口仍需修复。</p>
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
