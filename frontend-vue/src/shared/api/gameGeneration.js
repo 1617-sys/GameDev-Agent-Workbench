@@ -23,6 +23,18 @@ export const gameGenerationApi = {
     `${runRoot(projectUuid)}/${enc(runUuid)}/build?expectedVersion=${encodeURIComponent(expectedVersion)}`,
     { method: "POST", body: {}, timeoutMs: 660_000 }
   ),
+  approve: (projectUuid, runUuid, decision, reason, idempotencyKey) => apiRequest(
+    `${runRoot(projectUuid)}/${enc(runUuid)}/approval`,
+    { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: { decision, reason } }
+  ),
+  release: (projectUuid, runUuid, expectedVersion) => apiRequest(
+    `${runRoot(projectUuid)}/${enc(runUuid)}/release?expectedVersion=${encodeURIComponent(expectedVersion)}`,
+    { method: "POST", body: {} }
+  ),
+  downloadPreview: (projectUuid, runUuid) => apiDownload(`${runRoot(projectUuid)}/${enc(runUuid)}/preview-artifact`, {
+    timeoutMs: 120_000,
+    fallbackFilename: `preview-cocos-game-${runUuid}.zip`
+  }),
   download: (projectUuid, runUuid) => apiDownload(`${runRoot(projectUuid)}/${enc(runUuid)}/artifact`, {
     timeoutMs: 120_000,
     fallbackFilename: `local-cocos-game-${runUuid}.zip`

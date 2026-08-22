@@ -18,6 +18,8 @@ test("uses project-scoped V5 compile and generation endpoints", async () => {
     await gameGenerationApi.create("project one", { archetype: "arcade_collect" }, "generation-key");
     await gameGenerationApi.get("project one", "run/1");
     await gameGenerationApi.build("project one", "run/1", 3);
+    await gameGenerationApi.approve("project one", "run/1", "APPROVED", "人工试玩通过", "approval-key");
+    await gameGenerationApi.release("project one", "run/1", 5);
   } finally {
     globalThis.window = originalWindow;
     globalThis.fetch = originalFetch;
@@ -29,4 +31,7 @@ test("uses project-scoped V5 compile and generation endpoints", async () => {
   assert.equal(calls[3].options.headers["Idempotency-Key"], "generation-key");
   assert.match(calls[4].url, /generation-runs\/run%2F1$/);
   assert.match(calls[5].url, /generation-runs\/run%2F1\/build\?expectedVersion=3$/);
+  assert.equal(calls[6].options.headers["Idempotency-Key"], "approval-key");
+  assert.deepEqual(JSON.parse(calls[6].options.body), { decision: "APPROVED", reason: "人工试玩通过" });
+  assert.match(calls[7].url, /generation-runs\/run%2F1\/release\?expectedVersion=5$/);
 });

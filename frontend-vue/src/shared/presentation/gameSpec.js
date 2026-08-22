@@ -90,11 +90,13 @@ export function parsePersistedJson(value, fallback = []) {
 export function generationStatusMeta(status = "") {
   return ({
     VALIDATING: { label: "校验中", tone: "info", step: 1 },
-    BUILDING: { label: "等待构建", tone: "warning", step: 2 },
+    READY_TO_BUILD: { label: "等待构建", tone: "warning", step: 2 },
+    BUILDING: { label: "构建中", tone: "info", step: 3 },
     PLAYTESTING: { label: "可试玩", tone: "success", step: 4 },
-    AWAITING_APPROVAL: { label: "等待审批", tone: "warning", step: 4 },
-    APPROVED: { label: "已批准", tone: "success", step: 4 },
-    REJECTED: { label: "已拒绝", tone: "danger", step: 4 },
+    AWAITING_APPROVAL: { label: "等待审批", tone: "warning", step: 5 },
+    APPROVED: { label: "已批准", tone: "success", step: 6 },
+    RELEASED: { label: "已发布", tone: "success", step: 6 },
+    REJECTED: { label: "已拒绝", tone: "danger", step: 5 },
     FAILED: { label: "失败", tone: "danger", step: 2 },
     CANCELLED: { label: "已取消", tone: "neutral", step: 2 }
   })[status] || { label: status || "尚未创建", tone: "neutral", step: 0 };

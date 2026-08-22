@@ -7,12 +7,13 @@
 ## 首先阅读
 
 1. [根 README](../README.md)：项目用途、现状、启动方式和真实性边界。
-2. [V5 文档入口](requirements/v5/README.md)：目标架构、范围、决策与后续任务批次。
-3. [V5 主 PRD](requirements/v5/game-generation-studio-prd.md)：Cocos 小游戏工厂、用户价值、垂直切片和验收标准。
-4. [GameSpec 语言契约](requirements/v5/game-spec-language.md)：AI 可以生成什么，不能生成什么。
-5. [Java GameSpec 编译器](requirements/v5/java-gamespec-compiler.md)：Java 如何约束幻觉并产出目标包。
-6. [Cocos Runtime Target](requirements/v5/cocos-runtime-target.md)：引擎边界、构建 Worker、表现 Gate 与 Phaser 退役。
-7. [可玩产物契约](requirements/v5/playable-artifact-contract.md)：什么才算“真的生成了小游戏”。
+2. [V5 黄金链路收敛实施计划](v5-golden-path-convergence-plan.md)：当前唯一执行范围、代码改动与验收标准。
+3. [V5 文档入口](requirements/v5/README.md)：目标架构、范围、决策与后续任务批次。
+4. [V5 主 PRD](requirements/v5/game-generation-studio-prd.md)：Cocos 小游戏工厂、用户价值、垂直切片和验收标准。
+5. [GameSpec 语言契约](requirements/v5/game-spec-language.md)：AI 可以生成什么，不能生成什么。
+6. [Java GameSpec 编译器](requirements/v5/java-gamespec-compiler.md)：Java 如何约束幻觉并产出目标包。
+7. [Cocos Runtime Target](requirements/v5/cocos-runtime-target.md)：引擎边界、构建 Worker、表现 Gate 与 Phaser 退役。
+8. [可玩产物契约](requirements/v5/playable-artifact-contract.md)：什么才算“真的生成了小游戏”。
 
 ## 当前事实与历史版本
 

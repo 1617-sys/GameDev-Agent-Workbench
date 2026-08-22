@@ -3,6 +3,7 @@ package com.example.gameworkbench.generation;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
@@ -21,10 +22,13 @@ import com.example.gameworkbench.common.enums.ErrorCode;
 import com.example.gameworkbench.common.exception.BusinessException;
 import com.example.gameworkbench.entity.GameProject;
 import com.example.gameworkbench.entity.GenerationRun;
+import com.example.gameworkbench.entity.GenerationRunApproval;
+import com.example.gameworkbench.dto.gamespec.GenerationApprovalRequest;
 import com.example.gameworkbench.gamespec.GameSpecCompilationResult;
 import com.example.gameworkbench.gamespec.GameSpecCompiler;
 import com.example.gameworkbench.mapper.GameProjectMapper;
 import com.example.gameworkbench.mapper.GenerationRunMapper;
+import com.example.gameworkbench.mapper.GenerationRunApprovalMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -37,14 +41,16 @@ import lombok.RequiredArgsConstructor;
  * <p>创建阶段会再次编译 GameSpec，并冻结 canonical spec、Runtime IR、Build Request 及摘要；
  * 构建阶段只能使用这些持久化输入，不能接受客户端临时注入命令或构建参数。</p>
  *
- * <p>状态迁移使用 stateVersion 乐观并发控制。当前构建仍在事务方法中同步执行，且没有在
- * 启动 Cocos 前抢占独立 BUILD_RUNNING 状态，这是需要优先整改的长事务和重复构建风险。</p>
+ * <p>状态迁移使用 stateVersion 乐观并发控制。构建先以短数据库更新领取有期限的 claim，
+ * 再在事务外执行 Cocos，最后由持有同一 token 的执行者提交结果；过期 claim 可以接管。</p>
  */
 @Service
 @RequiredArgsConstructor
 public class GenerationRunService {
     private static final Pattern IDEMPOTENCY = Pattern.compile("^[A-Za-z0-9._~-]{1,128}$");
+    private static final Duration BUILD_LEASE = Duration.ofMinutes(12);
     private final GenerationRunMapper runs;
+    private final GenerationRunApprovalMapper approvals;
     private final GameProjectMapper projects;
     private final GameSpecCompiler compiler;
     private final CocosBuildWorker buildWorker;
@@ -74,8 +80,9 @@ public class GenerationRunService {
         GenerationRun run = GenerationRun.builder()
                 .runUuid(UUID.randomUUID().toString()).userId(userId).projectId(project.getId())
                 .idempotencyKey(idempotencyKey).requestFingerprint(fingerprint)
-                .status(succeeded ? GenerationRunStatus.BUILDING.name() : GenerationRunStatus.FAILED.name())
+                .status(succeeded ? GenerationRunStatus.READY_TO_BUILD.name() : GenerationRunStatus.FAILED.name())
                 .stateVersion(0L)
+                .buildAttempt(0)
                 .canonicalSpecJson(succeeded ? write(result.canonicalSpec()) : null)
                 .sourceDigest(result.sourceDigest())
                 .runtimeIrJson(succeeded ? write(result.runtimeIr()) : null)
@@ -103,41 +110,132 @@ public class GenerationRunService {
     @Transactional(readOnly = true)
     public byte[] artifact(Long userId, String projectUuid, String runUuid) {
         GenerationRun run = get(userId, projectUuid, runUuid);
-        if (run.getPackageDigest() == null) throw new BusinessException(ErrorCode.EXPORT_NOT_READY);
+        if (!GenerationRunStatus.RELEASED.name().equals(run.getStatus()) || run.getPackageDigest() == null) {
+            throw new BusinessException(ErrorCode.GENERATION_RELEASE_FORBIDDEN);
+        }
         return artifactStore.get(runUuid, run.getPackageDigest());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
+    public byte[] previewArtifact(Long userId, String projectUuid, String runUuid) {
+        GenerationRun run = get(userId, projectUuid, runUuid);
+        if (run.getPackageDigest() == null || !(GenerationRunStatus.AWAITING_APPROVAL.name().equals(run.getStatus())
+                || GenerationRunStatus.APPROVED.name().equals(run.getStatus())
+                || GenerationRunStatus.RELEASED.name().equals(run.getStatus()))) {
+            throw new BusinessException(ErrorCode.EXPORT_NOT_READY);
+        }
+        return artifactStore.get(runUuid, run.getPackageDigest());
+    }
+
     public GenerationBuildOutcome build(Long userId, String projectUuid, String runUuid, long expectedVersion) {
         GenerationRun run = get(userId, projectUuid, runUuid);
-        if (!GenerationRunStatus.BUILDING.name().equals(run.getStatus()) || run.getStateVersion() != expectedVersion) {
-            throw new BusinessException(ErrorCode.GAMESPEC_INVALID);
+        boolean ready = GenerationRunStatus.READY_TO_BUILD.name().equals(run.getStatus());
+        boolean expired = GenerationRunStatus.BUILDING.name().equals(run.getStatus())
+                && run.getBuildClaimExpiresAt() != null && run.getBuildClaimExpiresAt().isBefore(LocalDateTime.now());
+        if ((!ready && !expired) || run.getStateVersion() != expectedVersion) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
         }
-        // TODO(concurrency): 应先在短事务中乐观抢占构建权，再在事务外执行最长十分钟的
-        // Cocos 进程，最后用短事务写入结果。当前两个并发请求可能重复启动外部构建。
+        String claimToken = UUID.randomUUID().toString();
+        if (runs.claimBuild(run.getId(), run.getProjectId(), expectedVersion, claimToken,
+                LocalDateTime.now().plus(BUILD_LEASE)) != 1) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
+        long claimedVersion = expectedVersion + 1;
         try {
             CocosBuildResult result = buildWorker.build(readObject(run.getBuildRequestJson()), readObject(run.getRuntimeIrJson()));
             if (result.status() == CocosBuildResult.Status.SUCCEEDED) {
                 PlayableArtifact artifact = artifactAssembler.assemble(run, result.outputDirectory(), result.logDigest());
                 artifactStore.put(run.getRunUuid(), artifact);
-                transition(run, GenerationRunStatus.PLAYTESTING, artifact.packageDigest(), null);
-                return new GenerationBuildOutcome(runUuid, GenerationRunStatus.PLAYTESTING.name(), result.exitCode(),
+                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.AWAITING_APPROVAL,
+                        artifact.packageDigest(), null);
+                return new GenerationBuildOutcome(runUuid, GenerationRunStatus.AWAITING_APPROVAL.name(), result.exitCode(),
                         result.logDigest(), result.outputDigest(), artifact.packageDigest());
             } else {
-                transition(run, GenerationRunStatus.FAILED, null, "COCOS_BUILD_FAILED");
+                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "COCOS_BUILD_FAILED");
                 return new GenerationBuildOutcome(runUuid, GenerationRunStatus.FAILED.name(), result.exitCode(),
                         result.logDigest(), null, null);
             }
         } catch (BusinessException exception) {
-            // Missing local Cocos is recoverable configuration; keep the run ready to build.
+            if (exception.getCode().equals(ErrorCode.COCOS_BUILD_UNAVAILABLE.getCode())) {
+                releaseBuild(run, claimedVersion, claimToken);
+            } else {
+                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "BUILD_SECURITY_REJECTED");
+            }
+            throw exception;
+        } catch (RuntimeException exception) {
+            completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "COCOS_BUILD_FAILED");
             throw exception;
         }
     }
 
-    private void transition(GenerationRun run, GenerationRunStatus target, String packageDigest, String errorCode) {
-        int changed = runs.transition(run.getId(), run.getProjectId(), run.getStateVersion(), run.getStatus(),
-                target.name(), packageDigest, errorCode, target.terminal());
-        if (changed != 1) throw new BusinessException(ErrorCode.DIRECTOR_RUN_CONCURRENT_UPDATE);
+    @Transactional
+    public GenerationApprovalOutcome approve(Long userId, String projectUuid, String runUuid,
+            String idempotencyKey, GenerationApprovalRequest request) {
+        if (idempotencyKey == null || !IDEMPOTENCY.matcher(idempotencyKey).matches()) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
+        }
+        GenerationRun run = get(userId, projectUuid, runUuid);
+        String fingerprint = digest(runUuid + "\n" + request.decision() + "\n" + request.reason());
+        GenerationRunApproval replay = approvals.selectIdempotent(userId, run.getProjectId(), idempotencyKey);
+        if (replay != null) {
+            if (!Objects.equals(replay.getRequestFingerprint(), fingerprint)) approvalConflict();
+            return approvalOutcome(replay, true);
+        }
+        GenerationRunApproval existing = approvals.selectByRunId(run.getId());
+        if (existing != null) {
+            if (Objects.equals(existing.getRequestFingerprint(), fingerprint)) return approvalOutcome(existing, true);
+            approvalConflict();
+        }
+        if (!GenerationRunStatus.AWAITING_APPROVAL.name().equals(run.getStatus())) approvalConflict();
+        LocalDateTime now = LocalDateTime.now();
+        GenerationRunApproval approval = GenerationRunApproval.builder()
+                .approvalUuid(UUID.randomUUID().toString()).generationRunId(run.getId())
+                .generationRunUuid(runUuid).userId(userId).projectId(run.getProjectId()).actorUserId(userId)
+                .decision(request.decision()).reason(request.reason()).idempotencyKey(idempotencyKey)
+                .requestFingerprint(fingerprint).createdAt(now).build();
+        approvals.insert(approval);
+        GenerationRunStatus target = GenerationRunStatus.valueOf(request.decision());
+        if (runs.transitionStatus(run.getId(), run.getProjectId(), run.getStateVersion(), run.getStatus(),
+                target.name(), target.terminal()) != 1) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
+        return approvalOutcome(approval, false);
+    }
+
+    @Transactional
+    public GenerationRun release(Long userId, String projectUuid, String runUuid, long expectedVersion) {
+        GenerationRun run = get(userId, projectUuid, runUuid);
+        if (!GenerationRunStatus.APPROVED.name().equals(run.getStatus()) || run.getStateVersion() != expectedVersion) {
+            throw new BusinessException(ErrorCode.GENERATION_RELEASE_FORBIDDEN);
+        }
+        if (runs.transitionStatus(run.getId(), run.getProjectId(), expectedVersion,
+                GenerationRunStatus.APPROVED.name(), GenerationRunStatus.RELEASED.name(), true) != 1) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
+        return get(userId, projectUuid, runUuid);
+    }
+
+    private void completeBuild(GenerationRun run, long claimedVersion, String claimToken,
+            GenerationRunStatus target, String packageDigest, String errorCode) {
+        if (runs.completeBuild(run.getId(), run.getProjectId(), claimedVersion, claimToken,
+                target.name(), packageDigest, errorCode, target.terminal()) != 1) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
+    }
+
+    private void releaseBuild(GenerationRun run, long claimedVersion, String claimToken) {
+        if (runs.releaseBuild(run.getId(), run.getProjectId(), claimedVersion, claimToken) != 1) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
+    }
+
+    private GenerationApprovalOutcome approvalOutcome(GenerationRunApproval approval, boolean reused) {
+        return new GenerationApprovalOutcome(approval.getApprovalUuid(), approval.getGenerationRunUuid(),
+                approval.getDecision(), approval.getReason(), approval.getActorUserId(), approval.getCreatedAt(), reused);
+    }
+
+    private void approvalConflict() {
+        throw new BusinessException(ErrorCode.GENERATION_APPROVAL_CONFLICT);
     }
 
     private GameProject ownedProject(Long userId, String projectUuid) {

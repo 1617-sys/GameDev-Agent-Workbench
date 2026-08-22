@@ -107,8 +107,15 @@
               </dl>
               <p v-if="run.errorCode" class="alert danger"><CircleAlert :size="16" />{{ run.errorCode }}</p>
               <div class="pipeline-actions">
-                <button v-if="run.status === 'BUILDING' && !building" class="button primary full" type="button" @click="buildRun"><Hammer :size="17" />继续构建</button>
-                <button v-if="canDownload" class="button primary full" type="button" :disabled="downloading" @click="downloadArtifact"><Download :size="17" />{{ downloading ? "正在下载…" : "下载 Cocos 游戏包" }}</button>
+                <button v-if="canBuild && !building" class="button primary full" type="button" @click="buildRun"><Hammer :size="17" />{{ run.status === 'BUILDING' ? "接管超时构建" : "开始构建" }}</button>
+                <button v-if="canPreview" class="button ghost full" type="button" :disabled="downloading" @click="downloadPreview"><Download :size="17" />{{ downloading ? "正在下载…" : "下载内部试玩包" }}</button>
+                <template v-if="run.status === 'AWAITING_APPROVAL'">
+                  <input v-model="approvalReason" maxlength="500" placeholder="填写人工试玩结论" />
+                  <button class="button primary full" type="button" :disabled="approving || !approvalReason.trim()" @click="decide('APPROVED')">批准发布</button>
+                  <button class="button ghost full" type="button" :disabled="approving || !approvalReason.trim()" @click="decide('REJECTED')">拒绝发布</button>
+                </template>
+                <button v-if="run.status === 'APPROVED'" class="button primary full" type="button" :disabled="releasing" @click="releaseRun">{{ releasing ? "发布中…" : "生成正式发布版本" }}</button>
+                <button v-if="canDownload" class="button primary full" type="button" :disabled="downloading" @click="downloadArtifact"><Download :size="17" />{{ downloading ? "正在下载…" : "下载正式游戏包" }}</button>
                 <button class="button ghost full" type="button" :disabled="refreshing" @click="refreshRun"><RefreshCw :size="16" />刷新任务状态</button>
               </div>
             </template>
@@ -147,6 +154,9 @@ const authoring = ref(false);
 const building = ref(false);
 const refreshing = ref(false);
 const downloading = ref(false);
+const approving = ref(false);
+const releasing = ref(false);
+const approvalReason = ref("");
 const compilation = ref(null);
 const idea = ref("");
 const run = ref(null);
@@ -157,13 +167,19 @@ const diagnostics = computed(() => compilation.value?.diagnostics?.length
   ? compilation.value.diagnostics
   : parsePersistedJson(run.value?.diagnosticsJson, []));
 const runMeta = computed(() => generationStatusMeta(run.value?.status));
-const canDownload = computed(() => Boolean(run.value?.packageDigest) && ["PLAYTESTING", "AWAITING_APPROVAL", "APPROVED"].includes(run.value?.status));
+const canPreview = computed(() => Boolean(run.value?.packageDigest) && ["AWAITING_APPROVAL", "APPROVED", "RELEASED"].includes(run.value?.status));
+const canDownload = computed(() => Boolean(run.value?.packageDigest) && run.value?.status === "RELEASED");
+const canBuild = computed(() => run.value?.status === "READY_TO_BUILD"
+  || (run.value?.status === "BUILDING" && run.value?.buildClaimExpiresAt
+    && Date.parse(run.value.buildClaimExpiresAt) < Date.now()));
 const busy = computed(() => compiling.value || building.value || authoring.value);
 const pipeline = [
   { title: "GameSpec 校验", note: "封闭字段、范围与终局检查" },
   { title: "Runtime IR 编译", note: "生成 canonical spec 与摘要" },
   { title: "Cocos Web Mobile 构建", note: "隔离工作区执行 Creator 3.8.8" },
-  { title: "本地可玩包", note: "封装 manifest、来源与启动器" }
+  { title: "本地可玩包", note: "封装 manifest、来源与启动器" },
+  { title: "人工审批", note: "试玩结论独立留痕" },
+  { title: "正式发布", note: "审批通过后显式发布" }
 ];
 
 onMounted(async () => {
@@ -232,7 +248,7 @@ async function createAndBuild() {
     const key = globalThis.crypto?.randomUUID?.() || `web-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     run.value = await gameGenerationApi.create(projectUuid.value, spec, key);
     await router.replace({ query: { run: run.value.runUuid } });
-    if (run.value.status === "BUILDING") await buildRun();
+    if (run.value.status === "READY_TO_BUILD") await buildRun();
   } catch (cause) { pageError.value = cause.message || "创建 Cocos 构建任务失败"; }
   finally { building.value = false; }
 }
@@ -262,9 +278,34 @@ async function downloadArtifact() {
   catch (cause) { pageError.value = cause.message || "下载游戏包失败"; }
   finally { downloading.value = false; }
 }
+async function downloadPreview() {
+  downloading.value = true;
+  try { saveGenerationArtifact(await gameGenerationApi.downloadPreview(projectUuid.value, run.value.runUuid)); }
+  catch (cause) { pageError.value = cause.message || "下载内部试玩包失败"; }
+  finally { downloading.value = false; }
+}
+async function decide(decision) {
+  approving.value = true;
+  pageError.value = "";
+  try {
+    const key = globalThis.crypto?.randomUUID?.() || `approval-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    await gameGenerationApi.approve(projectUuid.value, run.value.runUuid, decision, approvalReason.value.trim(), key);
+    await loadRun(run.value.runUuid);
+  } catch (cause) { pageError.value = cause.message || "提交审批失败"; }
+  finally { approving.value = false; }
+}
+async function releaseRun() {
+  releasing.value = true;
+  pageError.value = "";
+  try {
+    await gameGenerationApi.release(projectUuid.value, run.value.runUuid, run.value.stateVersion);
+    await loadRun(run.value.runUuid);
+  } catch (cause) { pageError.value = cause.message || "正式发布失败"; }
+  finally { releasing.value = false; }
+}
 function pipelineClass(step) {
   if (run.value?.status === "FAILED" && step >= runMeta.value.step) return "failed";
-  if (step < runMeta.value.step || (canDownload.value && step <= 4)) return "complete";
+  if (step < runMeta.value.step || (canDownload.value && step <= 6)) return "complete";
   if (step === runMeta.value.step || (!run.value && compilation.value?.status === "SUCCEEDED" && step <= 2)) return "active";
   return "";
 }
