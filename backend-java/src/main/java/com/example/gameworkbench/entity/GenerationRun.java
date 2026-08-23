@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Data
 @Builder
@@ -24,6 +25,10 @@ public class GenerationRun {
     private String requestFingerprint;
     private String status;
     private Long stateVersion;
+    @JsonIgnore
+    private String buildClaimToken;
+    private LocalDateTime buildClaimExpiresAt;
+    private Integer buildAttempt;
     private String canonicalSpecJson;
     private String sourceDigest;
     private String runtimeIrJson;

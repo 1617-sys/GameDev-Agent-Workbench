@@ -8,8 +8,8 @@
   → Java Compiler 执行语义与能力校验
   → 稳定诊断码反馈给模型（有限重试）
   → canonical GameSpec + Runtime IR + Build Request
-  → 固定 Cocos Runtime Shell 构建 Web Mobile 包
-  → 自动试玩 / 人工审批 / 可追溯产物
+  → 数据库租约抢占后由固定 Cocos Runtime Shell 构建 Web Mobile 包
+  → 内部试玩包 → 人工审批 → 显式发布 → 正式可下载产物
 ```
 
 模型不能生成或执行任意游戏代码。它只能提出候选规格和受控工具决策；Java 负责校验、授权、预算、状态迁移、构建输入和产物门禁。
@@ -40,6 +40,7 @@ Director 每轮只能选择一个类型化工具或控制决策。Java 对工具
 | Java Compiler | `arcade_collect` 语义校验、能力门禁、规范化摘要、Runtime IR、Build Request |
 | Director | 类型化工具、预算、检查点、数据库 claim、等待实验与人工审批状态 |
 | Cocos 构建 | 固定 Runtime Shell、本地 Web Mobile 构建、日志摘要和可验证 ZIP |
+| V5 发布门禁 | 构建租约、人工审批独立留痕、预览/正式下载隔离、显式 RELEASED 状态 |
 | 自动试玩 | V4 已有确定性 Player/LLM Player 和 episode 证据；尚未与 V5 GameSpec/Cocos 主链统一 |
 | 可靠工作流 | MySQL Outbox、RabbitMQ at-least-once、幂等消费、Redis 快速防重、恢复审计 |
 
@@ -110,6 +111,7 @@ npm run test:unit
 ## 文档导航
 
 - [黄金切片升级方案](docs/upgrade-plan-v5-gold-slice.md)
+- [V5 黄金链路收敛实施计划](docs/v5-golden-path-convergence-plan.md)
 - [GameSpec 语言契约](docs/requirements/v5/game-spec-language.md)
 - [Java GameSpec 编译器设计](docs/requirements/v5/java-gamespec-compiler.md)
 - [Cocos Runtime Target](docs/requirements/v5/cocos-runtime-target.md)

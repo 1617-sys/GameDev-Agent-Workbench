@@ -18,9 +18,14 @@ public class PlayableArtifactStore {
 
     public Path put(String runUuid, PlayableArtifact artifact) {
         if (runUuid == null || !runUuid.matches("[0-9a-f-]{36}")) throw new IllegalArgumentException("Invalid run UUID");
+        if (artifact == null || artifact.packageDigest() == null || !artifact.packageDigest().matches("[0-9a-f]{64}")) {
+            throw new IllegalArgumentException("Invalid artifact digest");
+        }
         try {
             Files.createDirectories(root);
-            Path target = root.resolve(runUuid + ".zip").normalize();
+            // Digest-addressed files prevent a stale, expired build worker from overwriting the
+            // artifact selected by the winning database compare-and-set.
+            Path target = target(runUuid, artifact.packageDigest());
             if (!target.startsWith(root)) throw new IllegalArgumentException("Artifact path escapes storage root");
             Path temporary = Files.createTempFile(root, runUuid + "-", ".tmp");
             Files.write(temporary, artifact.zipBytes());
@@ -41,7 +46,7 @@ public class PlayableArtifactStore {
             throw new IllegalArgumentException("Invalid artifact identity");
         }
         try {
-            Path target = root.resolve(runUuid + ".zip").normalize();
+            Path target = target(runUuid, expectedDigest);
             if (!target.startsWith(root) || !Files.isRegularFile(target)) throw new IllegalStateException("Artifact is unavailable");
             byte[] value = Files.readAllBytes(target);
             String actual = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(value));
@@ -52,5 +57,11 @@ public class PlayableArtifactStore {
         } catch (Exception exception) {
             throw new IllegalStateException("Unable to read playable artifact", exception);
         }
+    }
+
+    private Path target(String runUuid, String digest) {
+        Path target = root.resolve(runUuid + "-" + digest + ".zip").normalize();
+        if (!target.startsWith(root)) throw new IllegalArgumentException("Artifact path escapes storage root");
+        return target;
     }
 }

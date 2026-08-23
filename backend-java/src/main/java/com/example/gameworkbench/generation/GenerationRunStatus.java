@@ -1,9 +1,10 @@
 package com.example.gameworkbench.generation;
 
 public enum GenerationRunStatus {
-    VALIDATING, BUILDING, PLAYTESTING, AWAITING_APPROVAL, APPROVED, REJECTED, FAILED, CANCELLED;
+    VALIDATING, READY_TO_BUILD, BUILDING, PLAYTESTING, AWAITING_APPROVAL,
+    APPROVED, RELEASED, REJECTED, FAILED, CANCELLED;
 
     public boolean terminal() {
-        return this == APPROVED || this == REJECTED || this == FAILED || this == CANCELLED;
+        return this == RELEASED || this == REJECTED || this == FAILED || this == CANCELLED;
     }
 }

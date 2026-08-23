@@ -30,7 +30,7 @@ public class MyBatisDirectorReadModelGateway implements DirectorReadModelGateway
         PrototypeVersion version=ownedVersion(projectId,uuid);return versionNode(version);
     }
     @Override public JsonNode getMachineEpisodeMetrics(long projectId,String uuid){
-        ownedVersion(projectId,uuid);var rows=episodes.selectForAggregate(projectId,uuid);long completed=rows.stream().filter(e->"COMPLETED".equals(e.getExecutionStatus())).count();long won=rows.stream().filter(e->"SUCCESS".equals(e.getOutcome())).count();
+        ownedVersion(projectId,uuid);var rows=episodes.selectForAggregate(projectId,uuid);long completed=rows.stream().filter(e->"COMPLETED".equals(e.getExecutionStatus())).count();long won=rows.stream().filter(e->"WON".equals(e.getOutcome())).count();
         double meanSteps=rows.stream().filter(e->e.getStepCount()!=null).mapToInt(e->e.getStepCount()).average().orElse(0);
         return json.createObjectNode().put("prototypeVersionUuid",uuid).put("episodeCount",rows.size()).put("completedCount",completed).put("completionRate",rows.isEmpty()?0:(double)won/rows.size()).put("meanSteps",meanSteps);
     }

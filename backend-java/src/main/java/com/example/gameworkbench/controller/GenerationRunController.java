@@ -14,9 +14,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import com.example.gameworkbench.common.ApiResponse;
 import com.example.gameworkbench.dto.gamespec.CreateGenerationRunRequest;
+import com.example.gameworkbench.dto.gamespec.GenerationApprovalRequest;
 import com.example.gameworkbench.entity.GenerationRun;
 import com.example.gameworkbench.generation.GenerationRunService;
 import com.example.gameworkbench.generation.GenerationBuildOutcome;
+import com.example.gameworkbench.generation.GenerationApprovalOutcome;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -51,10 +53,36 @@ public class GenerationRunController {
                 .body(zip);
     }
 
+    @GetMapping("/{runUuid}/preview-artifact")
+    public ResponseEntity<byte[]> previewArtifact(@AuthenticationPrincipal Long userId,
+            @PathVariable String projectUuid, @PathVariable String runUuid) {
+        byte[] zip = service.previewArtifact(userId, projectUuid, runUuid);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType("application/zip"))
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=preview-cocos-game-" + runUuid + ".zip")
+                .contentLength(zip.length)
+                .body(zip);
+    }
+
     @PostMapping("/{runUuid}/build")
     public ApiResponse<GenerationBuildOutcome> build(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String runUuid,
             @RequestParam long expectedVersion) {
         return ApiResponse.success(service.build(userId, projectUuid, runUuid, expectedVersion));
+    }
+
+    @PostMapping("/{runUuid}/approval")
+    public ApiResponse<GenerationApprovalOutcome> approve(@AuthenticationPrincipal Long userId,
+            @PathVariable String projectUuid, @PathVariable String runUuid,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
+            @Valid @RequestBody GenerationApprovalRequest request) {
+        return ApiResponse.success(service.approve(userId, projectUuid, runUuid, idempotencyKey, request));
+    }
+
+    @PostMapping("/{runUuid}/release")
+    public ApiResponse<GenerationRun> release(@AuthenticationPrincipal Long userId,
+            @PathVariable String projectUuid, @PathVariable String runUuid,
+            @RequestParam long expectedVersion) {
+        return ApiResponse.success(service.release(userId, projectUuid, runUuid, expectedVersion));
     }
 }
