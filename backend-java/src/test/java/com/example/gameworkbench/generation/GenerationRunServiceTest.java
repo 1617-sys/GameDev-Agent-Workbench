@@ -3,16 +3,19 @@ package com.example.gameworkbench.generation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import com.example.gameworkbench.artifact.PlayableArtifactAssembler;
 import com.example.gameworkbench.artifact.PlayableArtifactStore;
 import com.example.gameworkbench.artifact.PlayableArtifact;
@@ -33,6 +36,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 class GenerationRunServiceTest {
+    @TempDir Path temporary;
     private final ObjectMapper json = new ObjectMapper();
     private final GenerationRunMapper runs = mock(GenerationRunMapper.class);
     private final GenerationRunApprovalMapper approvals = mock(GenerationRunApprovalMapper.class);
@@ -90,8 +94,13 @@ class GenerationRunServiceTest {
     @Test
     void claimsBeforeBuildingAndMovesSuccessfulArtifactToApprovalGate() throws Exception {
         GenerationRun run = readyRun();
-        when(runs.selectByUuid("run-1")).thenReturn(run);
-        when(runs.claimBuild(any(Long.class), any(Long.class), any(Long.class), any(), any())).thenReturn(1);
+        GenerationRun claimed = claimedRun();
+        when(runs.selectByUuid("run-1")).thenReturn(run, claimed);
+        when(runs.claimBuild(any(Long.class), any(Long.class), any(Long.class), any(), any()))
+                .thenAnswer(invocation -> {
+                    claimed.setBuildClaimToken(invocation.getArgument(3));
+                    return 1;
+                });
         when(buildWorker.build(any(), any())).thenReturn(new CocosBuildResult(
                 CocosBuildResult.Status.SUCCEEDED, 0, "log", "output", Path.of("output")));
         PlayableArtifact artifact = new PlayableArtifact("a".repeat(64), "b".repeat(64), "c".repeat(64),
@@ -104,6 +113,8 @@ class GenerationRunServiceTest {
 
         assertThat(outcome.status()).isEqualTo("AWAITING_APPROVAL");
         verify(buildWorker).build(any(), any());
+        verify(artifactAssembler).assemble(argThat(value -> "BUILDING".equals(value.getStatus())
+                && value.getStateVersion() == 4L && value.getBuildClaimToken() != null), any(), any());
         verify(runs).completeBuild(any(Long.class), any(Long.class), org.mockito.ArgumentMatchers.eq(4L), any(),
                 org.mockito.ArgumentMatchers.eq("AWAITING_APPROVAL"),
                 org.mockito.ArgumentMatchers.eq("c".repeat(64)),
@@ -111,9 +122,66 @@ class GenerationRunServiceTest {
     }
 
     @Test
+    void usesDurableClaimSnapshotWithRealArtifactAssembler() throws Exception {
+        Path output = temporary.resolve("cocos-output");
+        Files.createDirectories(output.resolve("assets"));
+        Files.writeString(output.resolve("index.html"), "<!doctype html><script src=\"assets/main.js\"></script>");
+        Files.writeString(output.resolve("assets/main.js"), "console.log('ready')");
+
+        GenerationRun ready = readyRun();
+        ready.setCanonicalSpecJson("{}");
+        ready.setSourceDigest("a".repeat(64));
+        ready.setRuntimeIrJson("{}");
+        ready.setRuntimeIrDigest("b".repeat(64));
+        ready.setBuildRequestJson("{}");
+        GenerationRun claimed = claimedRun();
+        claimed.setCanonicalSpecJson(ready.getCanonicalSpecJson());
+        claimed.setSourceDigest(ready.getSourceDigest());
+        claimed.setRuntimeIrJson(ready.getRuntimeIrJson());
+        claimed.setRuntimeIrDigest(ready.getRuntimeIrDigest());
+        claimed.setBuildRequestJson(ready.getBuildRequestJson());
+
+        when(runs.selectByUuid("run-1")).thenReturn(ready, claimed);
+        when(runs.claimBuild(any(Long.class), any(Long.class), any(Long.class), any(), any()))
+                .thenAnswer(invocation -> {
+                    claimed.setBuildClaimToken(invocation.getArgument(3));
+                    return 1;
+                });
+        when(buildWorker.build(any(), any())).thenReturn(new CocosBuildResult(
+                CocosBuildResult.Status.SUCCEEDED, 0, "c".repeat(64), "d".repeat(64), output));
+        when(runs.completeBuild(any(Long.class), any(Long.class), any(Long.class), any(), any(), any(), any(),
+                any(Boolean.class))).thenReturn(1);
+
+        GenerationRunService realAssemblerService = new GenerationRunService(
+                runs, approvals, projects,
+                new GameSpecCompiler(json, new ArcadeCollectCapabilityRegistry(json)),
+                buildWorker, new PlayableArtifactAssembler(json), artifactStore, json);
+
+        GenerationBuildOutcome outcome = realAssemblerService.build(11L, "project-1", "run-1", 3L);
+
+        assertThat(outcome.status()).isEqualTo("AWAITING_APPROVAL");
+        assertThat(outcome.packageDigest()).hasSize(64);
+        verify(artifactStore).put(org.mockito.ArgumentMatchers.eq("run-1"), any(PlayableArtifact.class));
+    }
+
+    @Test
     void doesNotStartCocosWhenAnotherCallerWinsBuildClaim() throws Exception {
         when(runs.selectByUuid("run-1")).thenReturn(readyRun());
         when(runs.claimBuild(any(Long.class), any(Long.class), any(Long.class), any(), any())).thenReturn(0);
+
+        assertThatThrownBy(() -> service.build(11L, "project-1", "run-1", 3L))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(error -> assertThat(((BusinessException) error).getCode())
+                        .isEqualTo(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE.getCode()));
+        verifyNoInteractions(buildWorker);
+    }
+
+    @Test
+    void doesNotStartCocosWhenReloadedClaimBelongsToAnotherWorker() throws Exception {
+        GenerationRun claimedByAnotherWorker = claimedRun();
+        claimedByAnotherWorker.setBuildClaimToken("another-worker-token");
+        when(runs.selectByUuid("run-1")).thenReturn(readyRun(), claimedByAnotherWorker);
+        when(runs.claimBuild(any(Long.class), any(Long.class), any(Long.class), any(), any())).thenReturn(1);
 
         assertThatThrownBy(() -> service.build(11L, "project-1", "run-1", 3L))
                 .isInstanceOf(BusinessException.class)
@@ -169,6 +237,13 @@ class GenerationRunServiceTest {
     private GenerationRun readyRun() {
         return GenerationRun.builder().id(9L).runUuid("run-1").userId(11L).projectId(7L)
                 .status("READY_TO_BUILD").stateVersion(3L).buildClaimExpiresAt(LocalDateTime.now().minusMinutes(1))
+                .buildRequestJson("{}").runtimeIrJson("{}").build();
+    }
+
+    private GenerationRun claimedRun() {
+        return GenerationRun.builder().id(9L).runUuid("run-1").userId(11L).projectId(7L)
+                .status("BUILDING").stateVersion(4L).buildAttempt(1)
+                .buildClaimExpiresAt(LocalDateTime.now().plusMinutes(12))
                 .buildRequestJson("{}").runtimeIrJson("{}").build();
     }
 

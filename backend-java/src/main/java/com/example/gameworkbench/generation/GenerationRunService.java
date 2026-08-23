@@ -141,29 +141,45 @@ public class GenerationRunService {
             throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
         }
         long claimedVersion = expectedVersion + 1;
+        // The conditional UPDATE changes the database row, not the already-loaded Java object.
+        // Re-read and verify the durable claim before any external work or artifact assembly.
+        GenerationRun claimedRun = runs.selectByUuid(runUuid);
+        if (claimedRun == null
+                || !Objects.equals(claimedRun.getId(), run.getId())
+                || !Objects.equals(claimedRun.getProjectId(), run.getProjectId())
+                || !GenerationRunStatus.BUILDING.name().equals(claimedRun.getStatus())
+                || !Objects.equals(claimedRun.getStateVersion(), claimedVersion)
+                || !Objects.equals(claimedRun.getBuildClaimToken(), claimToken)) {
+            throw new BusinessException(ErrorCode.GENERATION_RUN_CONCURRENT_UPDATE);
+        }
         try {
-            CocosBuildResult result = buildWorker.build(readObject(run.getBuildRequestJson()), readObject(run.getRuntimeIrJson()));
+            CocosBuildResult result = buildWorker.build(
+                    readObject(claimedRun.getBuildRequestJson()), readObject(claimedRun.getRuntimeIrJson()));
             if (result.status() == CocosBuildResult.Status.SUCCEEDED) {
-                PlayableArtifact artifact = artifactAssembler.assemble(run, result.outputDirectory(), result.logDigest());
-                artifactStore.put(run.getRunUuid(), artifact);
-                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.AWAITING_APPROVAL,
+                PlayableArtifact artifact = artifactAssembler.assemble(
+                        claimedRun, result.outputDirectory(), result.logDigest());
+                artifactStore.put(claimedRun.getRunUuid(), artifact);
+                completeBuild(claimedRun, claimedVersion, claimToken, GenerationRunStatus.AWAITING_APPROVAL,
                         artifact.packageDigest(), null);
                 return new GenerationBuildOutcome(runUuid, GenerationRunStatus.AWAITING_APPROVAL.name(), result.exitCode(),
                         result.logDigest(), result.outputDigest(), artifact.packageDigest());
             } else {
-                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "COCOS_BUILD_FAILED");
+                completeBuild(claimedRun, claimedVersion, claimToken, GenerationRunStatus.FAILED, null,
+                        "COCOS_BUILD_FAILED");
                 return new GenerationBuildOutcome(runUuid, GenerationRunStatus.FAILED.name(), result.exitCode(),
                         result.logDigest(), null, null);
             }
         } catch (BusinessException exception) {
             if (exception.getCode().equals(ErrorCode.COCOS_BUILD_UNAVAILABLE.getCode())) {
-                releaseBuild(run, claimedVersion, claimToken);
+                releaseBuild(claimedRun, claimedVersion, claimToken);
             } else {
-                completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "BUILD_SECURITY_REJECTED");
+                completeBuild(claimedRun, claimedVersion, claimToken, GenerationRunStatus.FAILED, null,
+                        "BUILD_SECURITY_REJECTED");
             }
             throw exception;
         } catch (RuntimeException exception) {
-            completeBuild(run, claimedVersion, claimToken, GenerationRunStatus.FAILED, null, "COCOS_BUILD_FAILED");
+            completeBuild(claimedRun, claimedVersion, claimToken, GenerationRunStatus.FAILED, null,
+                    "COCOS_BUILD_FAILED");
             throw exception;
         }
     }
