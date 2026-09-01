@@ -22,6 +22,12 @@ import com.example.gameworkbench.generation.GenerationApprovalOutcome;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * V5 可玩包生成流程的 REST 入口。
+ *
+ * <p>接口按状态机拆分为创建、构建、审批和发布。Controller 不自行判断状态，所有权限、
+ * 幂等及并发规则集中在 {@link GenerationRunService}，保证网页和其他客户端遵守同一规则。</p>
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v5/projects/{projectUuid}/generation-runs")
@@ -45,6 +51,7 @@ public class GenerationRunController {
     @GetMapping("/{runUuid}/artifact")
     public ResponseEntity<byte[]> artifact(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String runUuid) {
+        // 正式下载由服务层检查 RELEASED 门禁；Controller 只负责设置 ZIP 响应头。
         byte[] zip = service.artifact(userId, projectUuid, runUuid);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/zip"))
@@ -56,6 +63,7 @@ public class GenerationRunController {
     @GetMapping("/{runUuid}/preview-artifact")
     public ResponseEntity<byte[]> previewArtifact(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String runUuid) {
+        // 试玩包可在待审批阶段下载，但仍需验证项目归属和产物摘要。
         byte[] zip = service.previewArtifact(userId, projectUuid, runUuid);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType("application/zip"))
@@ -67,6 +75,7 @@ public class GenerationRunController {
     @PostMapping("/{runUuid}/build")
     public ApiResponse<GenerationBuildOutcome> build(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String runUuid,
+            // expectedVersion 是乐观锁版本，防止两个页面重复领取同一个构建任务。
             @RequestParam long expectedVersion) {
         return ApiResponse.success(service.build(userId, projectUuid, runUuid, expectedVersion));
     }
@@ -82,6 +91,7 @@ public class GenerationRunController {
     @PostMapping("/{runUuid}/release")
     public ApiResponse<GenerationRun> release(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String runUuid,
+            // 发布是独立于审批的显式动作，并再次用版本号阻止旧请求覆盖新状态。
             @RequestParam long expectedVersion) {
         return ApiResponse.success(service.release(userId, projectUuid, runUuid, expectedVersion));
     }

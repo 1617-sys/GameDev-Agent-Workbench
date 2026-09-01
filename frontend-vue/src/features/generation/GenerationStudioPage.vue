@@ -212,6 +212,7 @@ function parsedSpec() {
 }
 
 async function compileSpec() {
+  // 高级 JSON 编辑器可能包含语法错误；只把合法对象发送给后端权威编译器。
   const spec = parsedSpec();
   if (!spec) return null;
   compiling.value = true;
@@ -228,6 +229,7 @@ async function authorSpec() {
   authoring.value = true;
   pageError.value = "";
   try {
+    // 把当前编辑内容一并发送：有内容时是“修改/修复”，没有内容时是“从创意生成”。
     const currentSpec = parsedSpec();
     const result = await gameGenerationApi.author(projectUuid.value, idea.value.trim(), currentSpec);
     specText.value = pretty(result.spec);
@@ -239,6 +241,7 @@ async function authorSpec() {
 }
 
 async function createAndBuild() {
+  // 规格自上次编译后被修改过时禁止构建，避免页面展示和实际构建的内容不一致。
   if (compiledText.value !== specText.value || compilation.value?.status !== "SUCCEEDED") return;
   const spec = parsedSpec();
   if (!spec) return;
@@ -258,6 +261,7 @@ async function buildRun() {
   building.value = true;
   pageError.value = "";
   try {
+    // stateVersion 是乐观锁：若另一个请求已改变状态，后端会拒绝这个旧版本请求。
     await gameGenerationApi.build(projectUuid.value, run.value.runUuid, run.value.stateVersion);
     await loadRun(run.value.runUuid);
   } catch (cause) { pageError.value = cause.message || "Cocos 构建失败"; }
@@ -288,6 +292,7 @@ async function decide(decision) {
   approving.value = true;
   pageError.value = "";
   try {
+    // 审批使用独立幂等键，网络重试不会重复写入两条人工决定。
     const key = globalThis.crypto?.randomUUID?.() || `approval-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     await gameGenerationApi.approve(projectUuid.value, run.value.runUuid, decision, approvalReason.value.trim(), key);
     await loadRun(run.value.runUuid);
@@ -298,6 +303,7 @@ async function releaseRun() {
   releasing.value = true;
   pageError.value = "";
   try {
+    // APPROVED 只代表试玩通过；release 是第二个显式门禁，成功后才开放正式包下载。
     await gameGenerationApi.release(projectUuid.value, run.value.runUuid, run.value.stateVersion);
     await loadRun(run.value.runUuid);
   } catch (cause) { pageError.value = cause.message || "正式发布失败"; }

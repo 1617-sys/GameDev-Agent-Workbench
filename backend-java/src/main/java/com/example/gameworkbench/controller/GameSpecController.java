@@ -18,6 +18,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * GameSpec 能力查询、编译和 AI 创作的协议层入口。
+ *
+ * <p>编译接口适合用户手工编辑后的即时校验；author 接口则把自然语言交给有界修复循环。
+ * 两条路径最终都以同一个 Java 编译器为准，不能由前端或模型绕过业务规则。</p>
+ */
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v5")
@@ -27,6 +33,7 @@ public class GameSpecController {
 
     @GetMapping("/gamespec/capabilities")
     public ApiResponse<ObjectNode> capabilities() {
+        // 前端用这份快照展示当前真正支持的玩法、资源配置和构建目标。
         return ApiResponse.success(service.capabilities());
     }
 
@@ -41,6 +48,7 @@ public class GameSpecController {
     @PostMapping("/projects/{projectUuid}/gamespec/author")
     public ApiResponse<SpecAuthorResult> author(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @Valid @RequestBody AuthorGameSpecRequest request) {
+        // currentSpec 可为空：为空表示从创意生成，非空表示基于现有规格修改或修复。
         return ApiResponse.success(specAuthor.author(userId, projectUuid, request.idea(), request.currentSpec()));
     }
 }
