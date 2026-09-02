@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/projects/{projectUuid}/workflow-runs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'workflow-runs.manage')")
 public class AsyncWorkflowController {
 
     private final AsyncWorkflowSubmissionService asyncWorkflowSubmissionService;

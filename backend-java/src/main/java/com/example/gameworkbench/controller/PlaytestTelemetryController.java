@@ -13,6 +13,7 @@ import com.example.gameworkbench.vo.telemetry.*;
 
 @RestController @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectUuid}")
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'playtest.manage')")
 public class PlaytestTelemetryController {
     private final PlaytestTelemetryService service;
     private final ObjectMapper json;

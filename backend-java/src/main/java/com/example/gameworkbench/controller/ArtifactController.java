@@ -34,4 +34,13 @@ public class ArtifactController {
     ) {
         return ApiResponse.success(agentArtifactService.getArtifact(userId, artifactUuid));
     }
+
+    @GetMapping("/projects/{projectUuid}/artifacts/{artifactUuid}")
+    public ApiResponse<AgentArtifactVO> getProjectArtifact(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable String projectUuid,
+            @PathVariable String artifactUuid
+    ) {
+        return ApiResponse.success(agentArtifactService.getProjectArtifact(userId, projectUuid, artifactUuid));
+    }
 }

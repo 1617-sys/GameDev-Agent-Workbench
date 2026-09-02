@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController @RequiredArgsConstructor @RequestMapping("/api/projects/{projectUuid}/prototype-versions/{versionUuid}/approval")
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'prototype-versions.manage')")
 public class PrototypeApprovalController {
     private final PrototypeApprovalService service;
     @PostMapping public ApiResponse<PrototypeApprovalVO> decide(@AuthenticationPrincipal Long userId,@PathVariable String projectUuid,@PathVariable String versionUuid,@RequestHeader("Idempotency-Key")String key,@Valid @RequestBody PrototypeApprovalRequest request){return ApiResponse.success(service.decide(userId,projectUuid,versionUuid,key,request));}

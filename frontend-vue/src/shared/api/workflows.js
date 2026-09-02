@@ -13,6 +13,7 @@ export const workflowsApi = {
   run: (uuid) => apiRequest(runPath(uuid)),
   steps: (uuid) => apiRequest(`${runPath(uuid)}/steps`),
   artifacts: (uuid) => apiRequest(`${runPath(uuid)}/artifacts`),
+  ragEvidence: (uuid) => apiRequest(`${runPath(uuid)}/rag-evidence`),
   artifact: (uuid) => apiRequest(`/api/artifacts/${encodeURIComponent(uuid)}`),
   cancel: (uuid) => apiRequest(`${runPath(uuid)}/cancel`, { method: "POST" }),
   retry: (uuid) => apiRequest(`${runPath(uuid)}/retry`, { method: "POST" }),

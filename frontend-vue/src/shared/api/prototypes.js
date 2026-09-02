@@ -14,5 +14,9 @@ export const prototypesApi = {
   ),
   compare: (projectUuid, left, right) => apiRequest(
     `${base(projectUuid)}/compare?left=${encodeURIComponent(left)}&right=${encodeURIComponent(right)}`
+  ),
+  approve: (projectUuid, versionUuid, body, idempotencyKey) => apiRequest(
+    `${base(projectUuid)}/${encodeURIComponent(versionUuid)}/approval`,
+    { method: "POST", body, headers: { "Idempotency-Key": idempotencyKey } }
   )
 };

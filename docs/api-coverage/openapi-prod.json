@@ -1,0 +1,6353 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "OpenAPI definition",
+    "version" : "v0"
+  },
+  "x-runtime-profile" : "prod",
+  "paths" : {
+    "/api/agent/run" : {
+      "post" : {
+        "operationId" : "run_1",
+        "parameters" : [ {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AgentRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseAgentRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "agent-controller" ]
+      }
+    },
+    "/api/agent/runs" : {
+      "get" : {
+        "operationId" : "listRuns",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "pageNum",
+          "required" : false,
+          "schema" : {
+            "default" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageSize",
+          "required" : false,
+          "schema" : {
+            "default" : 10,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "projectUuid",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "agentType",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "REQUIREMENT_BREAKDOWN", "API_DESIGN", "BUG_ANALYSIS", "PROMPT_GENERATE", "GAME_CONCEPT", "CORE_LOOP_DESIGN", "TASK_BREAKDOWN", "GAME_CONFIG_GENERATE", "BALANCE_EVALUATION" ],
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "enum" : [ "RUNNING", "SUCCESS", "FAILED", "TIMEOUT" ],
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePageAgentRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "agent-controller" ]
+      }
+    },
+    "/api/agent/runs/{runUuid}" : {
+      "get" : {
+        "operationId" : "getRun_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseAgentRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "agent-controller" ]
+      }
+    },
+    "/api/artifacts/{artifactUuid}" : {
+      "get" : {
+        "operationId" : "getArtifact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "artifactUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseAgentArtifactVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "artifact-controller" ]
+      }
+    },
+    "/api/auth/login" : {
+      "post" : {
+        "operationId" : "login",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseLoginResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/me" : {
+      "get" : {
+        "operationId" : "me",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseUserVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/auth/register" : {
+      "post" : {
+        "operationId" : "register",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/RegisterRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseUserVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "auth-controller" ]
+      }
+    },
+    "/api/dashboard/projects/selectAgentType" : {
+      "get" : {
+        "operationId" : "selectAgentRunTypeSummary",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListAgentRunTypeSummaryVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-controller" ]
+      }
+    },
+    "/api/dashboard/projects/summary" : {
+      "get" : {
+        "operationId" : "listProjectRunSummary",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListProjectRunSummaryVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "dashboard-controller" ]
+      }
+    },
+    "/api/health" : {
+      "get" : {
+        "operationId" : "health",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMapStringString"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "health-controller" ]
+      }
+    },
+    "/api/projects" : {
+      "get" : {
+        "operationId" : "listProjects",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListGameProjectVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-controller" ]
+      },
+      "post" : {
+        "operationId" : "createProject",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GameProjectRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGameProjectVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}" : {
+      "get" : {
+        "operationId" : "getProject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGameProjectVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-controller" ]
+      },
+      "put" : {
+        "operationId" : "updateProject",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GameProjectRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGameProjectVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/artifacts" : {
+      "get" : {
+        "operationId" : "listProjectArtifacts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListAgentArtifactVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "artifact-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/artifacts/{artifactUuid}" : {
+      "get" : {
+        "operationId" : "getProjectArtifact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "artifactUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseAgentArtifactVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "artifact-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/director-runs" : {
+      "post" : {
+        "operationId" : "submit_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Trace-Id",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/SubmitDirectorRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseDirectorRun"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "director-run-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/director-runs/{runUuid}" : {
+      "get" : {
+        "operationId" : "get_5",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseDirectorRunView"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "director-run-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/director-runs/{runUuid}/cancel" : {
+      "post" : {
+        "operationId" : "cancel_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "expectedVersion",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseDirectorRun"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "director-run-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/exports/{jobUuid}" : {
+      "get" : {
+        "operationId" : "get_4",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "jobUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeExportJobVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-export-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/exports/{jobUuid}/download" : {
+      "get" : {
+        "operationId" : "download",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "jobUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-export-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/exports/{jobUuid}/retry" : {
+      "post" : {
+        "operationId" : "retry_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "jobUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeExportJobVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-export-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/knowledge-documents" : {
+      "get" : {
+        "operationId" : "list_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseKnowledgeLibraryResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "knowledge-document-controller" ]
+      },
+      "post" : {
+        "operationId" : "upload",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "properties" : {
+                  "file" : {
+                    "format" : "binary",
+                    "type" : "string"
+                  }
+                },
+                "required" : [ "file" ],
+                "type" : "object"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseKnowledgeUploadResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "knowledge-document-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/batches" : {
+      "post" : {
+        "operationId" : "persist",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PersistMachineEpisodeBatchRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeBatchVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/batches/{batchUuid}" : {
+      "get" : {
+        "operationId" : "batch",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "batchUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeBatchVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/prototype-versions/{versionUuid}/aggregate" : {
+      "get" : {
+        "operationId" : "aggregate",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeAggregateVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}" : {
+      "get" : {
+        "operationId" : "episode",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "episodeUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/steps" : {
+      "get" : {
+        "operationId" : "steps",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "episodeUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "page",
+          "required" : false,
+          "schema" : {
+            "default" : 0,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "size",
+          "required" : false,
+          "schema" : {
+            "default" : 50,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeStepPageVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/summary" : {
+      "get" : {
+        "operationId" : "summary",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "episodeUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseMachineEpisodeVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "machine-episode-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/player-runs" : {
+      "get" : {
+        "operationId" : "list_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "prototypeVersionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListPlayerRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "player-run-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_4",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "X-Trace-Id",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreatePlayerRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlayerRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "player-run-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/player-runs/{runUuid}" : {
+      "get" : {
+        "operationId" : "get_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlayerRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "player-run-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/playtest-metrics/compare" : {
+      "get" : {
+        "operationId" : "compare_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "left",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "right",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlaytestMetricsComparisonVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}" : {
+      "get" : {
+        "operationId" : "get_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sessionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlaytestSessionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}/events" : {
+      "post" : {
+        "operationId" : "ingest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "sessionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TelemetryBatchRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseTelemetryBatchVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions" : {
+      "get" : {
+        "operationId" : "list",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListPrototypeVersionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-version-controller" ]
+      },
+      "post" : {
+        "operationId" : "create_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreatePrototypeVersionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeVersionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-version-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/compare" : {
+      "get" : {
+        "operationId" : "compare",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "left",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "right",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeVersionComparisonVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-version-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{parentVersionUuid}/tune" : {
+      "post" : {
+        "operationId" : "tune",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "parentVersionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/TunePrototypeVersionRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeVersionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-version-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}" : {
+      "get" : {
+        "operationId" : "get_1",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeVersionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-version-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/approval" : {
+      "post" : {
+        "operationId" : "decide",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PrototypeApprovalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeApprovalVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-approval-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/balance-suggestions" : {
+      "post" : {
+        "operationId" : "suggest",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseBalanceSuggestionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/exports" : {
+      "post" : {
+        "operationId" : "create_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePrototypeExportJobVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prototype-export-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-metrics" : {
+      "get" : {
+        "operationId" : "metrics",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlaytestMetricsVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-sessions" : {
+      "post" : {
+        "operationId" : "create_2",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "versionUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreatePlaytestSessionRequest"
+              }
+            }
+          }
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePlaytestSessionVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "playtest-telemetry-controller" ]
+      }
+    },
+    "/api/promptTemplate" : {
+      "get" : {
+        "operationId" : "list_5",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "pageNum",
+          "required" : false,
+          "schema" : {
+            "default" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageSize",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "agentType",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePagePromptTemplateVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prompt-template-controller" ]
+      }
+    },
+    "/api/promptTemplate/get" : {
+      "get" : {
+        "operationId" : "getPromptTemplate",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "templateUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePromptTemplateVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prompt-template-controller" ]
+      }
+    },
+    "/api/promptTemplate/modify" : {
+      "post" : {
+        "operationId" : "modifyPromptTemplate",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PromptTemplateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePromptTemplateVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prompt-template-controller" ]
+      }
+    },
+    "/api/promptTemplate/{templateUuid}" : {
+      "put" : {
+        "operationId" : "updatePromptTemplate",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "templateUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/PromptTemplateRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePromptTemplateVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prompt-template-controller" ]
+      }
+    },
+    "/api/v1/analytics/prompt-versions" : {
+      "get" : {
+        "operationId" : "list_4",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "projectId",
+          "required" : false,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "agentType",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "from",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "to",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "includeMock",
+          "required" : false,
+          "schema" : {
+            "default" : false,
+            "type" : "boolean"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListPromptVersionMetricVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "prompt-version-analytics-controller" ]
+      }
+    },
+    "/api/v1/projects/{projectUuid}/workflow-runs" : {
+      "get" : {
+        "operationId" : "listProjectRuns",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListWorkflowRunSummaryVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "project-workflow-run-query-controller" ]
+      },
+      "post" : {
+        "operationId" : "submit",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AsyncWorkflowSubmitRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowSubmitVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "async-workflow-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}" : {
+      "get" : {
+        "operationId" : "getRun",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowRunDetailVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-query-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/artifacts" : {
+      "get" : {
+        "operationId" : "getArtifacts",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListArtifactSummaryVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-query-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/cancel" : {
+      "post" : {
+        "operationId" : "cancel",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowRunCommandVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-command-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/events" : {
+      "get" : {
+        "operationId" : "subscribe",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Last-Event-ID",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SseEmitter"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-sse-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/rag-evidence" : {
+      "get" : {
+        "operationId" : "list_3",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListRagEvidenceResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "rag-evidence-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/retry" : {
+      "post" : {
+        "operationId" : "retry",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowRunCommandVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-command-controller" ]
+      }
+    },
+    "/api/v1/workflow-runs/{workflowRunUuid}/steps" : {
+      "get" : {
+        "operationId" : "getSteps",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListWorkflowStepReadVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-run-query-controller" ]
+      }
+    },
+    "/api/v5/gamespec/capabilities" : {
+      "get" : {
+        "operationId" : "capabilities",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseObjectNode"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-spec-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/gamespec/author" : {
+      "post" : {
+        "operationId" : "author",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/AuthorGameSpecRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseSpecAuthorResult"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-spec-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/gamespec/compile" : {
+      "post" : {
+        "operationId" : "compile",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CompileGameSpecRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGameSpecCompilationResult"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "game-spec-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs" : {
+      "post" : {
+        "operationId" : "create",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/CreateGenerationRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationRun"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}" : {
+      "get" : {
+        "operationId" : "get",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationRun"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/approval" : {
+      "post" : {
+        "operationId" : "approve",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/GenerationApprovalRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationApprovalOutcome"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/artifact" : {
+      "get" : {
+        "operationId" : "artifact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/build" : {
+      "post" : {
+        "operationId" : "build",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "expectedVersion",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationBuildOutcome"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/preview-artifact" : {
+      "get" : {
+        "operationId" : "previewArtifact",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "format" : "byte",
+                  "type" : "string"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version" : {
+      "post" : {
+        "operationId" : "createPrototypeVersion",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "header",
+          "name" : "Idempotency-Key",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationPrototypeBridgeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version-compatibility" : {
+      "get" : {
+        "operationId" : "inspectPrototypeCompatibility",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationPrototypeBridgeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/release" : {
+      "post" : {
+        "operationId" : "release",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "projectUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "path",
+          "name" : "runUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "expectedVersion",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseGenerationRun"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "generation-run-controller" ]
+      }
+    },
+    "/api/workflow/game-design/run" : {
+      "post" : {
+        "operationId" : "run",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WorkflowRunRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-controller" ]
+      }
+    },
+    "/api/workflow/{workflowRunUuid}" : {
+      "get" : {
+        "operationId" : "getWorkflowRun",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "workflowRunUuid",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseWorkflowRunVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "workflow-controller" ]
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "AgentArtifactVO" : {
+        "properties" : {
+          "agentRunId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "artifactType" : {
+            "type" : "string"
+          },
+          "artifactUuid" : {
+            "type" : "string"
+          },
+          "content" : {
+            "type" : "string"
+          },
+          "contentDigest" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "runtimeCapabilityVersion" : {
+            "type" : "string"
+          },
+          "runtimeEligible" : {
+            "type" : "boolean"
+          },
+          "schemaKey" : {
+            "type" : "string"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "sourceArtifactUuid" : {
+            "type" : "string"
+          },
+          "sourceAttempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "validationSummary" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AgentRunRequest" : {
+        "properties" : {
+          "agentType" : {
+            "enum" : [ "REQUIREMENT_BREAKDOWN", "API_DESIGN", "BUG_ANALYSIS", "PROMPT_GENERATE", "GAME_CONCEPT", "CORE_LOOP_DESIGN", "TASK_BREAKDOWN", "GAME_CONFIG_GENERATE", "BALANCE_EVALUATION" ],
+            "type" : "string"
+          },
+          "content" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "context" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "projectUuid" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "ragContextBudget" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "ragEnabled" : {
+            "type" : "boolean"
+          },
+          "ragTopK" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "agentType", "content", "projectUuid", "title" ],
+        "type" : "object"
+      },
+      "AgentRunTypeSummaryVO" : {
+        "properties" : {
+          "agentType" : {
+            "type" : "string"
+          },
+          "avgTimeTakenMs" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "failedCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "successCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "AgentRunVO" : {
+        "properties" : {
+          "agentType" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "errorCategory" : {
+            "type" : "string"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "mockState" : {
+            "type" : "string"
+          },
+          "modelName" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "projectUuid" : {
+            "type" : "string"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "runUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "timeTakenMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "traceId" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseAgentArtifactVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/AgentArtifactVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseAgentRunVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/AgentRunVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseBalanceSuggestionVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/BalanceSuggestionVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseDirectorRun" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/DirectorRun"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseDirectorRunView" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/DirectorRunView"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGameProjectVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GameProjectVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGameSpecCompilationResult" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GameSpecCompilationResult"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGenerationApprovalOutcome" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GenerationApprovalOutcome"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGenerationBuildOutcome" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GenerationBuildOutcome"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGenerationPrototypeBridgeResponse" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GenerationPrototypeBridgeResponse"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseGenerationRun" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/GenerationRun"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseKnowledgeLibraryResponse" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/KnowledgeLibraryResponse"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseKnowledgeUploadResponse" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/KnowledgeUploadResponse"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListAgentArtifactVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AgentArtifactVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListAgentRunTypeSummaryVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AgentRunTypeSummaryVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListArtifactSummaryVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ArtifactSummaryVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListGameProjectVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GameProjectVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListPlayerRunVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PlayerRunVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListProjectRunSummaryVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ProjectRunSummaryVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListPromptVersionMetricVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PromptVersionMetricVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListPrototypeVersionVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PrototypeVersionVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListRagEvidenceResponse" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/RagEvidenceResponse"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListWorkflowRunSummaryVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/WorkflowRunSummaryVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseListWorkflowStepReadVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/WorkflowStepReadVO"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseLoginResponse" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/LoginResponse"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseMachineEpisodeAggregateVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/MachineEpisodeAggregateVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseMachineEpisodeBatchVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/MachineEpisodeBatchVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseMachineEpisodeStepPageVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/MachineEpisodeStepPageVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseMachineEpisodeVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/MachineEpisodeVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseMapStringString" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "additionalProperties" : {
+              "type" : "string"
+            },
+            "type" : "object"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseObjectNode" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "type" : "object"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePageAgentRunVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PageAgentRunVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePagePromptTemplateVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PagePromptTemplateVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePlayerRunVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PlayerRunVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePlaytestMetricsComparisonVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PlaytestMetricsComparisonVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePlaytestMetricsVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PlaytestMetricsVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePlaytestSessionVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PlaytestSessionVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePromptTemplateVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PromptTemplateVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePrototypeApprovalVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PrototypeApprovalVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePrototypeExportJobVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PrototypeExportJobVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePrototypeVersionComparisonVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PrototypeVersionComparisonVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePrototypeVersionVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PrototypeVersionVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseSpecAuthorResult" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/SpecAuthorResult"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseTelemetryBatchVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/TelemetryBatchVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseUserVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/UserVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseWorkflowRunCommandVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/WorkflowRunCommandVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseWorkflowRunDetailVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/WorkflowRunDetailVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseWorkflowRunVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/WorkflowRunVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseWorkflowSubmitVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/WorkflowSubmitVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ArtifactSummaryVO" : {
+        "properties" : {
+          "artifactUuid" : {
+            "type" : "string"
+          },
+          "contentDigest" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "displayName" : {
+            "type" : "string"
+          },
+          "runtimeCapabilityVersion" : {
+            "type" : "string"
+          },
+          "runtimeEligible" : {
+            "type" : "boolean"
+          },
+          "schemaKey" : {
+            "type" : "string"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "sourceArtifactUuid" : {
+            "type" : "string"
+          },
+          "sourceAttempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "stepKey" : {
+            "type" : "string"
+          },
+          "type" : {
+            "type" : "string"
+          },
+          "url" : {
+            "type" : "string"
+          },
+          "validationSummary" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "AsyncWorkflowSubmitRequest" : {
+        "properties" : {
+          "additionalRequirements" : {
+            "maxLength" : 2000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "context" : {
+            "maxLength" : 5000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "difficulty" : {
+            "minLength" : 1,
+            "pattern" : "easy|normal|hard",
+            "type" : "string"
+          },
+          "durationSeconds" : {
+            "format" : "int32",
+            "maximum" : 600,
+            "minimum" : 30,
+            "type" : "integer"
+          },
+          "idea" : {
+            "maxLength" : 5000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "visualTheme" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "workflowKey" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "difficulty", "durationSeconds", "idea", "visualTheme", "workflowKey" ],
+        "type" : "object"
+      },
+      "AuthorGameSpecRequest" : {
+        "properties" : {
+          "currentSpec" : {
+            "type" : "object"
+          },
+          "idea" : {
+            "maxLength" : 2000,
+            "minLength" : 10,
+            "type" : "string"
+          }
+        },
+        "required" : [ "idea" ],
+        "type" : "object"
+      },
+      "BalanceSuggestionVO" : {
+        "properties" : {
+          "artifactUuid" : {
+            "type" : "string"
+          },
+          "configDigest" : {
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "recommendation" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "sampleSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "snapshotAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "Capabilities" : {
+        "properties" : {
+          "delete" : {
+            "type" : "boolean"
+          },
+          "invalidate" : {
+            "type" : "boolean"
+          },
+          "upload" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "ComparisonSummary" : {
+        "properties" : {
+          "chunkingVersion" : {
+            "type" : "string"
+          },
+          "embeddingModel" : {
+            "type" : "string"
+          },
+          "evaluationVersions" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "from" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "modelName" : {
+            "type" : "string"
+          },
+          "promptVersionId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "provider" : {
+            "type" : "string"
+          },
+          "ragOff" : {
+            "$ref" : "#/components/schemas/RagCohortStats"
+          },
+          "ragOn" : {
+            "$ref" : "#/components/schemas/RagCohortStats"
+          },
+          "retrievalVersion" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "to" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "CompileGameSpecRequest" : {
+        "properties" : {
+          "spec" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          }
+        },
+        "required" : [ "spec" ],
+        "type" : "object"
+      },
+      "CreateGenerationRunRequest" : {
+        "properties" : {
+          "spec" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          }
+        },
+        "required" : [ "spec" ],
+        "type" : "object"
+      },
+      "CreatePlayerRunRequest" : {
+        "properties" : {
+          "clientBatchKey" : {
+            "minLength" : 1,
+            "pattern" : "[A-Za-z0-9._:-]{1,80}",
+            "type" : "string"
+          },
+          "concurrency" : {
+            "format" : "int32",
+            "maximum" : 8,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "episodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Item"
+            },
+            "maxItems" : 100,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "prototypeVersionUuid" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "clientBatchKey", "episodes", "prototypeVersionUuid" ],
+        "type" : "object"
+      },
+      "CreatePlaytestSessionRequest" : { },
+      "CreatePrototypeVersionRequest" : {
+        "properties" : {
+          "artifactUuid" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "artifactUuid" ],
+        "type" : "object"
+      },
+      "DirectorDecisionRecord" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "decisionDigest" : {
+            "type" : "string"
+          },
+          "decisionUuid" : {
+            "type" : "string"
+          },
+          "directorRunId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "modelEvidenceJson" : {
+            "type" : "string"
+          },
+          "payloadJson" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "reasonSummary" : {
+            "type" : "string"
+          },
+          "roundNumber" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "stateVersion" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "DirectorRun" : {
+        "properties" : {
+          "budgetJson" : {
+            "type" : "string"
+          },
+          "checkpointJson" : {
+            "type" : "string"
+          },
+          "claimToken" : {
+            "type" : "string"
+          },
+          "claimUntil" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "executionAttempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "goalDigest" : {
+            "type" : "string"
+          },
+          "goalJson" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "idempotencyKey" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "requestFingerprint" : {
+            "type" : "string"
+          },
+          "runUuid" : {
+            "type" : "string"
+          },
+          "stateVersion" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "waitingApprovalRef" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "DirectorRunView" : {
+        "properties" : {
+          "candidates" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ExperimentCandidate"
+            },
+            "type" : "array"
+          },
+          "decisions" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DirectorDecisionRecord"
+            },
+            "type" : "array"
+          },
+          "run" : {
+            "$ref" : "#/components/schemas/DirectorRun"
+          },
+          "toolCalls" : {
+            "items" : {
+              "$ref" : "#/components/schemas/DirectorToolCallRecord"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "DirectorToolCallRecord" : {
+        "properties" : {
+          "callUuid" : {
+            "type" : "string"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "decisionId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "directorRunId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "durationMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "idempotencyKey" : {
+            "type" : "string"
+          },
+          "inputDigest" : {
+            "type" : "string"
+          },
+          "inputSummary" : {
+            "type" : "string"
+          },
+          "outputDigest" : {
+            "type" : "string"
+          },
+          "outputSummary" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "resultRef" : {
+            "type" : "string"
+          },
+          "retryCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "toolName" : {
+            "type" : "string"
+          },
+          "toolVersion" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ErrorSummaryVO" : {
+        "properties" : {
+          "code" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ExperimentCandidate" : {
+        "properties" : {
+          "candidateUuid" : {
+            "type" : "string"
+          },
+          "configDigest" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "directorRunId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "evidenceJson" : {
+            "type" : "string"
+          },
+          "generatorVersion" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "inputDigest" : {
+            "type" : "string"
+          },
+          "machineEpisodeUuid" : {
+            "type" : "string"
+          },
+          "ordinalNumber" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "playerRunUuid" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "tuningJson" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "GameProjectRequest" : {
+        "properties" : {
+          "description" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "gameType" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "name" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "targetPlatform" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "description", "gameType", "name", "targetPlatform" ],
+        "type" : "object"
+      },
+      "GameProjectVO" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "gameType" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "projectUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "targetPlatform" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "GameSpecCompilationResult" : {
+        "properties" : {
+          "buildRequest" : {
+            "type" : "object"
+          },
+          "canonicalSpec" : {
+            "type" : "object"
+          },
+          "diagnostics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GameSpecDiagnostic"
+            },
+            "type" : "array"
+          },
+          "runtimeIr" : {
+            "type" : "object"
+          },
+          "runtimeIrDigest" : {
+            "type" : "string"
+          },
+          "sourceDigest" : {
+            "type" : "string"
+          },
+          "status" : {
+            "enum" : [ "SUCCEEDED", "FAILED" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "GameSpecDiagnostic" : {
+        "properties" : {
+          "allowedValues" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          },
+          "retryableBySpecChange" : {
+            "type" : "boolean"
+          },
+          "severity" : {
+            "enum" : [ "ERROR", "WARNING" ],
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "GenerationApprovalOutcome" : {
+        "properties" : {
+          "actorUserId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "approvalUuid" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "decision" : {
+            "type" : "string"
+          },
+          "generationRunUuid" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "GenerationApprovalRequest" : {
+        "properties" : {
+          "decision" : {
+            "minLength" : 1,
+            "pattern" : "APPROVED|REJECTED",
+            "type" : "string"
+          },
+          "reason" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "decision", "reason" ],
+        "type" : "object"
+      },
+      "GenerationBuildOutcome" : {
+        "properties" : {
+          "buildLogDigest" : {
+            "type" : "string"
+          },
+          "cocosExitCode" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "cocosOutputDigest" : {
+            "type" : "string"
+          },
+          "generationRunUuid" : {
+            "type" : "string"
+          },
+          "packageDigest" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "GenerationPrototypeBridgeResponse" : {
+        "properties" : {
+          "compatible" : {
+            "type" : "boolean"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "reasons" : {
+            "items" : {
+              "$ref" : "#/components/schemas/Incompatibility"
+            },
+            "type" : "array"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "source" : {
+            "$ref" : "#/components/schemas/SourceSummary"
+          }
+        },
+        "type" : "object"
+      },
+      "GenerationRun" : {
+        "properties" : {
+          "buildAttempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "buildClaimExpiresAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "buildRequestJson" : {
+            "type" : "string"
+          },
+          "canonicalSpecJson" : {
+            "type" : "string"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "diagnosticsJson" : {
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "idempotencyKey" : {
+            "type" : "string"
+          },
+          "packageDigest" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "requestFingerprint" : {
+            "type" : "string"
+          },
+          "runUuid" : {
+            "type" : "string"
+          },
+          "runtimeIrDigest" : {
+            "type" : "string"
+          },
+          "runtimeIrJson" : {
+            "type" : "string"
+          },
+          "sourceDigest" : {
+            "type" : "string"
+          },
+          "stateVersion" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "Incompatibility" : {
+        "properties" : {
+          "actual" : {
+            "type" : "string"
+          },
+          "code" : {
+            "type" : "string"
+          },
+          "expected" : {
+            "type" : "string"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "path" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "Item" : {
+        "properties" : {
+          "clientEpisodeKey" : {
+            "minLength" : 1,
+            "pattern" : "[A-Za-z0-9._:-]{1,80}",
+            "type" : "string"
+          },
+          "maxSteps" : {
+            "format" : "int32",
+            "maximum" : 10000,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "modelKey" : {
+            "pattern" : "default",
+            "type" : "string"
+          },
+          "personaId" : {
+            "minLength" : 1,
+            "pattern" : "baseline-neutral|NOVICE|REGULAR|EXPERT",
+            "type" : "string"
+          },
+          "policyKind" : {
+            "minLength" : 1,
+            "pattern" : "DETERMINISTIC|LLM",
+            "type" : "string"
+          },
+          "policySeed" : {
+            "format" : "int64",
+            "maximum" : 4294967295,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "seed" : {
+            "format" : "int64",
+            "maximum" : 4294967295,
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "clientEpisodeKey", "personaId", "policyKind" ],
+        "type" : "object"
+      },
+      "JsonNode" : { },
+      "KnowledgeDocumentSummary" : {
+        "properties" : {
+          "contentHashSummary" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "documentUuid" : {
+            "type" : "string"
+          },
+          "failureSummary" : {
+            "type" : "string"
+          },
+          "indexedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "parsedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "sourceType" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "KnowledgeLibraryResponse" : {
+        "properties" : {
+          "capabilities" : {
+            "$ref" : "#/components/schemas/Capabilities"
+          },
+          "documents" : {
+            "items" : {
+              "$ref" : "#/components/schemas/KnowledgeDocumentSummary"
+            },
+            "type" : "array"
+          }
+        },
+        "type" : "object"
+      },
+      "KnowledgeUploadResponse" : {
+        "properties" : {
+          "contentHash" : {
+            "type" : "string"
+          },
+          "documentUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "LoginRequest" : {
+        "properties" : {
+          "password" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "username" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
+        "type" : "object"
+      },
+      "LoginResponse" : {
+        "properties" : {
+          "token" : {
+            "type" : "string"
+          },
+          "user" : {
+            "$ref" : "#/components/schemas/UserVO"
+          }
+        },
+        "type" : "object"
+      },
+      "MachineEpisodeAggregateVO" : {
+        "properties" : {
+          "averageActionCount" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "averageDurationMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "completedCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "completionRate" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "configDigest" : {
+            "type" : "string"
+          },
+          "episodeResultRefs" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "failedCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "sampleSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sampleSource" : {
+            "type" : "string"
+          },
+          "terminationReasons" : {
+            "additionalProperties" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "type" : "object"
+          }
+        },
+        "type" : "object"
+      },
+      "MachineEpisodeBatchVO" : {
+        "properties" : {
+          "batchId" : {
+            "type" : "string"
+          },
+          "cancelled" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "clientBatchKey" : {
+            "type" : "string"
+          },
+          "completed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "failed" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/MachineEpisodeVO"
+            },
+            "type" : "array"
+          },
+          "rejected" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "requestFingerprint" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "total" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "MachineEpisodeStepPageVO" : {
+        "properties" : {
+          "episodeId" : {
+            "type" : "string"
+          },
+          "items" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JsonNode"
+            },
+            "type" : "array"
+          },
+          "page" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "size" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "MachineEpisodeVO" : {
+        "properties" : {
+          "acceptedActionCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "audit" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "batchId" : {
+            "type" : "string"
+          },
+          "clientEpisodeKey" : {
+            "type" : "string"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "configDigest" : {
+            "type" : "string"
+          },
+          "episodeId" : {
+            "type" : "string"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "executionStatus" : {
+            "type" : "string"
+          },
+          "finalScore" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "finalStateHash" : {
+            "type" : "string"
+          },
+          "invalidActionCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "maxSteps" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "metricVersion" : {
+            "type" : "string"
+          },
+          "model" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "outcome" : {
+            "type" : "string"
+          },
+          "personaId" : {
+            "type" : "string"
+          },
+          "personaVersion" : {
+            "type" : "string"
+          },
+          "policyId" : {
+            "type" : "string"
+          },
+          "policyVersion" : {
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "sampleSource" : {
+            "type" : "string"
+          },
+          "seed" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "stepCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JsonNode"
+            },
+            "type" : "array"
+          },
+          "terminationReason" : {
+            "type" : "string"
+          },
+          "timing" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "trajectoryDigest" : {
+            "type" : "string"
+          },
+          "trajectoryRef" : {
+            "type" : "string"
+          },
+          "usage" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "wallDurationMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "OrderItem" : {
+        "properties" : {
+          "asc" : {
+            "type" : "boolean"
+          },
+          "column" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PageAgentRunVO" : {
+        "properties" : {
+          "countId" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "current" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "maxLimit" : {
+            "format" : "int64",
+            "type" : "integer",
+            "writeOnly" : true
+          },
+          "optimizeCountSql" : {
+            "$ref" : "#/components/schemas/PageAgentRunVO",
+            "writeOnly" : true
+          },
+          "optimizeJoinOfCountSql" : {
+            "type" : "boolean",
+            "writeOnly" : true
+          },
+          "orders" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OrderItem"
+            },
+            "type" : "array",
+            "writeOnly" : true
+          },
+          "pages" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "records" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AgentRunVO"
+            },
+            "type" : "array"
+          },
+          "searchCount" : {
+            "$ref" : "#/components/schemas/PageAgentRunVO",
+            "writeOnly" : true
+          },
+          "size" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PagePromptTemplateVO" : {
+        "properties" : {
+          "countId" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "current" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "maxLimit" : {
+            "format" : "int64",
+            "type" : "integer",
+            "writeOnly" : true
+          },
+          "optimizeCountSql" : {
+            "$ref" : "#/components/schemas/PagePromptTemplateVO",
+            "writeOnly" : true
+          },
+          "optimizeJoinOfCountSql" : {
+            "type" : "boolean",
+            "writeOnly" : true
+          },
+          "orders" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OrderItem"
+            },
+            "type" : "array",
+            "writeOnly" : true
+          },
+          "pages" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "records" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PromptTemplateVO"
+            },
+            "type" : "array"
+          },
+          "searchCount" : {
+            "$ref" : "#/components/schemas/PagePromptTemplateVO",
+            "writeOnly" : true
+          },
+          "size" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "ParameterDifference" : {
+        "properties" : {
+          "changed" : {
+            "type" : "boolean"
+          },
+          "key" : {
+            "type" : "string"
+          },
+          "leftValue" : { },
+          "rightValue" : { }
+        },
+        "type" : "object"
+      },
+      "PersistMachineEpisodeBatchRequest" : {
+        "properties" : {
+          "clientBatchKey" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "episodeProtocolVersion" : {
+            "minLength" : 1,
+            "pattern" : "episode/1\\.0",
+            "type" : "string"
+          },
+          "episodes" : {
+            "items" : {
+              "$ref" : "#/components/schemas/PersistMachineEpisodeResultRequest"
+            },
+            "maxItems" : 100,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "clientBatchKey", "episodeProtocolVersion", "episodes" ],
+        "type" : "object"
+      },
+      "PersistMachineEpisodeResultRequest" : {
+        "properties" : {
+          "acceptedActionCount" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "audit" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "clientEpisodeKey" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "configDigest" : {
+            "minLength" : 1,
+            "pattern" : "[0-9a-f]{64}",
+            "type" : "string"
+          },
+          "coreVersion" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "episodeId" : {
+            "minLength" : 1,
+            "pattern" : "[0-9a-fA-F-]{36}",
+            "type" : "string"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "executionStatus" : {
+            "minLength" : 1,
+            "pattern" : "COMPLETED|FAILED|REJECTED|CANCELLED",
+            "type" : "string"
+          },
+          "finalScore" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "finalStateHash" : {
+            "pattern" : "[0-9a-f]{64}",
+            "type" : "string"
+          },
+          "invalidActionCount" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "maxSteps" : {
+            "format" : "int32",
+            "maximum" : 1000000,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "metricVersion" : {
+            "minLength" : 1,
+            "pattern" : "score-delta/1\\.0",
+            "type" : "string"
+          },
+          "model" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "observationPolicy" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "outcome" : {
+            "pattern" : "WON|LOST|TRUNCATED|ERROR",
+            "type" : "string"
+          },
+          "personaDigest" : {
+            "minLength" : 1,
+            "pattern" : "[0-9a-f]{64}",
+            "type" : "string"
+          },
+          "personaId" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "personaVersion" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "policyDigest" : {
+            "minLength" : 1,
+            "pattern" : "[0-9a-f]{64}",
+            "type" : "string"
+          },
+          "policyId" : {
+            "maxLength" : 80,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "policyVersion" : {
+            "maxLength" : 40,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "minLength" : 1,
+            "pattern" : "[0-9a-fA-F-]{36}",
+            "type" : "string"
+          },
+          "seed" : {
+            "format" : "int64",
+            "maximum" : 4294967295,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "simulationProtocolVersion" : {
+            "minLength" : 1,
+            "pattern" : "simulation/1\\.0",
+            "type" : "string"
+          },
+          "stepCount" : {
+            "format" : "int32",
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/JsonNode"
+            },
+            "maxItems" : 1000000,
+            "minItems" : 0,
+            "type" : "array"
+          },
+          "terminationReason" : {
+            "pattern" : "WON|HEALTH_DEPLETED|TIME_EXPIRED|MAX_STEPS|ERROR",
+            "type" : "string"
+          },
+          "timing" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "trajectoryDigest" : {
+            "pattern" : "[0-9a-f]{64}",
+            "type" : "string"
+          },
+          "trajectoryRef" : {
+            "maxLength" : 255,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "usage" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "wallDurationMs" : {
+            "format" : "int64",
+            "minimum" : 0,
+            "type" : "integer"
+          }
+        },
+        "required" : [ "acceptedActionCount", "clientEpisodeKey", "configDigest", "coreVersion", "episodeId", "executionStatus", "invalidActionCount", "maxSteps", "metricVersion", "observationPolicy", "personaDigest", "personaId", "personaVersion", "policyDigest", "policyId", "policyVersion", "prototypeVersionUuid", "seed", "simulationProtocolVersion", "stepCount", "steps" ],
+        "type" : "object"
+      },
+      "PlayerRunVO" : {
+        "properties" : {
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "clientBatchKey" : {
+            "type" : "string"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "persistedBatchUuid" : {
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "runUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PlaytestMetricsComparisonVO" : {
+        "properties" : {
+          "left" : {
+            "$ref" : "#/components/schemas/PlaytestMetricsVO"
+          },
+          "right" : {
+            "$ref" : "#/components/schemas/PlaytestMetricsVO"
+          }
+        },
+        "type" : "object"
+      },
+      "PlaytestMetricsVO" : {
+        "properties" : {
+          "averageCollectedCount" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "averageDurationMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "averageHitCount" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "averageRestartCount" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "averageScore" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "failures" : {
+            "additionalProperties" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "sampleSize" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "snapshotAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "sufficientForAi" : {
+            "type" : "boolean"
+          },
+          "winRate" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "type" : "object"
+      },
+      "PlaytestSessionVO" : {
+        "properties" : {
+          "collectedCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "durationMs" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "endedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "eventCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "failureReason" : {
+            "type" : "string"
+          },
+          "hitCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "outcome" : {
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "restartCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "score" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "sessionUuid" : {
+            "type" : "string"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ProjectRunSummaryVO" : {
+        "properties" : {
+          "failedRunCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastRunTime" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "projectName" : {
+            "type" : "string"
+          },
+          "projectUuid" : {
+            "type" : "string"
+          },
+          "successRunCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "totalRunCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PromptTemplateRequest" : {
+        "properties" : {
+          "agentType" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "name" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "projectUuid" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "systemPrompt" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "templateUuid" : {
+            "type" : "string"
+          },
+          "userPromptTemplate" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "required" : [ "agentType", "name", "systemPrompt", "userPromptTemplate", "version" ],
+        "type" : "object"
+      },
+      "PromptTemplateVO" : {
+        "properties" : {
+          "agentType" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "systemPrompt" : {
+            "type" : "string"
+          },
+          "templateUuid" : {
+            "type" : "string"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userPromptTemplate" : {
+            "type" : "string"
+          },
+          "version" : {
+            "format" : "int32",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PromptVersionMetricVO" : {
+        "properties" : {
+          "callCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "costMissingCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "estimatedCost" : {
+            "type" : "number"
+          },
+          "inputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "insufficientSample" : {
+            "type" : "boolean"
+          },
+          "latencyMissingCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "meanLatencyMs" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "mockSampleCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "outputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "p50LatencyMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "p95LatencyMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "promptVersionId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "realSampleCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "successRate" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "unknownMockCount" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "PrototypeApprovalRequest" : {
+        "properties" : {
+          "decision" : {
+            "minLength" : 1,
+            "pattern" : "APPROVED|REJECTED",
+            "type" : "string"
+          },
+          "reason" : {
+            "maxLength" : 500,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "decision", "reason" ],
+        "type" : "object"
+      },
+      "PrototypeApprovalVO" : {
+        "properties" : {
+          "actorType" : {
+            "type" : "string"
+          },
+          "actorUserId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "approvalUuid" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "decision" : {
+            "type" : "string"
+          },
+          "directorRunUuid" : {
+            "type" : "string"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "reason" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "PrototypeExportJobVO" : {
+        "properties" : {
+          "attemptCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "completedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "errorCode" : {
+            "type" : "string"
+          },
+          "jobUuid" : {
+            "type" : "string"
+          },
+          "packageDigest" : {
+            "type" : "string"
+          },
+          "packageName" : {
+            "type" : "string"
+          },
+          "packageSize" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "prototypeVersionUuid" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "PrototypeVersionComparisonVO" : {
+        "properties" : {
+          "differences" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ParameterDifference"
+            },
+            "type" : "array"
+          },
+          "left" : {
+            "$ref" : "#/components/schemas/PrototypeVersionVO"
+          },
+          "right" : {
+            "$ref" : "#/components/schemas/PrototypeVersionVO"
+          }
+        },
+        "type" : "object"
+      },
+      "PrototypeVersionVO" : {
+        "properties" : {
+          "approvalUpdatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "configDigest" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "directorRunUuid" : {
+            "type" : "string"
+          },
+          "gameConfig" : {
+            "type" : "string"
+          },
+          "gameConfigArtifactUuid" : {
+            "type" : "string"
+          },
+          "lifecycleStatus" : {
+            "type" : "string"
+          },
+          "parameters" : {
+            "additionalProperties" : { },
+            "type" : "object"
+          },
+          "parentVersionUuid" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "runtimeCapabilityVersion" : {
+            "type" : "string"
+          },
+          "source" : {
+            "type" : "string"
+          },
+          "versionNumber" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "versionUuid" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "RagCohortStats" : {
+        "properties" : {
+          "emptyRetrieval" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "estimatedCost" : {
+            "type" : "number"
+          },
+          "evaluated" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "failedRetrieval" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "inputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "missingCostSamples" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "missingMetricSamples" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "mockExcluded" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "outputTokens" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "p50LatencyMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "p95LatencyMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "retrievalCovered" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "rulePassRate" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "runtimePassRate" : {
+            "format" : "double",
+            "type" : "number"
+          },
+          "samples" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "schemaPassRate" : {
+            "format" : "double",
+            "type" : "number"
+          }
+        },
+        "type" : "object"
+      },
+      "RagEvidenceResponse" : {
+        "properties" : {
+          "agentRunUuid" : {
+            "type" : "string"
+          },
+          "chunkingVersion" : {
+            "type" : "string"
+          },
+          "comparison" : {
+            "$ref" : "#/components/schemas/ComparisonSummary"
+          },
+          "contextBudget" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "embeddingModel" : {
+            "type" : "string"
+          },
+          "mock" : {
+            "type" : "boolean"
+          },
+          "ragEnabled" : {
+            "type" : "boolean"
+          },
+          "ragStatus" : {
+            "type" : "string"
+          },
+          "references" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ReferenceSummary"
+            },
+            "type" : "array"
+          },
+          "retrievalVersion" : {
+            "type" : "string"
+          },
+          "stepKey" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ReferenceSummary" : {
+        "properties" : {
+          "chunkUuid" : {
+            "type" : "string"
+          },
+          "documentUuid" : {
+            "type" : "string"
+          },
+          "documentVersion" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "rank" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "score" : {
+            "type" : "number"
+          }
+        },
+        "type" : "object"
+      },
+      "RegisterRequest" : {
+        "properties" : {
+          "password" : {
+            "maxLength" : 32,
+            "minLength" : 6,
+            "type" : "string"
+          },
+          "username" : {
+            "maxLength" : 20,
+            "minLength" : 4,
+            "type" : "string"
+          }
+        },
+        "required" : [ "password", "username" ],
+        "type" : "object"
+      },
+      "SourceSummary" : {
+        "properties" : {
+          "runUuid" : {
+            "type" : "string"
+          },
+          "runtimeIrDigest" : {
+            "type" : "string"
+          },
+          "sourceDigest" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SpecAuthorAttempt" : {
+        "properties" : {
+          "accepted" : {
+            "type" : "boolean"
+          },
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "diagnostics" : {
+            "items" : {
+              "$ref" : "#/components/schemas/GameSpecDiagnostic"
+            },
+            "type" : "array"
+          },
+          "modelEvidence" : {
+            "type" : "object"
+          },
+          "spec" : {
+            "type" : "object"
+          }
+        },
+        "type" : "object"
+      },
+      "SpecAuthorResult" : {
+        "properties" : {
+          "attempts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/SpecAuthorAttempt"
+            },
+            "type" : "array"
+          },
+          "compilation" : {
+            "$ref" : "#/components/schemas/GameSpecCompilationResult"
+          },
+          "spec" : {
+            "type" : "object"
+          },
+          "status" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "SseEmitter" : {
+        "properties" : {
+          "timeout" : {
+            "format" : "int64",
+            "type" : [ "integer", "null" ]
+          }
+        },
+        "type" : "object"
+      },
+      "SubmitDirectorRunRequest" : {
+        "properties" : {
+          "budget" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "facts" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          },
+          "goal" : {
+            "$ref" : "#/components/schemas/JsonNode"
+          }
+        },
+        "required" : [ "budget", "goal" ],
+        "type" : "object"
+      },
+      "TelemetryBatchRequest" : {
+        "properties" : {
+          "batchUuid" : {
+            "minLength" : 1,
+            "pattern" : "^[0-9a-fA-F-]{36}$",
+            "type" : "string"
+          },
+          "events" : {
+            "items" : {
+              "$ref" : "#/components/schemas/TelemetryEventRequest"
+            },
+            "maxItems" : 50,
+            "minItems" : 0,
+            "type" : "array"
+          }
+        },
+        "required" : [ "batchUuid", "events" ],
+        "type" : "object"
+      },
+      "TelemetryBatchVO" : {
+        "properties" : {
+          "acceptedCount" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "batchUuid" : {
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "session" : {
+            "$ref" : "#/components/schemas/PlaytestSessionVO"
+          }
+        },
+        "type" : "object"
+      },
+      "TelemetryEventRequest" : {
+        "properties" : {
+          "clientElapsedMs" : {
+            "format" : "int32",
+            "maximum" : 1800000,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "eventUuid" : {
+            "minLength" : 1,
+            "pattern" : "^[0-9a-fA-F-]{36}$",
+            "type" : "string"
+          },
+          "payload" : {
+            "additionalProperties" : { },
+            "type" : "object"
+          },
+          "sequence" : {
+            "format" : "int32",
+            "maximum" : 1000,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "type" : {
+            "minLength" : 1,
+            "type" : "string"
+          }
+        },
+        "required" : [ "clientElapsedMs", "eventUuid", "payload", "sequence", "type" ],
+        "type" : "object"
+      },
+      "TunePrototypeVersionRequest" : {
+        "properties" : {
+          "anyParameterPresent" : {
+            "type" : "boolean"
+          },
+          "enemyCount" : {
+            "format" : "int32",
+            "maximum" : 12,
+            "minimum" : 0,
+            "type" : "integer"
+          },
+          "enemySpeeds" : {
+            "additionalProperties" : {
+              "format" : "int32",
+              "type" : "integer"
+            },
+            "type" : "object"
+          },
+          "playerMaxHealth" : {
+            "format" : "int32",
+            "maximum" : 5,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "playerSpeed" : {
+            "format" : "int32",
+            "maximum" : 400,
+            "minimum" : 80,
+            "type" : "integer"
+          },
+          "targetCollectibles" : {
+            "format" : "int32",
+            "maximum" : 20,
+            "minimum" : 1,
+            "type" : "integer"
+          },
+          "timeLimitSeconds" : {
+            "format" : "int32",
+            "maximum" : 600,
+            "minimum" : 30,
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "UserVO" : {
+        "properties" : {
+          "capabilities" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowRunCommandVO" : {
+        "properties" : {
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "workflowRunUuid" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowRunDetailVO" : {
+        "properties" : {
+          "allowedActions" : {
+            "items" : {
+              "type" : "string"
+            },
+            "type" : "array"
+          },
+          "artifacts" : {
+            "items" : {
+              "$ref" : "#/components/schemas/ArtifactSummaryVO"
+            },
+            "type" : "array"
+          },
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "definitionVersionId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorSummaryVO"
+          },
+          "failedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "lastSequence" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "statusVersion" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/WorkflowStepReadVO"
+            },
+            "type" : "array"
+          },
+          "timeTakenMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "workflowRunUuid" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowRunRequest" : {
+        "properties" : {
+          "context" : {
+            "maxLength" : 5000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "idea" : {
+            "maxLength" : 5000,
+            "minLength" : 0,
+            "type" : "string"
+          },
+          "projectUuid" : {
+            "minLength" : 1,
+            "type" : "string"
+          },
+          "title" : {
+            "maxLength" : 200,
+            "minLength" : 0,
+            "type" : "string"
+          }
+        },
+        "required" : [ "idea", "projectUuid", "title" ],
+        "type" : "object"
+      },
+      "WorkflowRunSummaryVO" : {
+        "properties" : {
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "timeTakenMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "workflowRunUuid" : {
+            "type" : "string"
+          },
+          "workflowType" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowRunVO" : {
+        "properties" : {
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "errorMessage" : {
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "inputContent" : {
+            "type" : "string"
+          },
+          "projectId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "projectUuid" : {
+            "type" : "string"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "statusVersion" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "steps" : {
+            "items" : {
+              "$ref" : "#/components/schemas/WorkflowStepVO"
+            },
+            "type" : "array"
+          },
+          "summary" : {
+            "type" : "string"
+          },
+          "timeTakenMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "userId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "workflowDefinitionVersionId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "workflowRunUuid" : {
+            "type" : "string"
+          },
+          "workflowType" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowStepReadVO" : {
+        "properties" : {
+          "agentType" : {
+            "type" : "string"
+          },
+          "artifactType" : {
+            "type" : "string"
+          },
+          "attempt" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "error" : {
+            "$ref" : "#/components/schemas/ErrorSummaryVO"
+          },
+          "finishedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "schemaKey" : {
+            "type" : "string"
+          },
+          "schemaVersion" : {
+            "type" : "string"
+          },
+          "startedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "stepKey" : {
+            "type" : "string"
+          },
+          "stepOrder" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "timeTakenMs" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "updatedAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowStepVO" : {
+        "properties" : {
+          "agentRunUuid" : {
+            "type" : "string"
+          },
+          "agentType" : {
+            "type" : "string"
+          },
+          "artifactType" : {
+            "type" : "string"
+          },
+          "artifactUuid" : {
+            "type" : "string"
+          },
+          "content" : {
+            "type" : "string"
+          },
+          "stepOrder" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "title" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "WorkflowSubmitVO" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "reused" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "workflowRunUuid" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      }
+    }
+  }
+}

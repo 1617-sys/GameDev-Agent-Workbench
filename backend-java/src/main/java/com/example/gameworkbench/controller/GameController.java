@@ -48,6 +48,7 @@ public class GameController {
     }
 
     @PutMapping("/{projectUuid}")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'projects.update')")
     public ApiResponse<GameProjectVO> updateProject(
             @AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid,

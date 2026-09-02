@@ -15,6 +15,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1/workflow-runs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'workflow-runs.manage')")
 public class WorkflowRunQueryController {
 
     private final WorkflowRunQueryService workflowRunQueryService;

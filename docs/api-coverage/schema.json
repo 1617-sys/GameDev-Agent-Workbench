@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gameworkbench.local/schemas/api-coverage-v1.json",
+  "title": "GameDev Agent Workbench API coverage metadata",
+  "type": "object",
+  "required": ["schemaVersion", "generatedFrom", "endpoints"],
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "generatedFrom": { "type": "string", "minLength": 1 },
+    "endpoints": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/endpoint" }
+    }
+  },
+  "$defs": {
+    "endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method", "path", "domain", "lifecycle", "audience", "frontendFeature",
+        "dangerLevel", "owner", "profiles", "test"
+      ],
+      "properties": {
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"] },
+        "path": { "type": "string", "pattern": "^/" },
+        "domain": { "type": "string", "minLength": 1 },
+        "lifecycle": { "enum": ["active", "internal", "deprecated", "non_prod"] },
+        "audience": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["anonymous", "user", "project_advanced", "admin_diagnostics", "internal"] }
+        },
+        "frontendFeature": { "type": ["string", "null"] },
+        "dangerLevel": { "enum": ["low", "medium", "high"] },
+        "owner": { "type": "string", "minLength": 1 },
+        "profiles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["prod", "non-prod"] }
+        },
+        "test": { "type": "string", "minLength": 1 },
+        "retentionReason": { "type": "string", "minLength": 1 },
+        "replacement": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

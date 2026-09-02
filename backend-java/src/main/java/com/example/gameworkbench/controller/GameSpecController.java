@@ -38,6 +38,7 @@ public class GameSpecController {
     }
 
     @PostMapping("/projects/{projectUuid}/gamespec/compile")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'generation.compile')")
     public ApiResponse<GameSpecCompilationResult> compile(
             @AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid,
@@ -46,6 +47,7 @@ public class GameSpecController {
     }
 
     @PostMapping("/projects/{projectUuid}/gamespec/author")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'generation.author')")
     public ApiResponse<SpecAuthorResult> author(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @Valid @RequestBody AuthorGameSpecRequest request) {
         // currentSpec 可为空：为空表示从创意生成，非空表示基于现有规格修改或修复。

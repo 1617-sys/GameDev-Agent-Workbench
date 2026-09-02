@@ -17,6 +17,10 @@ public class AgentRun {
 
     private String runUuid;
 
+    private String idempotencyKey;
+
+    private String requestFingerprint;
+
     private Long userId;
 
     private Long projectId;

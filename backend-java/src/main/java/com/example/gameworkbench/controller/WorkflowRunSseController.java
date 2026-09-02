@@ -14,6 +14,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequestMapping("/api/v1/workflow-runs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'workflow-runs.manage')")
 public class WorkflowRunSseController {
     private final WorkflowRunSubscriptionService workflowRunSubscriptionService;
 

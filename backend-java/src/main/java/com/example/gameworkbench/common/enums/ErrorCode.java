@@ -56,6 +56,7 @@ public enum ErrorCode {
     GENERATION_RUN_IDEMPOTENCY_CONFLICT(40916, "Generation Run idempotency key conflicts with another request", "Generation Run"),
     GENERATION_RUN_CONCURRENT_UPDATE(40917, "Generation Run was concurrently updated or is already claimed", "Generation Run"),
     GENERATION_APPROVAL_CONFLICT(40918, "Generation approval conflicts with its lifecycle or prior decision", "Generation Run Approval"),
+    PROMPT_TEMPLATE_VERSION_CONFLICT(40920, "Prompt template version is stale; reload before updating", "Prompt template update"),
     GENERATION_RELEASE_FORBIDDEN(40919, "Generation Run must be approved before release", "Generation Run Release"),
     COCOS_BUILD_UNAVAILABLE(50303, "Cocos Build Worker is not configured", "Cocos build"),
     AI_MODEL_UNAVAILABLE(50304, "AI model provider is unavailable or not configured", "Spring AI model call"),

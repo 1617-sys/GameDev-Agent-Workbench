@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/workflow-runs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'workflow-runs.manage')")
 public class WorkflowRunCommandController {
     private final WorkflowRunCommandService workflowRunCommandService;
     @PostMapping("/{workflowRunUuid}/cancel")

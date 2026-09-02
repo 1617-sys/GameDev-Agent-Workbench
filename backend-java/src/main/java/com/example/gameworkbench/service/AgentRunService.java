@@ -14,6 +14,8 @@ public interface AgentRunService {
 
     AgentRunVO run(Long userId, AgentRunRequest request);
 
+    AgentRunVO run(Long userId, AgentRunRequest request, String idempotencyKey);
+
     AgentRunVO getRun(Long userId, String runUuid);
 
     Page<AgentRunVO> listRuns(

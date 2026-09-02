@@ -40,6 +40,13 @@ export const gameGenerationApi = {
     `${runRoot(projectUuid)}/${enc(runUuid)}/release?expectedVersion=${encodeURIComponent(expectedVersion)}`,
     { method: "POST", body: {} }
   ),
+  prototypeCompatibility: (projectUuid, runUuid) => apiRequest(
+    `${runRoot(projectUuid)}/${enc(runUuid)}/prototype-version-compatibility`
+  ),
+  createPrototypeVersion: (projectUuid, runUuid, idempotencyKey) => apiRequest(
+    `${runRoot(projectUuid)}/${enc(runUuid)}/prototype-version`,
+    { method: "POST", headers: { "Idempotency-Key": idempotencyKey }, body: {} }
+  ),
   downloadPreview: (projectUuid, runUuid) => apiDownload(`${runRoot(projectUuid)}/${enc(runUuid)}/preview-artifact`, {
     timeoutMs: 120_000,
     fallbackFilename: `preview-cocos-game-${runUuid}.zip`

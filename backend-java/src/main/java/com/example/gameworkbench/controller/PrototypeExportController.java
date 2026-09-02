@@ -12,6 +12,7 @@ import com.example.gameworkbench.vo.export.PrototypeExportJobVO;
 
 @RestController @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectUuid}")
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'exports.manage')")
 public class PrototypeExportController {
  private final PrototypeExportService service;
  @PostMapping("/prototype-versions/{versionUuid}/exports")

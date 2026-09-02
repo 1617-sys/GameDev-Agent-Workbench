@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/v1/workflow-runs")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'workflow-runs.manage')")
 public class RagEvidenceController {
 
     private final RagEvidenceReadService evidence;

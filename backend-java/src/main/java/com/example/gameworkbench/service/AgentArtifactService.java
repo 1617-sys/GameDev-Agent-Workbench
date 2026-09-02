@@ -9,4 +9,6 @@ public interface AgentArtifactService {
     List<AgentArtifactVO> listProjectArtifacts(Long userId, String projectUuid);
 
     AgentArtifactVO getArtifact(Long userId, String artifactUuid);
+
+    AgentArtifactVO getProjectArtifact(Long userId, String projectUuid, String artifactUuid);
 }

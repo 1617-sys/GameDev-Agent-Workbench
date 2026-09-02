@@ -34,6 +34,7 @@ public class KnowledgeDocumentController {
     }
 
     @PostMapping(consumes = "multipart/form-data")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'knowledge.upload')")
     public ApiResponse<KnowledgeUploadResponse> upload(
             @AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid,

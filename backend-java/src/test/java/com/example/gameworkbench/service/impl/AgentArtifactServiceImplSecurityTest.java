@@ -47,4 +47,21 @@ class AgentArtifactServiceImplSecurityTest {
                 .getArtifact(99L, "guessed-artifact"))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    void projectScopedDetailRejectsArtifactFromAnotherOwnedProject() {
+        AgentArtifactMapper artifacts = mock(AgentArtifactMapper.class);
+        GameProjectMapper projects = mock(GameProjectMapper.class);
+        GameProject requestedProject = new GameProject();
+        requestedProject.setId(7L); requestedProject.setUserId(42L); requestedProject.setProjectUuid("project-a");
+        AgentArtifact foreignArtifact = AgentArtifact.builder()
+                .artifactUuid("artifact-from-b").projectId(8L).content("must-not-leak").build();
+        when(projects.selectOne(any())).thenReturn(requestedProject);
+        when(artifacts.selectOne(any())).thenReturn(foreignArtifact);
+
+        assertThatThrownBy(() -> new AgentArtifactServiceImpl(artifacts, projects)
+                .getProjectArtifact(42L, "project-a", "artifact-from-b"))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageNotContaining("must-not-leak");
+    }
 }

@@ -1,0 +1,1304 @@
+{
+  "schemaVersion": 1,
+  "generatedFrom": "spring-mvc-controller-mappings",
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/api/agent/run",
+      "domain": "agent-runs",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "agent-runs",
+      "dangerLevel": "high",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/agent/runs",
+      "domain": "agent-runs",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "agent-runs",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/agent/runs/{runUuid}",
+      "domain": "agent-runs",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "agent-runs",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/artifacts",
+      "domain": "artifacts",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "artifacts",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/artifacts/{artifactUuid}",
+      "domain": "artifacts",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "artifacts",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/artifacts/{artifactUuid}",
+      "domain": "artifacts",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "artifacts",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/{projectUuid}/workflow-runs",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "medium",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "domain": "auth",
+      "lifecycle": "active",
+      "audience": [
+        "anonymous"
+      ],
+      "frontendFeature": "auth",
+      "dangerLevel": "low",
+      "owner": "identity",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "domain": "auth",
+      "lifecycle": "active",
+      "audience": [
+        "anonymous"
+      ],
+      "frontendFeature": "auth",
+      "dangerLevel": "low",
+      "owner": "identity",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "domain": "auth",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced",
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "session",
+      "dangerLevel": "low",
+      "owner": "identity",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/projects/summary",
+      "domain": "dashboard",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "dashboard",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/projects/selectAgentType",
+      "domain": "dashboard",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "dashboard",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/demo/game/stream",
+      "domain": "demo",
+      "lifecycle": "non_prod",
+      "audience": [
+        "internal"
+      ],
+      "frontendFeature": null,
+      "dangerLevel": "high",
+      "owner": "developer-experience",
+      "profiles": [
+        "non-prod"
+      ],
+      "test": "NonProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot",
+      "retentionReason": "Interactive streaming fixture for local generation diagnostics; bean is absent in prod.",
+      "replacement": "/demo/play (non-prod profile only)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/director-runs",
+      "domain": "director",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "director",
+      "dangerLevel": "high",
+      "owner": "ai-orchestration",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/director-runs/{runUuid}",
+      "domain": "director",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "director",
+      "dangerLevel": "low",
+      "owner": "ai-orchestration",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/director-runs/{runUuid}/cancel",
+      "domain": "director",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "director",
+      "dangerLevel": "medium",
+      "owner": "ai-orchestration",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects",
+      "domain": "projects",
+      "lifecycle": "active",
+      "audience": [
+        "user"
+      ],
+      "frontendFeature": "projects",
+      "dangerLevel": "medium",
+      "owner": "projects",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "domain": "projects",
+      "lifecycle": "active",
+      "audience": [
+        "user"
+      ],
+      "frontendFeature": "projects",
+      "dangerLevel": "low",
+      "owner": "projects",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}",
+      "domain": "projects",
+      "lifecycle": "active",
+      "audience": [
+        "user"
+      ],
+      "frontendFeature": "projects",
+      "dangerLevel": "low",
+      "owner": "projects",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/{projectUuid}",
+      "domain": "projects",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "projects",
+      "dangerLevel": "medium",
+      "owner": "projects",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/gamespec/capabilities",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "low",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/gamespec/compile",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "medium",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/gamespec/author",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "low",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/artifact",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "low",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/preview-artifact",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "low",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/build",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/approval",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/release",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "high",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version-compatibility",
+      "domain": "generation-v5",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "generation",
+      "dangerLevel": "low",
+      "owner": "generation",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "domain": "health",
+      "lifecycle": "active",
+      "audience": [
+        "anonymous"
+      ],
+      "frontendFeature": "diagnostics",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/knowledge-documents",
+      "domain": "knowledge",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "knowledge",
+      "dangerLevel": "low",
+      "owner": "knowledge",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/knowledge-documents",
+      "domain": "knowledge",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "knowledge",
+      "dangerLevel": "medium",
+      "owner": "knowledge",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/machine-episodes/batches",
+      "domain": "machine-episodes",
+      "lifecycle": "internal",
+      "audience": [
+        "internal"
+      ],
+      "frontendFeature": null,
+      "dangerLevel": "high",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot",
+      "retentionReason": "Player worker callback persists generated episode batches and is not an end-user operation.",
+      "replacement": "POST /api/projects/{projectUuid}/player-runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/batches/{batchUuid}",
+      "domain": "machine-episodes",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "episodes",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}",
+      "domain": "machine-episodes",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "episodes",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/steps",
+      "domain": "machine-episodes",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "episodes",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/summary",
+      "domain": "machine-episodes",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "episodes",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/prototype-versions/{versionUuid}/aggregate",
+      "domain": "machine-episodes",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "episodes",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/player-runs",
+      "domain": "player-runs",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "player-runs",
+      "dangerLevel": "high",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/player-runs",
+      "domain": "player-runs",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "player-runs",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/player-runs/{runUuid}",
+      "domain": "player-runs",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "player-runs",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-sessions",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "medium",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}/events",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "medium",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-metrics",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/playtest-metrics/compare",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "low",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/balance-suggestions",
+      "domain": "telemetry",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "playtest",
+      "dangerLevel": "high",
+      "owner": "player-runtime",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/{projectUuid}/workflow-runs",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/promptTemplate/modify",
+      "domain": "prompt-ops",
+      "lifecycle": "deprecated",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "prompt-ops",
+      "dangerLevel": "high",
+      "owner": "ai-platform",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot",
+      "retentionReason": "Compatibility endpoint for legacy prompt tooling; new UI never calls it.",
+      "replacement": "PUT /api/promptTemplate/{templateUuid}"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/promptTemplate/{templateUuid}",
+      "domain": "prompt-ops",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "prompt-ops",
+      "dangerLevel": "high",
+      "owner": "ai-platform",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/promptTemplate/get",
+      "domain": "prompt-ops",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "prompt-ops",
+      "dangerLevel": "low",
+      "owner": "ai-platform",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/promptTemplate",
+      "domain": "prompt-ops",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "prompt-ops",
+      "dangerLevel": "low",
+      "owner": "ai-platform",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/analytics/prompt-versions",
+      "domain": "analytics",
+      "lifecycle": "active",
+      "audience": [
+        "admin_diagnostics"
+      ],
+      "frontendFeature": "analytics",
+      "dangerLevel": "low",
+      "owner": "ai-platform",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/approval",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "high",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/exports",
+      "domain": "exports",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "exports",
+      "dangerLevel": "high",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}",
+      "domain": "exports",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "exports",
+      "dangerLevel": "low",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}/retry",
+      "domain": "exports",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "exports",
+      "dangerLevel": "high",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}/download",
+      "domain": "exports",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "exports",
+      "dangerLevel": "medium",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "low",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "user",
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "low",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/compare",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "low",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "high",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{parentVersionUuid}/tune",
+      "domain": "prototype-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "prototype-versions",
+      "dangerLevel": "high",
+      "owner": "prototype",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/rag-evidence",
+      "domain": "rag",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "rag-evidence",
+      "dangerLevel": "low",
+      "owner": "knowledge",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/workflow/game-design/run",
+      "domain": "workflow-legacy",
+      "lifecycle": "deprecated",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "legacy-workflow",
+      "dangerLevel": "high",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot",
+      "retentionReason": "Preserved for existing V3 clients during V4 migration; hidden from ordinary navigation.",
+      "replacement": "POST /api/v1/projects/{projectUuid}/workflow-runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workflow/{workflowRunUuid}",
+      "domain": "workflow-legacy",
+      "lifecycle": "deprecated",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "legacy-workflow",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot",
+      "retentionReason": "Read compatibility for runs created by the legacy submit endpoint.",
+      "replacement": "GET /api/v1/workflow-runs/{workflowRunUuid}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/cancel",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "medium",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/retry",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "high",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/steps",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/artifacts",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/events",
+      "domain": "workflow-v4",
+      "lifecycle": "active",
+      "audience": [
+        "project_advanced"
+      ],
+      "frontendFeature": "workflow-runs",
+      "dangerLevel": "low",
+      "owner": "workflow",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    }
+  ]
+}

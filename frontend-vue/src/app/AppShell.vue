@@ -8,7 +8,12 @@
       </div>
 
       <nav class="primary-nav" aria-label="主导航">
-        <RouterLink to="/projects" @click="mobileMenuOpen = false"><LayoutGrid :size="18" />项目中心</RouterLink>
+        <section v-for="section in navigation" :key="section.key" class="nav-group">
+          <span class="nav-group-label">{{ section.label }}</span>
+          <RouterLink v-for="item in section.items" :key="item.key" :to="item.to" @click="mobileMenuOpen = false">
+            <LayoutGrid :size="18" />{{ item.label }}
+          </RouterLink>
+        </section>
       </nav>
 
       <div class="sidebar-section">
@@ -40,17 +45,19 @@
 </template>
 
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { ChevronRight, LayoutGrid, LogOut, Menu, RefreshCw, X } from "@lucide/vue";
 import { useSessionStore } from "../features/auth/sessionStore";
 import { useProjectsStore } from "../features/projects/projectsStore";
+import { visibleNavigation } from "./navigation";
 
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
 const projects = useProjectsStore();
 const mobileMenuOpen = ref(false);
+const navigation = computed(() => visibleNavigation(session.capabilityKeys, { projectUuid: route.params.projectUuid }));
 
 onMounted(() => projects.load());
 
