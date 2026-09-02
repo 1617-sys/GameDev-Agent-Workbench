@@ -414,6 +414,12 @@ public class PrototypeVersionServiceImpl implements PrototypeVersionService {
         catch (Exception exception) { throw new IllegalStateException("Unable to serialize GameConfig", exception); }
     }
 
+    @Override
+    public void validateSourceArtifact(Long userId, String projectUuid, String artifactUuid) {
+        GameProject project = ownedProject(userId, projectUuid);
+        eligibleArtifact(project.getId(), artifactUuid);
+    }
+
     private String digest(String value) {
         try {
             return java.util.HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256")

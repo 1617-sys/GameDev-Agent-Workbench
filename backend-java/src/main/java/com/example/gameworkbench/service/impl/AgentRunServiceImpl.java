@@ -21,6 +21,7 @@ import com.example.gameworkbench.service.EmbeddingProvider;
 import com.example.gameworkbench.observability.ApplicationObservability;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -75,12 +76,35 @@ public class AgentRunServiceImpl implements AgentRunService {
      */
     @Override
     public AgentRunVO run(Long userId, AgentRunRequest request) {
+        return runInternal(userId, request, null);
+    }
+
+    @Override
+    public AgentRunVO run(Long userId, AgentRunRequest request, String idempotencyKey) {
+        if (idempotencyKey == null || !idempotencyKey.matches("[A-Za-z0-9._:-]{1,128}")) {
+            throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_INVALID);
+        }
+        return runInternal(userId, request, idempotencyKey);
+    }
+
+    private AgentRunVO runInternal(Long userId, AgentRunRequest request, String idempotencyKey) {
         /*
          * 校验用户身份：未登录或 userId 为空则直接拒绝。
          */
         if (userId == null) {
             log.warn("[Agent] run rejected: unauthorized agentType={}", request.getAgentType());
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        String requestFingerprint = idempotencyKey == null ? null : sha256(writeJsonSafely(request));
+        if (idempotencyKey != null) {
+            AgentRun replay = agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>()
+                    .eq(AgentRun::getUserId, userId).eq(AgentRun::getIdempotencyKey, idempotencyKey));
+            if (replay != null) {
+                if (!requestFingerprint.equals(replay.getRequestFingerprint())) {
+                    throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT);
+                }
+                return toVO(replay);
+            }
         }
         /*
          * 校验项目归属：只有项目创建者才能对该项目发起 Agent 运行。
@@ -102,6 +126,8 @@ public class AgentRunServiceImpl implements AgentRunService {
 
         AgentRun agentRun = new AgentRun();
         agentRun.setRunUuid(UUID.randomUUID().toString());
+        agentRun.setIdempotencyKey(idempotencyKey);
+        agentRun.setRequestFingerprint(requestFingerprint);
         agentRun.setUserId(userId);
         agentRun.setProjectId(gameProject.getId());
         agentRun.setProjectUuid(gameProject.getProjectUuid());
@@ -117,7 +143,18 @@ public class AgentRunServiceImpl implements AgentRunService {
         agentRun.setEmbeddingModel(embeddingProvider.model());
         agentRun.setCreatedAt(now);
         agentRun.setUpdatedAt(now);
-        agentRunMapper.insert(agentRun);
+        try {
+            agentRunMapper.insert(agentRun);
+        } catch (DuplicateKeyException conflict) {
+            if (idempotencyKey == null) throw conflict;
+            AgentRun winner = agentRunMapper.selectOne(new LambdaQueryWrapper<AgentRun>()
+                    .eq(AgentRun::getUserId, userId).eq(AgentRun::getIdempotencyKey, idempotencyKey));
+            if (winner == null) throw conflict;
+            if (!requestFingerprint.equals(winner.getRequestFingerprint())) {
+                throw new BusinessException(ErrorCode.IDEMPOTENCY_KEY_CONFLICT);
+            }
+            return toVO(winner);
+        }
 
         log.info("[Agent] run started userId={} projectId={} projectUuid={} runUuid={} agentType={}",
                 userId, agentRun.getProjectId(), agentRun.getProjectUuid(), agentRun.getRunUuid(),

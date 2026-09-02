@@ -29,6 +29,8 @@ public class SysUser {
 
     private String status;
 
+    private String role;
+
     private LocalDateTime lastLoginAt;
 
     private LocalDateTime createdAt;

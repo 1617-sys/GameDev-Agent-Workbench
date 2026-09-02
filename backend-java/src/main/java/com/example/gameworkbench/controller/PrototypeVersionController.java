@@ -41,12 +41,14 @@ public class PrototypeVersionController {
     }
 
     @GetMapping("/compare")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'prototype-versions.manage')")
     public ApiResponse<PrototypeVersionComparisonVO> compare(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @RequestParam String left, @RequestParam String right) {
         return ApiResponse.success(service.compare(userId, projectUuid, left, right));
     }
 
     @PostMapping
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'prototype-versions.manage')")
     public ApiResponse<PrototypeVersionVO> create(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,
@@ -56,6 +58,7 @@ public class PrototypeVersionController {
     }
 
     @PostMapping("/{parentVersionUuid}/tune")
+    @org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'prototype-versions.manage')")
     public ApiResponse<PrototypeVersionVO> tune(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @PathVariable String parentVersionUuid,
             @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey,

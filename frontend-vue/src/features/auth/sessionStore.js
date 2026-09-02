@@ -8,7 +8,12 @@ function savedToken() {
 
 export const useSessionStore = defineStore("session", {
   state: () => ({ token: savedToken(), user: null, initialized: false, busy: false, error: "" }),
-  getters: { authenticated: (state) => Boolean(state.token) },
+  getters: {
+    authenticated: (state) => Boolean(state.token),
+    capabilityKeys: (state) => Array.isArray(state.user?.capabilities) ? state.user.capabilities : [],
+    hasCapability: (state) => (capability) =>
+      Array.isArray(state.user?.capabilities) && state.user.capabilities.includes(capability)
+  },
   actions: {
     async initialize() {
       if (this.initialized) return;

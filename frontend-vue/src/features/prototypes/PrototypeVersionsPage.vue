@@ -8,6 +8,7 @@
         <p>每次 AI 生成或人工调参都会形成新的不可变版本。</p>
       </div>
       <button class="button ghost" type="button" :disabled="loading" @click="loadVersions"><RefreshCw :size="16" :class="{ spin: loading }" />刷新版本</button>
+      <RouterLink class="button ghost" :to="`/projects/${projectUuid}/artifacts`">Artifact 总览</RouterLink>
     </header>
 
     <p v-if="error" class="alert danger" role="alert"><AlertCircle :size="18" />{{ error }}</p>
@@ -36,6 +37,19 @@
           </dl>
           <details><summary>追溯信息</summary><code>{{ selected.versionUuid }}</code><code>{{ selected.configDigest }}</code><code>{{ selected.runtimeCapabilityVersion }}</code></details>
           <RouterLink class="button ghost" :to="`/projects/${projectUuid}/versions/${selected.versionUuid}/episodes`">查看 Player Runs 与 Episode 证据</RouterLink>
+          <form v-if="session.hasCapability('player-runs.create')" class="player-run-form" @submit.prevent="startPlayerRun">
+            <header><strong>启动 Player Run</strong><small>成本受 Episode 数、maxSteps 与策略类型共同限制。</small></header>
+            <div class="compact-form-grid">
+              <label><span>Persona</span><select v-model="playerForm.personaId"><option>NOVICE</option><option>REGULAR</option><option>EXPERT</option><option>baseline-neutral</option></select></label>
+              <label><span>策略</span><select v-model="playerForm.policyKind"><option>DETERMINISTIC</option><option>LLM</option></select></label>
+              <label><span>最大步骤预算</span><input v-model.number="playerForm.maxSteps" type="number" min="1" max="10000" /></label>
+              <label><span>并发数</span><input v-model.number="playerForm.concurrency" type="number" min="1" max="8" /></label>
+              <label><span>确定性种子</span><input v-model.number="playerForm.seed" type="number" min="0" max="4294967295" /></label>
+            </div>
+            <label class="confirmation-row"><input v-model="playerConfirmed" type="checkbox" />我已确认所选策略和 {{ playerForm.maxSteps }} 步预算可能产生计算/模型成本。</label>
+            <button class="button primary" type="submit" :disabled="!playerCanStart">{{ playerBusy ? "正在启动…" : "确认并启动 Player Run" }}</button>
+            <RouterLink v-if="createdPlayerRun" class="button ghost" :to="`/projects/${projectUuid}/versions/${selected.versionUuid}/episodes`">查看运行 {{ createdPlayerRun.runUuid }}</RouterLink>
+          </form>
           <dl v-if="metrics" class="version-parameters telemetry-metrics">
             <div><dt>结束样本</dt><dd>{{ metrics.sampleSize }}</dd></div><div><dt>通关率</dt><dd>{{ percent(metrics.winRate) }}</dd></div>
             <div><dt>平均耗时</dt><dd>{{ duration(metrics.averageDurationMs) }}</dd></div><div><dt>平均得分</dt><dd>{{ metrics.averageScore }}</dd></div>
@@ -100,8 +114,12 @@ import { createIdempotencyKey } from "../../shared/presentation/submission";
 import { sha256Hex, validateGameConfig } from "../demo/runtime/gameConfig";
 import { formatPackageSize, waitForExportTerminal } from "./exportState";
 import GamePreview from "../demo/GamePreview.vue";
+import { useSessionStore } from "../auth/sessionStore";
+import { playerRunsApi } from "../../shared/api/playerRuns.js";
+import { buildPlayerRunRequest, canStartPlayerRun } from "./playerRunForm.js";
 
 const route = useRoute();
+const session = useSessionStore();
 const projectUuid = computed(() => String(route.params.projectUuid));
 const versions = ref([]); const selected = ref(null); const loading = ref(false); const saving = ref(false); const comparing = ref(false);
 const metrics = ref(null); const metricComparison = ref(null); const suggestion = ref(null); const suggesting = ref(false);
@@ -109,6 +127,9 @@ const exportJob = ref(null); const exportActivity = ref("IDLE");
 let exportEpoch = 0; let exportController = null;
 const error = ref(""); const tab = ref("play"); const comparison = ref(null); const compareLeft = ref(""); const compareRight = ref("");
 const tuning = reactive({ timeLimitSeconds: 90, playerSpeed: 220, playerMaxHealth: 3, targetCollectibles: 1, enemyCount: 0, enemySpeeds: {} });
+const playerForm = reactive({ personaId: "NOVICE", policyKind: "DETERMINISTIC", maxSteps: 500, concurrency: 1, seed: 1 });
+const playerConfirmed = ref(false); const playerBusy = ref(false); const createdPlayerRun = ref(null);
+const playerCanStart = computed(() => canStartPlayerRun({ capabilities: session.capabilityKeys, confirmed: playerConfirmed.value, busy: playerBusy.value }));
 const selectedConfig = computed(() => {
   const result = validateGameConfig(selected.value?.gameConfig);
   return result.valid && !result.migrated
@@ -131,7 +152,7 @@ async function loadVersions() {
   loading.value = true; error.value = "";
   try {
     versions.value = await prototypesApi.list(projectUuid.value);
-    if (versions.value.length) await selectVersion(selected.value?.versionUuid || versions.value[0].versionUuid);
+    if (versions.value.length) await selectVersion(String(route.query.version || selected.value?.versionUuid || versions.value[0].versionUuid));
     compareLeft.value ||= versions.value.at(-1)?.versionUuid || "";
     compareRight.value ||= versions.value[0]?.versionUuid || "";
   } catch (cause) { error.value = cause.message || "无法读取版本"; }
@@ -154,6 +175,16 @@ async function submitTune() {
     await loadVersions(); await selectVersion(created.versionUuid); tab.value = "play";
   } catch (cause) { error.value = cause.message || "创建调参版本失败"; }
   finally { saving.value = false; }
+}
+async function startPlayerRun() {
+  if (!selected.value || !playerCanStart.value) return;
+  playerBusy.value = true; error.value = "";
+  try {
+    const key = createIdempotencyKey();
+    const request = buildPlayerRunRequest(playerForm, selected.value.versionUuid, `web-${key.slice(0, 32)}`);
+    createdPlayerRun.value = await playerRunsApi.create(projectUuid.value, request, key, createIdempotencyKey());
+  } catch (cause) { error.value = cause.message || "Player Run 启动失败"; }
+  finally { playerBusy.value = false; }
 }
 async function runCompare() {
   comparing.value = true; error.value = "";

@@ -5,7 +5,7 @@ import { TERMINAL_STATUSES } from "../../shared/presentation/workflow";
 export const useRunStore = defineStore("run", {
   state: () => ({
     uuid: "", snapshot: null, steps: [], artifacts: [], artifactDetails: {}, loading: false,
-    actionLoading: false, error: "", connection: "idle", stream: null, refreshTimer: null
+    actionLoading: false, error: "", ragEvidence: [], ragError: "", connection: "idle", stream: null, refreshTimer: null
   }),
   getters: {
     terminal: (state) => TERMINAL_STATUSES.has(state.snapshot?.status),
@@ -24,6 +24,8 @@ export const useRunStore = defineStore("run", {
         this.snapshot = snapshot;
         this.steps = Array.isArray(steps) ? steps : snapshot?.steps || [];
         this.artifacts = Array.isArray(artifacts) ? artifacts : snapshot?.artifacts || [];
+        try { this.ragEvidence = await workflowsApi.ragEvidence(uuid); this.ragError = ""; }
+        catch (cause) { this.ragEvidence = []; this.ragError = cause.message || "RAG 证据不可用"; }
         if (this.terminal) this.disconnect();
       } catch (error) { this.error = error.message || "无法读取运行状态"; }
       finally { this.loading = false; }
@@ -54,7 +56,7 @@ export const useRunStore = defineStore("run", {
     },
     async open(uuid) {
       this.disconnect();
-      this.$patch({ uuid, snapshot: null, steps: [], artifacts: [], artifactDetails: {}, error: "" });
+      this.$patch({ uuid, snapshot: null, steps: [], artifacts: [], artifactDetails: {}, ragEvidence: [], ragError: "", error: "" });
       await this.load(uuid);
       if (!this.terminal && this.snapshot) this.connect();
     },

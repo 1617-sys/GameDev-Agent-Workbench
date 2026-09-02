@@ -12,7 +12,7 @@
 - 【代码确认】V5 已实现 `GameSpec -> Java 编译/诊断 -> Runtime IR -> Cocos 构建 -> ZIP 产物` 的垂直切片，当前只支持 `arcade_collect`。证据：`GameSpecCompiler`、`GenerationRunService`、`CocosBuildWorker`、`PlayableArtifactAssembler`。
 - 【代码确认】异步工作流确实使用 MySQL Outbox、RabbitMQ publisher confirm、手动 ACK、Redis 锁、数据库乐观抢占、延迟重试队列、DLQ 和恢复扫描，不是“只在 pom 里加了依赖”。
 - 【代码确认】本次本机实跑：Java `mvn clean test` 共 240 项通过；前端 `npm run test:unit` 共 76 项通过；Python `python -m pytest -q` 共 48 项通过。Java 直接运行未 clean 的增量测试曾因残留 `target` 产物导致 JUnit discovery 失败，clean 后恢复，说明构建可重复性仍需注意。默认 Surefire 不执行命名为 `*IT` 的 `AsyncWorkflowIntegrationHarnessIT`，不能把 240 项等同于完整端到端验证。
-- 【代码确认】V5 已定义 `READY_TO_BUILD -> BUILDING -> AWAITING_APPROVAL -> APPROVED/REJECTED -> RELEASED` 发布门禁。此前 claim 后继续传递 `READY_TO_BUILD` 旧 Entity 的 P1 已修复：claim 成功后重新读取并核对 run/project、`BUILDING`、版本和 claim token，再把 durable snapshot 交给构建与打包组件；真实 `PlayableArtifactAssembler` 组合测试及错误 token 反向测试均已通过。尚未执行真实 Cocos CLI 端到端构建。证据：`GenerationRunService.build`、`GenerationRunServiceTest.usesDurableClaimSnapshotWithRealArtifactAssembler/doesNotStartCocosWhenReloadedClaimBelongsToAnotherWorker`。
+- 【代码确认】V5 已定义 `READY_TO_BUILD -> BUILDING -> AWAITING_APPROVAL -> APPROVED/REJECTED -> RELEASED` 发布门禁。此前 claim 后继续传递 `READY_TO_BUILD` 旧 Entity 的 P1 已修复：claim 成功后重新读取并核对 run/project、`BUILDING`、版本和 claim token，再把 durable snapshot 交给构建与打包组件；真实 `PlayableArtifactAssembler` 组合测试及错误 token 反向测试均已通过。2026-08-06 的本机验证记录证明 Cocos Creator 3.8.8 CLI 能生成 Web Mobile 产物，但尚未在本次修复后重新跑通 `build -> preview -> approval -> release` 的完整服务端链路。证据：`GenerationRunService.build`、`GenerationRunServiceTest.usesDurableClaimSnapshotWithRealArtifactAssembler/doesNotStartCocosWhenReloadedClaimBelongsToAnotherWorker`、`docs/requirements/v5/implementation-core.md:60-62`。
 - 【代码确认】RAG 是 fake-hash 8 维嵌入加进程内检索基线，不能写成生产级语义检索。证据：`FakeEmbeddingProvider`、`InMemoryVectorStore`。
 
 最适合你的项目叙事不是“我做了很多微服务组件”，而是：**我把不可靠的模型输出约束成可校验、可追踪、可恢复、可人工审批的工程流水线。**
@@ -61,7 +61,7 @@
 | 确定性 Simulation/Replay | 【代码确认】较完整 | 前端单元测试含 100 次同输入同 hash 校验 |
 | Player Agent | 【代码确认】可运行 | 支持确定性与逐步 LLM 策略；真实模型质量未被证明 |
 | Director | 【代码确认】有真实 Spring AI 与 Python 回退 | 工具结果与幂等缓存仍为内存，重启恢复边界有限 |
-| V5 Cocos 构建与发布 | 【代码确认】状态机/API 已接通，stale Entity P1 已修复并通过组合测试 | 仍依赖本机 Cocos，尚未做真实 CLI 端到端验证，且未接入 V4 Player |
+| V5 Cocos 构建与发布 | 【代码确认】状态机/API 已接通，stale Entity P1 已修复并通过组合测试；历史 Cocos 3.8.8 CLI 构建成功 | 修复后尚未复测 build → preview → approval → release 完整服务链，且未接入 V4 Player |
 | RAG | 【代码确认】原型基线 | fake embedding + 内存检索，不能作为核心卖点 |
 | 生产高可用 | 【未发现实现】 | 单机 Compose、本地磁盘/内存存储，无多租户和集群证明 |
 
@@ -73,11 +73,11 @@
 
 30 秒：
 
-> 我做了一个面向小游戏创意验证的 Agent 工作台。用户输入创意后，Spring AI 生成受约束的 GameSpec，Java 负责能力白名单、语义编译、构建状态机和人工发布门禁；项目还保留 Python Player、Director 与 RabbitMQ 工作流作为实验链路。当前只支持 arcade_collect，构建 claim 的跨组件状态同步 Bug 已修复并补了真实打包器组合测试，但真实 Cocos CLI 端到端仍待验证，因此我不会把它描述成完全可用的生产系统。
+> 我做了一个面向小游戏创意验证的 Agent 工作台。用户输入创意后，Spring AI 生成受约束的 GameSpec，Java 负责能力白名单、语义编译、构建状态机和人工发布门禁；项目还保留 Python Player、Director 与 RabbitMQ 工作流作为实验链路。当前只支持 arcade_collect，历史上已用 Cocos Creator 3.8.8 CLI 生成 Web Mobile 产物；构建 claim 的跨组件状态同步 Bug 已修复并补了真实打包器组合测试，但修复后的审批发布完整链路仍待复测，因此我不会把它描述成完全可用的生产系统。
 
 2 分钟：
 
-> 这个项目最初是一个四步 LLM 游戏设计工作流，后来我把重点从“模型能生成什么”转成“怎样让生成过程可控”。当前 V5 主链中，Spring AI 只生成候选 GameSpec，Java 编译器负责封闭字段、范围、跨字段规则和能力白名单；通过后生成 canonical spec、Runtime IR 与 Build Request，并用 SHA-256 绑定来源。构建设计通过 `stateVersion + claim token + lease` 抢占，claim 后从数据库重读并验证持久化快照，再在事务外调用固定 Cocos Runtime Shell，成功后进入人工审批和显式发布。V4 还保留了 Outbox/RabbitMQ 工作流、确定性 Simulation/Replay、Python Player 和受预算约束的 Director。当前限制是只支持一种玩法，V4 与 V5 尚未统一，RAG 仍是 fake embedding，MQ 自动重试有状态机缺陷，且真实 Cocos CLI 端到端仍待验证。
+> 这个项目最初是一个四步 LLM 游戏设计工作流，后来我把重点从“模型能生成什么”转成“怎样让生成过程可控”。当前 V5 主链中，Spring AI 只生成候选 GameSpec，Java 编译器负责封闭字段、范围、跨字段规则和能力白名单；通过后生成 canonical spec、Runtime IR 与 Build Request，并用 SHA-256 绑定来源。构建设计通过 `stateVersion + claim token + lease` 抢占，claim 后从数据库重读并验证持久化快照，再在事务外调用固定 Cocos Runtime Shell，成功后进入人工审批和显式发布。历史上已用 Cocos Creator 3.8.8 CLI 两次生成 Web Mobile 产物；V4 还保留了 Outbox/RabbitMQ 工作流、确定性 Simulation/Replay、Python Player 和受预算约束的 Director。当前限制是只支持一种玩法，V4 与 V5 尚未统一，RAG 仍是 fake embedding，MQ 自动重试有状态机缺陷，且修复后的 build、审批与发布完整服务链仍待复测。
 
 ---
 
@@ -132,7 +132,7 @@ GameDev Agent Workbench/
 
 已确认：仓库不是单一 Spring Boot Demo，而是 Java 控制面、Vue UI、Python Agent、Simulation Service、Cocos Runtime Shell 的多运行时单仓；主启动类为 `GameDevAgentWorkbenchApplication`，启用 Mapper 扫描和异步执行；MySQL 由 Flyway V1～V38 演进；Compose 定义 MySQL 8.4、Redis 7.4、RabbitMQ 3.13、Java、Python、Simulation 和前端，并带健康检查、非 root/cap-drop 与持久卷。证据：根 `README.md`、`docker-compose.yml`、三个 Dockerfile、`application*.yml`、`start-docker.ps1`。
 
-尚未确认或无法仅凭仓库证明：真实 DeepSeek 调用质量与费用、真实 Cocos 在不同 Windows 安装环境的稳定性、多实例压力下的吞吐、生产级安全性、远程对象存储/集群容灾，以及招聘方实际评价。仓库中的 reports/evidence 有历史失败截图和脚本报告，只能作为当时运行记录，不能替代本次复测。
+尚未确认或无法仅凭仓库证明：真实 DeepSeek 调用质量与费用、真实 Cocos 在不同 Windows 安装环境的稳定性、修复后的构建审批发布全链复测、多实例压力下的吞吐、生产级安全性、远程对象存储/集群容灾，以及招聘方实际评价。仓库中的历史 Cocos 产物和 reports/evidence 只能证明当时的运行结果，不能替代本次复测。
 
 本轮重点阅读范围：V5 的 `gamespec/generation/cocos/artifact`；V4 的 `application/workflow`、`messaging`、`director`、Player/MachineEpisode；全部 Controller 路由；Flyway V1～V38；Spring Security 与全局异常；Vue V5 页面和 API；Python Director/Player；Java、前端和 Python 测试入口。未把 README 或 requirements 文档本身当作实现证据。
 
@@ -170,7 +170,7 @@ GameDev Agent Workbench/
 **数据变化：** `READY_TO_BUILD -> BUILDING -> AWAITING_APPROVAL -> APPROVED -> RELEASED`，拒绝时进入 `REJECTED`；每次迁移增加 `stateVersion`，保存 claim、package digest 和独立审批记录。
 **外部依赖：** 本机 Cocos Creator 可执行文件和文件系统。
 **异常路径：** Cocos 不可用时释放 claim 回 `READY_TO_BUILD`，普通构建/安全异常进入 `FAILED`，租约过期允许接管，旧 Worker 不能覆盖赢家；claim 成功后会重读并校验持久化 snapshot，状态、版本或 token 不匹配时在启动 Cocos 前返回并发更新错误。异常发生在 claim snapshot 重读阶段时不会误释放可能属于其他 Worker 的 claim，而由 lease 兜底恢复。
-**最终结果：** 审批前只能下载 preview ZIP，只有 `RELEASED` 才能下载正式 ZIP；真实 assembler 组合测试已覆盖 build 到 `AWAITING_APPROVAL`，但当前仍不能据此宣称真实 Cocos CLI 端到端已成功跑通。
+**最终结果：** 审批前只能下载 preview ZIP，只有 `RELEASED` 才能下载正式 ZIP。历史证据确认 Cocos Creator 3.8.8 CLI 可以产出 Web Mobile；真实 assembler 组合测试已覆盖 build 到 `AWAITING_APPROVAL`，但尚无证据证明修复后的真实 CLI 构建、preview、审批和 release 已在同一次服务端 E2E 中完整跑通。
 **关键代码：** `GenerationRunController.build/previewArtifact/approve/release/artifact`、`GenerationRunService.build/approve/release`、`GenerationRunMapper.claimBuild/completeBuild/transitionStatus`、`CocosBuildWorker.build`、`PlayableArtifactAssembler.assemble`、`PlayableArtifactStore.put/get`、迁移 `V38__converge_v5_generation_release_gate.sql`。
 
 ### 链路 D：Player 自动试玩与轨迹持久化
@@ -417,7 +417,7 @@ DTO/Entity/VO：Controller 用 DTO 接收入参并通过 Jakarta Validation；Se
 
 ### P1：投递简历前建议修复
 
-**已修复的主链缺陷：** V5 原先在 `claimBuild` 更新数据库后仍把 `READY_TO_BUILD` 旧 Entity 交给只接受 `BUILDING` 的 `PlayableArtifactAssembler`。现在 `GenerationRunService.build` 会重读并核对 run/project、状态、版本与 claim token，后续 Worker、Assembler、Store 和 CAS 均使用该 durable snapshot；新增真实 assembler 组合测试和错误 token 反向测试。该项已不再列为当前 P1，但仍需真实 Cocos CLI E2E 验证。
+**已修复的主链缺陷：** V5 原先在 `claimBuild` 更新数据库后仍把 `READY_TO_BUILD` 旧 Entity 交给只接受 `BUILDING` 的 `PlayableArtifactAssembler`。现在 `GenerationRunService.build` 会重读并核对 run/project、状态、版本与 claim token，后续 Worker、Assembler、Store 和 CAS 均使用该 durable snapshot；新增真实 assembler 组合测试和错误 token 反向测试。该项已不再列为当前 P1；历史 Cocos CLI 构建已成功，但仍需复测修复后的 build → preview → approval → release 服务端 E2E。
 
 1. **Runner 与 Consumer 的重试状态机断层。** `SynchronousWorkflowRunner:94` 捕获步骤异常后先把 Run 改成 `FAILED`；Consumer 随后在 `WorkflowMessageConsumer:166` 调用只允许 `status='RUNNING'` 的 `recordRetryableFailure`，更新 0 行后 NACK。消息再次投递看到终态后直接 ACK，配置的延迟重试没有生效。修法：Runner 不决定 Run 的最终失败，返回/抛出带分类的 Step failure 让 Consumer 原子迁移到 `RETRY_WAIT/FAILED`；或让 retry SQL 接受带版本的 FAILED 但必须避免与终态语义混淆。补一条真实 Runner exception → retry queue → second attempt success 的集成测试。
 
@@ -510,7 +510,7 @@ DTO/Entity/VO：Controller 用 DTO 接收入参并通过 Jakarta Validation；Se
 
 ### 测试、缺陷和规划
 
-33. **测试很多是否代表质量高？** 答：说明契约意识较强，但大量是单元/模拟测试；真实 LLM、真实 Cocos、Broker 崩溃窗口和多实例仍需集成/故障测试。
+33. **测试很多是否代表质量高？** 答：说明契约意识较强，但大量是单元/模拟测试；历史 Cocos CLI 构建成功不等于修复后的完整发布链 E2E，真实 LLM、Broker 崩溃窗口和多实例仍需集成/故障测试。
 34. **最自豪的测试是什么？** 答：确定性 Core 同输入 100 次得到相同终态 hash，以及 Outbox/锁/状态迁移单测；它们直接验证核心设计目标。
 35. **最严重的技术债是什么？** 答：MQ retry 状态机、RETRY_WAIT 恢复、并发幂等冲突处理、HTTP 状态语义、Director 内存结果存储；其次是代码可读性和 V4/V5 概念过多。
 36. **如果再给一周做什么？** 答：先修 MQ 与 HTTP/幂等正确性并加真实集成测试，再整理主链源码和演示脚本，最后更新简历；不会在一周内重做生产 RAG。
@@ -598,7 +598,7 @@ Java 21、Spring Boot、Spring AI、Spring Security/JWT、MyBatis-Plus、MySQL�
 2. 实现异步工作流的首次投递控制面，将运行、步骤、事件和 Outbox 在同一 MySQL 事务中持久化，结合 RabbitMQ publisher confirm、手动 ACK、Redis owner-token 锁和数据库状态版本降低任务丢失与重复消费风险；自动重试状态机仍在整改，不宣称 exactly-once。
 3. 构建固定步长、seed、PRNG 版本和 state hash 驱动的确定性 Simulation/Replay，并通过 Python Player 按 Persona 与策略批量运行 episode，持久化逐步 observation、decision、transition 和轨迹摘要用于复现与对比。
 4. 实现受预算约束的 Director Agent，将 Spring AI tool calling 与真实工具执行解耦，在 Java 侧完成闭合参数校验、资源授权、超时、幂等、检查点和人工审批，保留控制面事实权威。
-5. **真实跑通 Cocos CLI 后再作为主亮点使用：** 打通 GameSpec 到 Cocos Web Mobile 的可发布产物链路，通过 `stateVersion + claim token + lease` 抢占构建执行权，claim 后校验数据库持久化快照，在事务外执行固定 Cocos Runtime，并以确定性 ZIP、摘要复验、人工审批和显式发布门禁隔离内部试玩包与正式包。
+5. **修复后完整复测发布链再作为主亮点使用：** 打通 GameSpec 到 Cocos Web Mobile 的可发布产物链路，通过 `stateVersion + claim token + lease` 抢占构建执行权，claim 后校验数据库持久化快照，在事务外执行已被历史构建验证的固定 Cocos Runtime，并以确定性 ZIP、摘要复验、人工审批和显式发布门禁隔离内部试玩包与正式包。
 
 ### 招聘平台介绍
 
@@ -612,7 +612,7 @@ Java 21、Spring Boot、Spring AI、Spring Security/JWT、MyBatis-Plus、MySQL�
 
 | 天 | 学习任务 | 代码任务 | 验收标准 |
 |---|---|---|---|
-| Day 1 | 手画 V5 claim/build/assemble/approval 状态链 | 修复 claim 后 stale Entity，加入真实 Assembler 组合测试并完成一次 Cocos 构建 | 成功进入 AWAITING_APPROVAL，审批发布后 ZIP 摘要可复验 |
+| Day 1 | 手画 V5 claim/build/assemble/approval 状态链 | stale Entity 修复和真实 Assembler 组合测试已完成；用真实 Cocos 复测 build → preview → approval → release | 同一次服务端 E2E 成功进入 AWAITING_APPROVAL 和 RELEASED，ZIP 摘要可复验 |
 | Day 2 | 掌握 ACK/NACK、confirm、DLX、TTL queue | 为 Runner 异常重试写失败测试并重构失败迁移所有权 | 首次失败进入 retry，第二次成功，事件无重复 |
 | Day 3 | 学 Redis SET NX EX、Lua 解锁、固定窗口、锁续租 | namespace 用户缓存，只缓存 VO；记录锁 TTL 风险 | 能解释 Redis 挂掉与锁过期行为 |
 | Day 4 | 学 `@Async`、线程池、乐观锁和租约 | 为 V38 build claim 增加真实双线程/超时接管测试，并设计异步 build API | 能证明两个并发 build 只有一个取得 claim，旧 Worker 不能提交 |
@@ -622,7 +622,7 @@ Java 21、Spring Boot、Spring AI、Spring Security/JWT、MyBatis-Plus、MySQL�
 
 优先级：
 
-1. 必须先验证：stale Entity 已修复且真实 Assembler 组合测试通过；接下来用本机真实 Cocos CLI 跑通 build → preview → approval → release，并保存演示证据。
+1. 必须先验证：stale Entity 已修复、真实 Assembler 组合测试通过，且历史 Cocos 3.8.8 CLI 构建成功；接下来要复测修复后的 build → preview → approval → release 同一条服务链，并保存演示证据。
 2. 必须修：MQ retry 状态机和 RETRY_WAIT 丢唤醒窗口。
 3. 强烈建议修：HTTP 状态码、并发幂等冲突、Director 内存结果存储或至少明确降级边界。
 4. 面试前整理：格式化压缩源码、统一命名、给 V5 Entity 增加 VO。
@@ -633,7 +633,7 @@ Java 21、Spring Boot、Spring AI、Spring Security/JWT、MyBatis-Plus、MySQL�
 
 | 优先级 | 当前问题 | 修改建议 | 成本 | 面试收益 | 投递前 |
 |---|---|---|---|---|---|
-| 1 | stale Entity 已修复并通过真实 Assembler 组合测试，但缺本机真实 Cocos CLI E2E 证据 | 跑通 build → preview → approval → release，记录命令、状态版本、摘要与产物截图 | 0.5 天，低 | 极高：证明主链可重复演示，也体现分层测试意识 | 必须 |
+| 1 | stale Entity 已修复、真实 Assembler 组合测试和历史 Cocos CLI 构建均成功，但缺修复后完整服务链 E2E 证据 | 用真实 Cocos 复测 build → preview → approval → release，记录命令、状态版本、摘要与产物截图 | 0.5 天，低 | 极高：证明主链可重复演示，也体现分层测试意识 | 必须 |
 | 2 | Runner 先写 FAILED，Consumer 无法转 RETRY_WAIT | 统一失败迁移所有权，retry intent 写 Outbox，补真实二次成功集成测试 | 2～3 天，高 | 极高：能完整讲可靠消息 | 必须 |
 | 3 | cancel 可能被 Runner 的 `updateById` 覆盖 | 所有终态使用 statusVersion CAS；步骤边界检查取消 | 1 天，中 | 高：典型并发状态机题 | 必须 |
 | 4 | 业务异常多数 HTTP 200 | 建立 ErrorCode→HTTP status 映射，补 Controller 契约测试 | 0.5～1 天，中 | 高：API 基本功明显 | 必须 |

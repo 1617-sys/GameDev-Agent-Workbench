@@ -1,0 +1,565 @@
+{
+  "schemaVersion": 1,
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/api/agent/run",
+      "feature": "agent-runs",
+      "adapter": "frontend-vue/src/shared/api/agentRuns.js",
+      "page": "frontend-vue/src/features/admin/AdminAgentRunsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/agent/runs",
+      "feature": "agent-runs",
+      "adapter": "frontend-vue/src/shared/api/agentRuns.js",
+      "page": "frontend-vue/src/features/admin/AdminAgentRunsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/agent/runs/{runUuid}",
+      "feature": "agent-runs",
+      "adapter": "frontend-vue/src/shared/api/agentRuns.js",
+      "page": "frontend-vue/src/features/admin/AdminAgentRunsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/artifacts",
+      "feature": "artifacts",
+      "adapter": "frontend-vue/src/shared/api/artifacts.js",
+      "page": "frontend-vue/src/features/artifacts/ArtifactOverviewPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/artifacts/{artifactUuid}",
+      "feature": "artifacts",
+      "adapter": "frontend-vue/src/shared/api/artifacts.js",
+      "page": "frontend-vue/src/features/artifacts/ArtifactOverviewPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/artifacts/{artifactUuid}",
+      "feature": "artifacts",
+      "adapter": "frontend-vue/src/shared/api/artifacts.js",
+      "page": "frontend-vue/src/features/artifacts/ArtifactOverviewPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/projects/{projectUuid}/workflow-runs",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "feature": "auth",
+      "adapter": "frontend-vue/src/shared/api/auth.js",
+      "page": "frontend-vue/src/features/auth/AuthPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "feature": "auth",
+      "adapter": "frontend-vue/src/shared/api/auth.js",
+      "page": "frontend-vue/src/features/auth/AuthPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "feature": "session",
+      "adapter": "frontend-vue/src/shared/api/auth.js",
+      "page": "frontend-vue/src/app/AppShell.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/projects/summary",
+      "feature": "dashboard",
+      "adapter": "frontend-vue/src/shared/api/dashboard.js",
+      "page": "frontend-vue/src/features/admin/AdminDashboardPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/dashboard/projects/selectAgentType",
+      "feature": "dashboard",
+      "adapter": "frontend-vue/src/shared/api/dashboard.js",
+      "page": "frontend-vue/src/features/admin/AdminDashboardPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/director-runs",
+      "feature": "director",
+      "adapter": "frontend-vue/src/shared/api/director.js",
+      "page": "frontend-vue/src/features/director/DirectorRunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/director-runs/{runUuid}",
+      "feature": "director",
+      "adapter": "frontend-vue/src/shared/api/director.js",
+      "page": "frontend-vue/src/features/director/DirectorRunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/director-runs/{runUuid}/cancel",
+      "feature": "director",
+      "adapter": "frontend-vue/src/shared/api/director.js",
+      "page": "frontend-vue/src/features/director/DirectorRunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects",
+      "feature": "projects",
+      "adapter": "frontend-vue/src/shared/api/projects.js",
+      "page": "frontend-vue/src/features/projects/ProjectsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects",
+      "feature": "projects",
+      "adapter": "frontend-vue/src/shared/api/projects.js",
+      "page": "frontend-vue/src/features/projects/ProjectsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}",
+      "feature": "projects",
+      "adapter": "frontend-vue/src/shared/api/projects.js",
+      "page": "frontend-vue/src/features/projects/ProjectsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/projects/{projectUuid}",
+      "feature": "projects",
+      "adapter": "frontend-vue/src/shared/api/projects.js",
+      "page": "frontend-vue/src/features/projects/ProjectsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/gamespec/capabilities",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/gamespec/compile",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/gamespec/author",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/artifact",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/preview-artifact",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/build",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/approval",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/release",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v5/projects/{projectUuid}/generation-runs/{runUuid}/prototype-version-compatibility",
+      "feature": "generation",
+      "adapter": "frontend-vue/src/shared/api/gameGeneration.js",
+      "page": "frontend-vue/src/features/generation/GenerationStudioPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "feature": "diagnostics",
+      "adapter": "frontend-vue/src/shared/api/diagnostics.js",
+      "page": "frontend-vue/src/features/admin/AdminDiagnosticsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/knowledge-documents",
+      "feature": "knowledge",
+      "adapter": "frontend-vue/src/shared/api/knowledge.js",
+      "page": "frontend-vue/src/features/knowledge/KnowledgeLibraryPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/knowledge-documents",
+      "feature": "knowledge",
+      "adapter": "frontend-vue/src/shared/api/knowledge.js",
+      "page": "frontend-vue/src/features/knowledge/KnowledgeLibraryPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/batches/{batchUuid}",
+      "feature": "episodes",
+      "adapter": "frontend-vue/src/shared/api/episodes.js",
+      "page": "frontend-vue/src/features/episodes/EpisodeTracePage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}",
+      "feature": "episodes",
+      "adapter": "frontend-vue/src/shared/api/episodes.js",
+      "page": "frontend-vue/src/features/episodes/EpisodeTracePage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/steps",
+      "feature": "episodes",
+      "adapter": "frontend-vue/src/shared/api/episodes.js",
+      "page": "frontend-vue/src/features/episodes/EpisodeTracePage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/{episodeUuid}/summary",
+      "feature": "episodes",
+      "adapter": "frontend-vue/src/shared/api/episodes.js",
+      "page": "frontend-vue/src/features/episodes/EpisodeTracePage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/machine-episodes/prototype-versions/{versionUuid}/aggregate",
+      "feature": "episodes",
+      "adapter": "frontend-vue/src/shared/api/episodes.js",
+      "page": "frontend-vue/src/features/episodes/EpisodeTracePage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/player-runs",
+      "feature": "player-runs",
+      "adapter": "frontend-vue/src/shared/api/playerRuns.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/player-runs",
+      "feature": "player-runs",
+      "adapter": "frontend-vue/src/shared/api/playerRuns.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/player-runs/{runUuid}",
+      "feature": "player-runs",
+      "adapter": "frontend-vue/src/shared/api/playerRuns.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-sessions",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}/events",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/playtest-sessions/{sessionUuid}",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/playtest-metrics",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/playtest-metrics/compare",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/balance-suggestions",
+      "feature": "playtest",
+      "adapter": "frontend-vue/src/shared/api/telemetry.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/projects/{projectUuid}/workflow-runs",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/promptTemplate/{templateUuid}",
+      "feature": "prompt-ops",
+      "adapter": "frontend-vue/src/shared/api/promptOps.js",
+      "page": "frontend-vue/src/features/prompt-ops/PromptOpsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/promptTemplate/get",
+      "feature": "prompt-ops",
+      "adapter": "frontend-vue/src/shared/api/promptOps.js",
+      "page": "frontend-vue/src/features/prompt-ops/PromptOpsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/promptTemplate",
+      "feature": "prompt-ops",
+      "adapter": "frontend-vue/src/shared/api/promptOps.js",
+      "page": "frontend-vue/src/features/prompt-ops/PromptOpsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/analytics/prompt-versions",
+      "feature": "analytics",
+      "adapter": "frontend-vue/src/shared/api/promptAnalytics.js",
+      "page": "frontend-vue/src/features/prompt-analytics/PromptAnalyticsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/approval",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}/exports",
+      "feature": "exports",
+      "adapter": "frontend-vue/src/shared/api/exports.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}",
+      "feature": "exports",
+      "adapter": "frontend-vue/src/shared/api/exports.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}/retry",
+      "feature": "exports",
+      "adapter": "frontend-vue/src/shared/api/exports.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/exports/{jobUuid}/download",
+      "feature": "exports",
+      "adapter": "frontend-vue/src/shared/api/exports.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{versionUuid}",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/projects/{projectUuid}/prototype-versions/compare",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/prototype-versions/{parentVersionUuid}/tune",
+      "feature": "prototype-versions",
+      "adapter": "frontend-vue/src/shared/api/prototypes.js",
+      "page": "frontend-vue/src/features/prototypes/PrototypeVersionsPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/rag-evidence",
+      "feature": "rag-evidence",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/cancel",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/retry",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/steps",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/artifacts",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/workflow-runs/{workflowRunUuid}/events",
+      "feature": "workflow-runs",
+      "adapter": "frontend-vue/src/shared/api/workflows.js",
+      "page": "frontend-vue/src/features/runs/RunPage.vue",
+      "status": "implemented"
+    }
+  ]
+}

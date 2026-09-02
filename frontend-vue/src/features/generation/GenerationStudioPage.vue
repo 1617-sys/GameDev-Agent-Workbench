@@ -8,7 +8,12 @@
         <p>编辑受约束 GameSpec，先编译验证，再生成真实 Web Mobile 游戏包。</p>
       </div>
       <div class="generation-heading-actions">
-        <RouterLink class="button ghost" :to="`/projects/${projectUuid}/idea-studio`"><Sparkles :size="16" />旧版创意工作流</RouterLink>
+        <button v-if="session.hasCapability('generation.build')" class="button primary large" type="button" :disabled="busy" @click="startGameCreation">
+          <Rocket :size="17" />{{ building ? "正在创建游戏…" : compiling ? "正在验证规格…" : "开始创建游戏" }}
+        </button>
+        <span v-else class="status-pill tone-neutral" title="当前账号没有 generation.build capability"><span></span>只读权限</span>
+        <RouterLink class="button ghost" :to="`/projects/${projectUuid}/artifacts`"><FileText :size="16" />Artifacts</RouterLink>
+        <RouterLink v-if="session.hasCapability('workflow-runs.manage')" class="button ghost" :to="`/projects/${projectUuid}/idea-studio`"><Sparkles :size="16" />旧版创意工作流</RouterLink>
         <RouterLink class="button ghost" :to="`/projects/${projectUuid}/versions`"><GitCompareArrows :size="16" />版本与调参</RouterLink>
       </div>
     </header>
@@ -32,10 +37,20 @@
             <button class="button ghost" type="button" @click="resetSpec"><RefreshCw :size="15" />恢复模板</button>
           </header>
 
-          <div class="field-section">
+          <div v-if="session.hasCapability('generation.author')" class="field-section">
             <h3>Spring AI 规格作者</h3>
+            <div class="author-mode" role="radiogroup" aria-label="GameSpec 创作模式">
+              <label :class="{ selected: authorMode === 'scratch' }"><input v-model="authorMode" type="radio" value="scratch" />从零生成<small>忽略编辑器内容，发送 currentSpec: null</small></label>
+              <label :class="{ selected: authorMode === 'revise' }"><input v-model="authorMode" type="radio" value="revise" />修改现有规格<small>仅发送编辑器中的合法 JSON 对象</small></label>
+            </div>
+            <dl v-if="authorMode === 'revise' && authorPreparation.summary" class="spec-summary">
+              <div><dt>标题</dt><dd>{{ authorPreparation.summary.title }}</dd></div>
+              <div><dt>玩法</dt><dd>{{ authorPreparation.summary.archetype }}</dd></div>
+              <div><dt>实体数</dt><dd>{{ authorPreparation.summary.entityCount }}</dd></div>
+            </dl>
+            <p v-if="authorMode === 'revise' && authorPreparation.error" class="alert danger" role="alert"><CircleAlert :size="17" />{{ authorPreparation.error }}</p>
             <label><span>用自然语言描述游戏，或要求修复当前规格</span><textarea v-model="idea" rows="3" maxlength="2000" placeholder="例如：做一个森林主题的水晶收集游戏，90 秒内收集全部水晶并到达传送门。"></textarea></label>
-            <button class="button ghost" type="button" :disabled="busy || authoring || idea.trim().length < 10" @click="authorSpec">
+            <button class="button ghost" type="button" :disabled="busy || authoring || idea.trim().length < 10 || Boolean(authorPreparation.error)" @click="authorSpec">
               <Sparkles :size="16" />{{ authoring ? "Spring AI 生成与修复中…" : "生成 / 修复 GameSpec" }}
             </button>
           </div>
@@ -82,8 +97,8 @@
             <p v-else-if="compilation?.status === 'SUCCEEDED'" class="compile-success"><CheckCircle2 :size="17" />规格合法，已生成确定性 Runtime IR。</p>
 
             <div class="generation-actions">
-              <button class="button ghost large" type="submit" :disabled="busy"><ShieldCheck :size="17" />{{ compiling ? "正在编译…" : "编译并验证" }}</button>
-              <button class="button primary large" type="button" :disabled="busy || compilation?.status !== 'SUCCEEDED' || compiledText !== specText" @click="createAndBuild">
+              <button v-if="session.hasCapability('generation.compile')" class="button ghost large" type="submit" :disabled="busy"><ShieldCheck :size="17" />{{ compiling ? "正在编译…" : "编译并验证" }}</button>
+              <button v-if="session.hasCapability('generation.build')" class="button primary large" type="button" :disabled="busy || compilation?.status !== 'SUCCEEDED' || compiledText !== specText" @click="createAndBuild">
                 <Rocket :size="17" />{{ building ? "Cocos 构建中…" : "创建并构建游戏" }}
               </button>
             </div>
@@ -105,16 +120,24 @@
                 <div><dt>Runtime IR digest</dt><dd><code>{{ shortDigest(run.runtimeIrDigest) }}</code></dd></div>
                 <div v-if="run.packageDigest"><dt>Package digest</dt><dd><code>{{ shortDigest(run.packageDigest) }}</code></dd></div>
               </dl>
+              <section v-if="session.hasCapability('prototype-versions.manage') && ['APPROVED', 'RELEASED'].includes(run.status)" class="bridge-status">
+                <strong>V4 Player 兼容性</strong>
+                <p>{{ bridgeView.label }}</p>
+                <ul v-if="bridgeView.reasons.length"><li v-for="reason in bridgeView.reasons" :key="reason">{{ reason }}</li></ul>
+                <button class="button ghost full" type="button" :disabled="bridging || bridgeView.disabled" @click="createOrViewPrototype">
+                  {{ bridging ? "正在建立来源绑定…" : bridgeView.label }}
+                </button>
+              </section>
               <p v-if="run.errorCode" class="alert danger"><CircleAlert :size="16" />{{ run.errorCode }}</p>
               <div class="pipeline-actions">
-                <button v-if="canBuild && !building" class="button primary full" type="button" @click="buildRun"><Hammer :size="17" />{{ run.status === 'BUILDING' ? "接管超时构建" : "开始构建" }}</button>
+                <button v-if="session.hasCapability('generation.build') && canBuild && !building" class="button primary full" type="button" @click="buildRun"><Hammer :size="17" />{{ run.status === 'BUILDING' ? "接管超时构建" : "开始构建" }}</button>
                 <button v-if="canPreview" class="button ghost full" type="button" :disabled="downloading" @click="downloadPreview"><Download :size="17" />{{ downloading ? "正在下载…" : "下载内部试玩包" }}</button>
-                <template v-if="run.status === 'AWAITING_APPROVAL'">
+                <template v-if="session.hasCapability('generation.approve') && run.status === 'AWAITING_APPROVAL'">
                   <input v-model="approvalReason" maxlength="500" placeholder="填写人工试玩结论" />
                   <button class="button primary full" type="button" :disabled="approving || !approvalReason.trim()" @click="decide('APPROVED')">批准发布</button>
                   <button class="button ghost full" type="button" :disabled="approving || !approvalReason.trim()" @click="decide('REJECTED')">拒绝发布</button>
                 </template>
-                <button v-if="run.status === 'APPROVED'" class="button primary full" type="button" :disabled="releasing" @click="releaseRun">{{ releasing ? "发布中…" : "生成正式发布版本" }}</button>
+                <button v-if="session.hasCapability('generation.release') && run.status === 'APPROVED'" class="button primary full" type="button" :disabled="releasing" @click="releaseRun">{{ releasing ? "发布中…" : "生成正式发布版本" }}</button>
                 <button v-if="canDownload" class="button primary full" type="button" :disabled="downloading" @click="downloadArtifact"><Download :size="17" />{{ downloading ? "正在下载…" : "下载正式游戏包" }}</button>
                 <button class="button ghost full" type="button" :disabled="refreshing" @click="refreshRun"><RefreshCw :size="16" />刷新任务状态</button>
               </div>
@@ -140,9 +163,13 @@ import { ArrowLeft, CheckCircle2, CircleAlert, Download, FileText, GitCompareArr
 import { gameGenerationApi, saveGenerationArtifact } from "../../shared/api/gameGeneration.js";
 import { projectsApi } from "../../shared/api/projects.js";
 import { createArcadeCollectSpec, defaultGameSpecForm, generationStatusMeta, parsePersistedJson } from "../../shared/presentation/gameSpec.js";
+import { prepareAuthorRequest } from "./gameSpecAuthoring.js";
+import { bridgePresentation } from "./generationBridge.js";
+import { useSessionStore } from "../auth/sessionStore.js";
 
 const route = useRoute();
 const router = useRouter();
+const session = useSessionStore();
 const projectUuid = computed(() => String(route.params.projectUuid || ""));
 const project = ref(null);
 const capabilities = ref(null);
@@ -156,10 +183,13 @@ const refreshing = ref(false);
 const downloading = ref(false);
 const approving = ref(false);
 const releasing = ref(false);
+const bridging = ref(false);
 const approvalReason = ref("");
 const compilation = ref(null);
 const idea = ref("");
+const authorMode = ref("scratch");
 const run = ref(null);
+const bridgeResult = ref(null);
 const compiledText = ref("");
 const form = reactive(defaultGameSpecForm());
 const specText = ref(pretty(createArcadeCollectSpec(form)));
@@ -173,6 +203,8 @@ const canBuild = computed(() => run.value?.status === "READY_TO_BUILD"
   || (run.value?.status === "BUILDING" && run.value?.buildClaimExpiresAt
     && Date.parse(run.value.buildClaimExpiresAt) < Date.now()));
 const busy = computed(() => compiling.value || building.value || authoring.value);
+const authorPreparation = computed(() => prepareAuthorRequest(authorMode.value, idea.value, specText.value));
+const bridgeView = computed(() => bridgePresentation(bridgeResult.value));
 const pipeline = [
   { title: "GameSpec 校验", note: "封闭字段、范围与终局检查" },
   { title: "Runtime IR 编译", note: "生成 canonical spec 与摘要" },
@@ -212,6 +244,7 @@ function parsedSpec() {
 }
 
 async function compileSpec() {
+  // 高级 JSON 编辑器可能包含语法错误；只把合法对象发送给后端权威编译器。
   const spec = parsedSpec();
   if (!spec) return null;
   compiling.value = true;
@@ -225,11 +258,19 @@ async function compileSpec() {
 }
 
 async function authorSpec() {
+  const prepared = authorPreparation.value;
+  if (prepared.error || !prepared.request) {
+    editorError.value = prepared.error || "无法准备 GameSpec 创作请求";
+    return;
+  }
   authoring.value = true;
   pageError.value = "";
   try {
-    const currentSpec = parsedSpec();
-    const result = await gameGenerationApi.author(projectUuid.value, idea.value.trim(), currentSpec);
+    const result = await gameGenerationApi.author(
+      projectUuid.value,
+      prepared.request.idea,
+      prepared.request.currentSpec
+    );
     specText.value = pretty(result.spec);
     compilation.value = result.compilation;
     compiledText.value = result.status === "SUCCEEDED" ? specText.value : "";
@@ -239,6 +280,7 @@ async function authorSpec() {
 }
 
 async function createAndBuild() {
+  // 规格自上次编译后被修改过时禁止构建，避免页面展示和实际构建的内容不一致。
   if (compiledText.value !== specText.value || compilation.value?.status !== "SUCCEEDED") return;
   const spec = parsedSpec();
   if (!spec) return;
@@ -258,13 +300,47 @@ async function buildRun() {
   building.value = true;
   pageError.value = "";
   try {
+    // stateVersion 是乐观锁：若另一个请求已改变状态，后端会拒绝这个旧版本请求。
     await gameGenerationApi.build(projectUuid.value, run.value.runUuid, run.value.stateVersion);
     await loadRun(run.value.runUuid);
   } catch (cause) { pageError.value = cause.message || "Cocos 构建失败"; }
   finally { building.value = false; }
 }
 
-async function loadRun(uuid) { run.value = await gameGenerationApi.get(projectUuid.value, uuid); }
+async function loadRun(uuid) {
+  run.value = await gameGenerationApi.get(projectUuid.value, uuid);
+  bridgeResult.value = null;
+  if (["APPROVED", "RELEASED"].includes(run.value?.status)) {
+    bridgeResult.value = await gameGenerationApi.prototypeCompatibility(projectUuid.value, uuid);
+  }
+}
+
+async function startGameCreation() {
+  // 主操作负责完成必要的权威编译，用户不需要先在长表单底部寻找第二个按钮。
+  if (compiledText.value !== specText.value || compilation.value?.status !== "SUCCEEDED") {
+    const result = await compileSpec();
+    if (result?.status !== "SUCCEEDED" || compiledText.value !== specText.value) return;
+  }
+  await createAndBuild();
+}
+async function createOrViewPrototype() {
+  if (bridgeView.value.versionUuid) {
+    await router.push({ name: "versions", query: { version: bridgeView.value.versionUuid } });
+    return;
+  }
+  if (bridgeView.value.disabled || !run.value) return;
+  bridging.value = true;
+  try {
+    const key = globalThis.crypto?.randomUUID?.() || `bridge-${Date.now()}`;
+    bridgeResult.value = await gameGenerationApi.createPrototypeVersion(
+      projectUuid.value, run.value.runUuid, key
+    );
+    if (bridgeResult.value.prototypeVersionUuid) {
+      await router.push({ name: "versions", query: { version: bridgeResult.value.prototypeVersionUuid } });
+    }
+  } catch (cause) { pageError.value = cause.message || "无法创建原型版本"; }
+  finally { bridging.value = false; }
+}
 async function refreshRun() {
   if (!run.value) return;
   refreshing.value = true;
@@ -288,6 +364,7 @@ async function decide(decision) {
   approving.value = true;
   pageError.value = "";
   try {
+    // 审批使用独立幂等键，网络重试不会重复写入两条人工决定。
     const key = globalThis.crypto?.randomUUID?.() || `approval-${Date.now()}-${Math.random().toString(16).slice(2)}`;
     await gameGenerationApi.approve(projectUuid.value, run.value.runUuid, decision, approvalReason.value.trim(), key);
     await loadRun(run.value.runUuid);
@@ -298,6 +375,7 @@ async function releaseRun() {
   releasing.value = true;
   pageError.value = "";
   try {
+    // APPROVED 只代表试玩通过；release 是第二个显式门禁，成功后才开放正式包下载。
     await gameGenerationApi.release(projectUuid.value, run.value.runUuid, run.value.stateVersion);
     await loadRun(run.value.runUuid);
   } catch (cause) { pageError.value = cause.message || "正式发布失败"; }

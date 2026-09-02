@@ -22,10 +22,12 @@ import lombok.RequiredArgsConstructor;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/projects/{projectUuid}/machine-episodes")
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'machine-episodes.read')")
 public class MachineEpisodeController {
     private final MachineEpisodeService service;
 
     @PostMapping("/batches")
+    @org.springframework.security.access.prepost.PreAuthorize("denyAll()")
     public ApiResponse<MachineEpisodeBatchVO> persist(@AuthenticationPrincipal Long userId,
             @PathVariable String projectUuid, @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody PersistMachineEpisodeBatchRequest request) {

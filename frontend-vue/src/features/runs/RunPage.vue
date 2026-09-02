@@ -9,6 +9,7 @@
         <p>第 {{ run.snapshot?.attempt || 1 }} 次尝试 · {{ formatDuration(run.snapshot?.timeTakenMs) }}</p>
       </div>
       <div class="run-actions">
+        <RouterLink v-if="run.snapshot?.projectUuid" class="button ghost" :to="`/projects/${run.snapshot.projectUuid}/artifacts`">Artifact 总览</RouterLink>
         <button class="button ghost" type="button" :disabled="run.loading" @click="run.load()"><RefreshCw :class="{ spin: run.loading }" :size="17" />刷新状态</button>
         <button v-if="allowed('cancel')" class="button danger-outline" type="button" :disabled="run.actionLoading" @click="run.command('cancel')"><Square :size="15" />取消</button>
         <button v-if="allowed('retry')" class="button primary" type="button" :disabled="run.actionLoading" @click="run.command('retry')"><RotateCcw :size="16" />重新生成</button>
@@ -26,6 +27,7 @@
       <button :class="{ active: tab === 'results' }" type="button" @click="tab = 'results'"><PanelTop :size="17" />成果</button>
       <button :class="{ active: tab === 'progress' }" type="button" @click="tab = 'progress'"><ListChecks :size="17" />生成过程</button>
       <button :class="{ active: tab === 'technical' }" type="button" @click="tab = 'technical'"><Braces :size="17" />技术详情</button>
+      <button :class="{ active: tab === 'rag' }" type="button" @click="tab = 'rag'"><ListChecks :size="17" />RAG 证据</button>
     </nav>
 
     <section v-if="tab === 'results'" class="tab-panel">
@@ -42,6 +44,7 @@
       </article>
     </section>
 
+    <RagEvidencePanel v-else-if="tab === 'rag'" :items="run.ragEvidence" :error="run.ragError" />
     <section v-else class="tab-panel technical-panel">
       <dl class="technical-grid">
         <div><dt>运行 UUID</dt><dd>{{ run.snapshot?.workflowRunUuid || "--" }}</dd></div>
@@ -63,6 +66,7 @@ import StatusPill from "../../shared/ui/StatusPill.vue";
 import ArtifactResults from "./ArtifactResults.vue";
 import { selectPlayableGameConfigSummary, validatedPlayableConfig } from "./playableArtifact";
 import RunStepper from "./RunStepper.vue";
+import RagEvidencePanel from "./RagEvidencePanel.vue";
 import { useRunStore } from "./runStore";
 import { formatDuration, statusMeta, stepLabel } from "../../shared/presentation/workflow";
 

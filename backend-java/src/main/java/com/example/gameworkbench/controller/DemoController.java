@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 @Profile("!prod")
 @RequestMapping("/api/demo")
 @RequiredArgsConstructor
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'admin.diagnostics')")
 public class DemoController {
 
     private final DemoStreamService demoStreamService;

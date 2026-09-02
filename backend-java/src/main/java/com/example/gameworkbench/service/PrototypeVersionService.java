@@ -9,6 +9,8 @@ import com.example.gameworkbench.vo.prototype.PrototypeVersionVO;
 
 public interface PrototypeVersionService {
     PrototypeVersionVO createFromArtifact(Long userId, String projectUuid, String idempotencyKey, String artifactUuid);
+
+    void validateSourceArtifact(Long userId, String projectUuid, String artifactUuid);
     PrototypeVersionVO createFromWorkflow(Long userId, Long projectId, String workflowRunUuid, AgentArtifact artifact);
     PrototypeVersionVO tune(Long userId, String projectUuid, String parentVersionUuid, String idempotencyKey,
             TunePrototypeVersionRequest request);

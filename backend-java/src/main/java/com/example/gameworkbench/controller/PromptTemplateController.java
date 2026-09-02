@@ -7,6 +7,7 @@ import com.example.gameworkbench.vo.prompt.PromptTemplateVO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -15,13 +16,25 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 
 @RestController
 @RequestMapping("/api/promptTemplate")
 @RequiredArgsConstructor
+@PreAuthorize("@capabilityAuthorizationService.has(authentication, 'prompt-ops.manage')")
 public class PromptTemplateController {
 
     private final PromptTemplateService promptTemplateService;
+
+    @GetMapping
+    public ApiResponse<Page<PromptTemplateVO>> list(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(defaultValue = "1") int pageNum,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String agentType,
+            @RequestParam(required = false) String status) {
+        return ApiResponse.success(promptTemplateService.list(userId, pageNum, pageSize, agentType, status));
+    }
 
     @PostMapping("/modify")
     public ApiResponse<PromptTemplateVO> modifyPromptTemplate(

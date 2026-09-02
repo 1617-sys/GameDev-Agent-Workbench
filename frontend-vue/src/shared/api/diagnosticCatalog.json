@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "endpoints": [
+    {
+      "method": "POST",
+      "path": "/api/demo/game/stream",
+      "lifecycle": "non_prod",
+      "owner": "developer-experience",
+      "dangerLevel": "high",
+      "profiles": [
+        "non-prod"
+      ],
+      "retentionReason": "Interactive streaming fixture for local generation diagnostics; bean is absent in prod.",
+      "replacement": "/demo/play (non-prod profile only)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/projects/{projectUuid}/machine-episodes/batches",
+      "lifecycle": "internal",
+      "owner": "player-runtime",
+      "dangerLevel": "high",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "retentionReason": "Player worker callback persists generated episode batches and is not an end-user operation.",
+      "replacement": "POST /api/projects/{projectUuid}/player-runs"
+    },
+    {
+      "method": "POST",
+      "path": "/api/promptTemplate/modify",
+      "lifecycle": "deprecated",
+      "owner": "ai-platform",
+      "dangerLevel": "high",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "retentionReason": "Compatibility endpoint for legacy prompt tooling; new UI never calls it.",
+      "replacement": "PUT /api/promptTemplate/{templateUuid}"
+    },
+    {
+      "method": "POST",
+      "path": "/api/workflow/game-design/run",
+      "lifecycle": "deprecated",
+      "owner": "workflow",
+      "dangerLevel": "high",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "retentionReason": "Preserved for existing V3 clients during V4 migration; hidden from ordinary navigation.",
+      "replacement": "POST /api/v1/projects/{projectUuid}/workflow-runs"
+    },
+    {
+      "method": "GET",
+      "path": "/api/workflow/{workflowRunUuid}",
+      "lifecycle": "deprecated",
+      "owner": "workflow",
+      "dangerLevel": "low",
+      "profiles": [
+        "prod",
+        "non-prod"
+      ],
+      "retentionReason": "Read compatibility for runs created by the legacy submit endpoint.",
+      "replacement": "GET /api/v1/workflow-runs/{workflowRunUuid}"
+    }
+  ]
+}

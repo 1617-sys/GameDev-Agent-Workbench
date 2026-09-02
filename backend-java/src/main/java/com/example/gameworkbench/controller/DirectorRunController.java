@@ -11,6 +11,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 @RestController @RequiredArgsConstructor @RequestMapping("/api/projects/{projectUuid}/director-runs")
+@org.springframework.security.access.prepost.PreAuthorize("@capabilityAuthorizationService.has(authentication, 'director-runs.manage')")
 public class DirectorRunController {
     private final DirectorApplicationService service;
     @PostMapping public ApiResponse<DirectorRun> submit(@AuthenticationPrincipal Long userId,@PathVariable String projectUuid,@RequestHeader("Idempotency-Key")String key,@RequestHeader(value="X-Trace-Id",required=false)String trace,@Valid @RequestBody SubmitDirectorRunRequest request){return ApiResponse.success(service.submit(userId,projectUuid,key,trace,request));}

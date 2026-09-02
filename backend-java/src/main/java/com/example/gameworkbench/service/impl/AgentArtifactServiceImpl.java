@@ -74,6 +74,22 @@ public class AgentArtifactServiceImpl implements AgentArtifactService {
         return toVO(artifact);
     }
 
+    @Override
+    public AgentArtifactVO getProjectArtifact(Long userId, String projectUuid, String artifactUuid) {
+        if (userId == null) throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        GameProject project = gameProjectMapper.selectOne(new LambdaQueryWrapper<GameProject>()
+                .eq(GameProject::getProjectUuid, projectUuid)
+                .eq(GameProject::getUserId, userId));
+        if (project == null) throw new BusinessException(ErrorCode.FORBIDDEN_PROJECT_ACCESS);
+        AgentArtifact artifact = agentArtifactMapper.selectOne(new LambdaQueryWrapper<AgentArtifact>()
+                .eq(AgentArtifact::getArtifactUuid, artifactUuid));
+        if (artifact == null) throw new BusinessException(ErrorCode.ARTIFACT_NOT_FOUND);
+        if (!project.getId().equals(artifact.getProjectId())) {
+            throw new BusinessException(ErrorCode.FORBIDDEN_ARTIFACT_ACCESS);
+        }
+        return toVO(artifact);
+    }
+
     private AgentArtifactVO toVO(AgentArtifact artifact) {
         return AgentArtifactVO.builder()
                 .id(artifact.getId())

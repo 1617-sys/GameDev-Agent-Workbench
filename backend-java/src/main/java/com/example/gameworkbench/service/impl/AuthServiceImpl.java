@@ -10,6 +10,7 @@ import com.example.gameworkbench.mapper.SysUserMapper;
 import com.example.gameworkbench.service.AuthService;
 import com.example.gameworkbench.service.JwtService;
 import com.example.gameworkbench.service.RedisService;
+import com.example.gameworkbench.security.UserCapabilityService;
 import com.example.gameworkbench.vo.auth.LoginResponse;
 import com.example.gameworkbench.vo.auth.UserVO;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RedisService redisService;
+    private final UserCapabilityService userCapabilityService;
 
     @Override
     public UserVO register(RegisterRequest request) {
@@ -50,6 +52,7 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         user.setNickname(request.getUsername());
         user.setStatus(NORMAL_STATUS);
+        user.setRole(DEFAULT_ROLE);
         user.setDeleted(0);
 
         sysUserMapper.insert(user);
@@ -119,10 +122,12 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private UserVO buildUserVO(SysUser user) {
+        String role = user.getRole() == null ? DEFAULT_ROLE : user.getRole();
         return UserVO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
-                .role(DEFAULT_ROLE)
+                .role(role)
+                .capabilities(userCapabilityService.forRole(role))
                 .build();
     }
 }

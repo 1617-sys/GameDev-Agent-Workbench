@@ -8,6 +8,7 @@ const api = readFileSync(fileURLToPath(new URL("../src/shared/api/episodes.js", 
 
 test("episode evidence page uses persisted summaries and bounded step pages", () => {
   assert.match(api, /machine-episodes\/\$\{encodeURIComponent\(episodeUuid\)\}\/summary/);
+  assert.match(api, /detail:.*machine-episodes\/\$\{encodeURIComponent\(episodeUuid\)\}/);
   assert.match(api, /steps\?page=\$\{page\}&size=\$\{size\}/);
   assert.match(page, /episodesApi\.steps\([^)]*,page,50\)/);
   assert.doesNotMatch(page, /scoreDelta\s*\*|completionRate\s*=|trajectoryDigest\s*=/);
