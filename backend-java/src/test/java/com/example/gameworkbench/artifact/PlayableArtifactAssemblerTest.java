@@ -27,8 +27,10 @@ class PlayableArtifactAssemblerTest {
         var compiled = compiler.compile(json.readTree(stream));
         Path game = temporary.resolve("build");
         Files.createDirectories(game.resolve("assets"));
+        Files.createDirectories(game.resolve("cocos-js"));
         Files.writeString(game.resolve("index.html"), "<!doctype html><script src=\"assets/main.js\"></script>");
         Files.writeString(game.resolve("assets/main.js"), "console.log('ready')");
+        Files.writeString(game.resolve("cocos-js/_virtual_cc.js"), "const password = internalEngineOption;");
         GenerationRun run = GenerationRun.builder().runUuid("123e4567-e89b-12d3-a456-426614174000")
                 .projectId(7L).status("BUILDING").sourceDigest(compiled.sourceDigest())
                 .runtimeIrDigest(compiled.runtimeIrDigest()).canonicalSpecJson(json.writeValueAsString(compiled.canonicalSpec()))
@@ -44,7 +46,7 @@ class PlayableArtifactAssemblerTest {
         assertThat(first.payloadDigest()).hasSize(64);
         assertThat(first.manifest().path("artifactType").asText()).isEqualTo("LOCAL_COCOS_WEB_PACKAGE");
         assertThat(first.manifest().path("sourceDigest").asText()).isEqualTo(compiled.sourceDigest());
-        assertThat(entries(first.zipBytes())).contains("artifact-manifest.json", "game/index.html", "game/assets/main.js",
+        assertThat(entries(first.zipBytes())).contains("artifact-manifest.json", "game/index.html", "game/assets/main.js", "game/cocos-js/_virtual_cc.js",
                 "provenance/game-spec.json", "provenance/runtime-ir.json", "provenance/build-request.json",
                 "evidence/build-record.json", "launch.ps1", "README.md");
     }

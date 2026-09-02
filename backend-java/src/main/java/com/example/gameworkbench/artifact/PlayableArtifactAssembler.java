@@ -120,6 +120,7 @@ public class PlayableArtifactAssembler {
         files.forEach((path, bytes) -> {
             safePath(path);
             String lower = path.toLowerCase();
+            if (lower.startsWith("game/cocos-js/") && lower.endsWith(".js")) return;
             if (lower.endsWith(".html") || lower.endsWith(".js") || lower.endsWith(".json")
                     || lower.endsWith(".md") || lower.endsWith(".ps1")) {
                 String value = new String(bytes, StandardCharsets.UTF_8);
