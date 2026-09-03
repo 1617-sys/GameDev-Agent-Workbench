@@ -12,6 +12,7 @@ import java.util.Set;
 public class UserCapabilityService {
 
     public static final String ADMIN_DASHBOARD = "admin.dashboard";
+    public static final String ADMIN_USERS_MANAGE = "admin.users.manage";
 
     private static final List<String> USER = List.of(
             "projects.read",
@@ -44,6 +45,7 @@ public class UserCapabilityService {
             ADMIN_DASHBOARD,
             "admin.agent-runs",
             "admin.diagnostics",
+            ADMIN_USERS_MANAGE,
             "prompt-ops.manage",
             "prompt-analytics.read"
     );

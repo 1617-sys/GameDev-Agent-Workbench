@@ -48,7 +48,9 @@ class CapabilityAuthorizationServiceTest {
                 .contains("projects.read", "generation.read", "generation.release", "player-runs.create")
                 .doesNotContain(UserCapabilityService.ADMIN_DASHBOARD);
         assertThat(service.forRole("ADMIN"))
-                .contains(UserCapabilityService.ADMIN_DASHBOARD, "admin.diagnostics", "prompt-ops.manage");
+                .contains(UserCapabilityService.ADMIN_DASHBOARD, "admin.diagnostics", "prompt-ops.manage", "admin.users.manage");
+        assertThat(service.forRole("PROJECT_ADVANCED"))
+                .doesNotContain("admin.users.manage");
     }
 
     private static SysUser user(String role) {

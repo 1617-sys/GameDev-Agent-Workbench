@@ -28,6 +28,7 @@ const sections = [
       { key: "prompt-ops", label: "Prompt 运维", capability: "prompt-ops.manage", to: () => "/admin/prompt-ops" },
       { key: "analytics", label: "Prompt 指标", capability: "prompt-analytics.read", to: () => "/admin/analytics" },
       { key: "diagnostics", label: "系统诊断", capability: "admin.diagnostics", to: () => "/admin/diagnostics" }
+      ,{ key: "users", label: "用户与角色", capability: "admin.users.manage", to: () => "/admin/users" }
     ]
   }
 ];

@@ -19,6 +19,7 @@ export const appRoutes = [
   { path: "/admin/prompt-ops", name: "admin-prompt-ops", component: () => import("../features/prompt-ops/PromptOpsPage.vue"), meta: { title: "Prompt 运维", capability: "prompt-ops.manage" } },
   { path: "/admin/analytics", name: "admin-analytics", component: () => import("../features/prompt-analytics/PromptAnalyticsPage.vue"), meta: { title: "Prompt 指标", capability: "prompt-analytics.read" } },
   { path: "/admin/diagnostics", name: "admin-diagnostics", component: () => import("../features/admin/AdminDiagnosticsPage.vue"), meta: { title: "系统诊断", capability: "admin.diagnostics" } },
+  { path: "/admin/users", name: "admin-users", component: () => import("../features/admin/AdminUsersPage.vue"), meta: { title: "用户与角色", capability: "admin.users.manage" } },
   { path: "/demo/play", name: "demo", component: () => import("../features/demo/DemoPage.vue"), meta: { title: "非生产 Demo", capability: "admin.diagnostics", nonProdOnly: true } },
   { path: "/:pathMatch(.*)*", redirect: "/projects" }
 ];

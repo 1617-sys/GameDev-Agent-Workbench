@@ -6,6 +6,128 @@
   },
   "x-runtime-profile" : "prod",
   "paths" : {
+    "/api/admin/users" : {
+      "get" : {
+        "operationId" : "list_6",
+        "parameters" : [ {
+          "in" : "query",
+          "name" : "pageNum",
+          "required" : false,
+          "schema" : {
+            "default" : 1,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "pageSize",
+          "required" : false,
+          "schema" : {
+            "default" : 20,
+            "format" : "int32",
+            "type" : "integer"
+          }
+        }, {
+          "in" : "query",
+          "name" : "username",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "role",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "in" : "query",
+          "name" : "status",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponsePageAdminUserVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-user-controller" ]
+      }
+    },
+    "/api/admin/users/{targetId}" : {
+      "patch" : {
+        "operationId" : "update",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "targetId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/UpdateUserAccessRequest"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseAdminUserVO"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-user-controller" ]
+      }
+    },
+    "/api/admin/users/{targetId}/audits" : {
+      "get" : {
+        "operationId" : "audits",
+        "parameters" : [ {
+          "in" : "path",
+          "name" : "targetId",
+          "required" : true,
+          "schema" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ApiResponseListUserRoleAudit"
+                }
+              }
+            },
+            "description" : "OK"
+          }
+        },
+        "tags" : [ "admin-user-controller" ]
+      }
+    },
     "/api/agent/run" : {
       "post" : {
         "operationId" : "run_1",
@@ -2535,6 +2657,35 @@
   },
   "components" : {
     "schemas" : {
+      "AdminUserVO" : {
+        "properties" : {
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "lastLoginAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "role" : {
+            "type" : "string"
+          },
+          "self" : {
+            "type" : "boolean"
+          },
+          "status" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "AgentArtifactVO" : {
         "properties" : {
           "agentRunId" : {
@@ -2715,6 +2866,24 @@
           "userId" : {
             "format" : "int64",
             "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponseAdminUserVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/AdminUserVO"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
           }
         },
         "type" : "object"
@@ -3142,6 +3311,27 @@
         },
         "type" : "object"
       },
+      "ApiResponseListUserRoleAudit" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "items" : {
+              "$ref" : "#/components/schemas/UserRoleAudit"
+            },
+            "type" : "array"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "ApiResponseListWorkflowRunSummaryVO" : {
         "properties" : {
           "code" : {
@@ -3303,6 +3493,24 @@
           },
           "data" : {
             "type" : "object"
+          },
+          "message" : {
+            "type" : "string"
+          },
+          "traceId" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "ApiResponsePageAdminUserVO" : {
+        "properties" : {
+          "code" : {
+            "format" : "int32",
+            "type" : "integer"
+          },
+          "data" : {
+            "$ref" : "#/components/schemas/PageAdminUserVO"
           },
           "message" : {
             "type" : "string"
@@ -4883,6 +5091,61 @@
         },
         "type" : "object"
       },
+      "PageAdminUserVO" : {
+        "properties" : {
+          "countId" : {
+            "type" : "string",
+            "writeOnly" : true
+          },
+          "current" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "maxLimit" : {
+            "format" : "int64",
+            "type" : "integer",
+            "writeOnly" : true
+          },
+          "optimizeCountSql" : {
+            "$ref" : "#/components/schemas/PageAdminUserVO",
+            "writeOnly" : true
+          },
+          "optimizeJoinOfCountSql" : {
+            "type" : "boolean",
+            "writeOnly" : true
+          },
+          "orders" : {
+            "items" : {
+              "$ref" : "#/components/schemas/OrderItem"
+            },
+            "type" : "array",
+            "writeOnly" : true
+          },
+          "pages" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "records" : {
+            "items" : {
+              "$ref" : "#/components/schemas/AdminUserVO"
+            },
+            "type" : "array"
+          },
+          "searchCount" : {
+            "$ref" : "#/components/schemas/PageAdminUserVO",
+            "writeOnly" : true
+          },
+          "size" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "total" : {
+            "format" : "int64",
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
       "PageAgentRunVO" : {
         "properties" : {
           "countId" : {
@@ -6012,6 +6275,55 @@
             "format" : "int32",
             "maximum" : 600,
             "minimum" : 30,
+            "type" : "integer"
+          }
+        },
+        "type" : "object"
+      },
+      "UpdateUserAccessRequest" : {
+        "properties" : {
+          "role" : {
+            "pattern" : "USER|PROJECT_ADVANCED|ADMIN",
+            "type" : "string"
+          },
+          "status" : {
+            "pattern" : "NORMAL|DISABLED",
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "UserRoleAudit" : {
+        "properties" : {
+          "actorUserId" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "afterRole" : {
+            "type" : "string"
+          },
+          "afterStatus" : {
+            "type" : "string"
+          },
+          "beforeRole" : {
+            "type" : "string"
+          },
+          "beforeStatus" : {
+            "type" : "string"
+          },
+          "createdAt" : {
+            "format" : "date-time",
+            "type" : "string"
+          },
+          "id" : {
+            "format" : "int64",
+            "type" : "integer"
+          },
+          "operation" : {
+            "type" : "string"
+          },
+          "targetUserId" : {
+            "format" : "int64",
             "type" : "integer"
           }
         },

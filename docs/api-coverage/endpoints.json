@@ -55,6 +55,42 @@
     },
     {
       "method": "GET",
+      "path": "/api/admin/users",
+      "domain": "admin-users",
+      "lifecycle": "active",
+      "audience": ["admin"],
+      "frontendFeature": "admin-users",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": ["prod", "non-prod"],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/users/{targetId}",
+      "domain": "admin-users",
+      "lifecycle": "active",
+      "audience": ["admin"],
+      "frontendFeature": "admin-users",
+      "dangerLevel": "high",
+      "owner": "platform-ops",
+      "profiles": ["prod", "non-prod"],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users/{targetId}/audits",
+      "domain": "admin-users",
+      "lifecycle": "active",
+      "audience": ["admin"],
+      "frontendFeature": "admin-users",
+      "dangerLevel": "low",
+      "owner": "platform-ops",
+      "profiles": ["prod", "non-prod"],
+      "test": "ProdOpenApiSnapshotTest#springDocContractMatchesCheckedInSnapshot"
+    },
+    {
+      "method": "GET",
       "path": "/api/projects/{projectUuid}/artifacts",
       "domain": "artifacts",
       "lifecycle": "active",

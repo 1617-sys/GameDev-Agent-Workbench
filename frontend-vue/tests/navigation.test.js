@@ -28,9 +28,9 @@ test("project advanced users gain project operations without admin navigation", 
 test("administrators see diagnostics and operations only when declared by backend", () => {
   const items = visibleNavigation([
     "projects.read", "admin.dashboard", "admin.agent-runs", "prompt-ops.manage",
-    "prompt-analytics.read", "admin.diagnostics"
+    "prompt-analytics.read", "admin.diagnostics", "admin.users.manage"
   ], {});
 
-  assert.deepEqual(keys(items), ["projects", "dashboard", "agent-runs", "prompt-ops", "analytics", "diagnostics"]);
-  assert.equal(items.find(section => section.key === "admin")?.items.length, 5);
+  assert.deepEqual(keys(items), ["projects", "dashboard", "agent-runs", "prompt-ops", "analytics", "diagnostics", "users"]);
+  assert.equal(items.find(section => section.key === "admin")?.items.length, 6);
 });

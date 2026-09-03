@@ -27,6 +27,30 @@
     },
     {
       "method": "GET",
+      "path": "/api/admin/users",
+      "feature": "admin-users",
+      "adapter": "frontend-vue/src/shared/api/users.js",
+      "page": "frontend-vue/src/features/admin/AdminUsersPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/admin/users/{targetId}",
+      "feature": "admin-users",
+      "adapter": "frontend-vue/src/shared/api/users.js",
+      "page": "frontend-vue/src/features/admin/AdminUsersPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users/{targetId}/audits",
+      "feature": "admin-users",
+      "adapter": "frontend-vue/src/shared/api/users.js",
+      "page": "frontend-vue/src/features/admin/AdminUsersPage.vue",
+      "status": "implemented"
+    },
+    {
+      "method": "GET",
       "path": "/api/projects/{projectUuid}/artifacts",
       "feature": "artifacts",
       "adapter": "frontend-vue/src/shared/api/artifacts.js",

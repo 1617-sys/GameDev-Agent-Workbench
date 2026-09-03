@@ -42,7 +42,8 @@ const implementedFeatures = new Map(Object.entries({
   analytics: ["frontend-vue/src/shared/api/promptAnalytics.js", "frontend-vue/src/features/prompt-analytics/PromptAnalyticsPage.vue"],
   dashboard: ["frontend-vue/src/shared/api/dashboard.js", "frontend-vue/src/features/admin/AdminDashboardPage.vue"],
   "agent-runs": ["frontend-vue/src/shared/api/agentRuns.js", "frontend-vue/src/features/admin/AdminAgentRunsPage.vue"],
-  diagnostics: ["frontend-vue/src/shared/api/diagnostics.js", "frontend-vue/src/features/admin/AdminDiagnosticsPage.vue"]
+  diagnostics: ["frontend-vue/src/shared/api/diagnostics.js", "frontend-vue/src/features/admin/AdminDiagnosticsPage.vue"],
+  "admin-users": ["frontend-vue/src/shared/api/users.js", "frontend-vue/src/features/admin/AdminUsersPage.vue"]
 }));
 const frontendMappings = coverage.endpoints
   .filter(endpoint => endpoint.lifecycle === "active" && !endpoint.audience.includes("internal"))
