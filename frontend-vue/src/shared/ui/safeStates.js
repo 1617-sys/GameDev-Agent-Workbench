@@ -10,6 +10,13 @@ export function asyncStateCopy(kind) {
   return states[kind] || states["network-error"];
 }
 
+export function asyncStateKind({ loading = false, error = "", empty = false } = {}) {
+  if (loading) return "loading";
+  if (error) return /权限|403|forbidden/i.test(error) ? "forbidden" : "network-error";
+  if (empty) return "empty";
+  return "partial";
+}
+
 export function dangerConfirmation(expected, input) {
   return {
     disabled: !expected || input !== expected,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { asyncStateCopy, dangerConfirmation } from "../src/shared/ui/safeStates.js";
+import { asyncStateCopy, asyncStateKind, dangerConfirmation } from "../src/shared/ui/safeStates.js";
 
 test("shared async states use safe actionable copy", () => {
   assert.equal(asyncStateCopy("loading").busy, true);
@@ -8,6 +8,12 @@ test("shared async states use safe actionable copy", () => {
   assert.match(asyncStateCopy("forbidden").message, /权限/);
   assert.match(asyncStateCopy("network-error").message, /网络/);
   assert.match(asyncStateCopy("partial").message, /部分/);
+});
+
+test("async state chooses explicit errors before empty results", () => {
+  assert.equal(asyncStateKind({ loading: false, error: "权限不足", empty: true }), "forbidden");
+  assert.equal(asyncStateKind({ loading: false, error: "服务暂不可用", empty: true }), "network-error");
+  assert.equal(asyncStateKind({ loading: false, error: "", empty: true }), "empty");
 });
 
 test("dangerous operation stays disabled until exact confirmation", () => {
